@@ -66,9 +66,11 @@ const WishlistManager = {
                
                 throw new Error(`API error: ${response.status}`);
             }
-            const products = await response.json();
+            const apiResponse = await response.json();
+            // Extract products from API response (handles both direct array and {data: [...]} format)
+            const products = Array.isArray(apiResponse) ? apiResponse : (apiResponse.data || []);
             // Cache the products
-            this.productsCache = Array.isArray(products) ? products : [products];
+            this.productsCache = products;
             return this.productsCache;
         } catch(error) {
             console.error('Error fetching products:', error);

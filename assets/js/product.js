@@ -73,8 +73,8 @@ const displayALLProducts = async () => {
     const allCategories = await getAllCategories();
     console.log("Raw allCategories response:", allCategories);
     
-    const products = Array.isArray(allProducts) ? allProducts : (allProducts.products || []);
-    const categories = Array.isArray(allCategories) ? allCategories : (allCategories.categories || []);
+    const products = Array.isArray(allProducts) ? allProducts : (allProducts.data || []);
+    const categories = Array.isArray(allCategories) ? allCategories : (allCategories.data || []);
     
     console.log("Parsed products array:", products);
     console.log("Parsed categories array:", categories);
