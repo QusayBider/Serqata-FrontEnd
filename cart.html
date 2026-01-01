@@ -27,6 +27,13 @@
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <!-- Main CSS File -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Custom CSS to remove duplicate heart icon from btn-wishlist -->
+    <style>
+        .btn-wishlist::before {
+            content: none !important;
+            display: none !important;
+        }
+    </style>
 </head>
 
 <body>
@@ -588,65 +595,21 @@
 										</tr>
 									</thead>
 
-									<tbody>
-										<tr>
-											<td class="product-col">
-												<div class="product">
-													<figure class="product-media">
-														<a href="#">
-															<img src="assets/images/products/table/product-1.jpg" alt="Product image">
-														</a>
-													</figure>
-
-													<h3 class="product-title">
-														<a href="#">Beige knitted elastic runner shoes</a>
-													</h3><!-- End .product-title -->
-												</div><!-- End .product -->
-											</td>
-											<td class="price-col">$84.00</td>
-											<td class="quantity-col">
-                                                <div class="cart-product-quantity">
-                                                    <input type="number" class="form-control" value="1" min="1" max="10" step="1" data-decimals="0" required>
-                                                </div><!-- End .cart-product-quantity -->
-                                            </td>
-											<td class="total-col">$84.00</td>
-											<td class="remove-col"><button class="btn-remove"><i class="icon-close"></i></button></td>
-										</tr>
-										<tr>
-											<td class="product-col">
-												<div class="product">
-													<figure class="product-media">
-														<a href="#">
-															<img src="assets/images/products/table/product-2.jpg" alt="Product image">
-														</a>
-													</figure>
-
-													<h3 class="product-title">
-														<a href="#">Blue utility pinafore denim dress</a>
-													</h3><!-- End .product-title -->
-												</div><!-- End .product -->
-											</td>
-											<td class="price-col">$76.00</td>
-											<td class="quantity-col">
-                                                <div class="cart-product-quantity">
-                                                    <input type="number" class="form-control" value="1" min="1" max="10" step="1" data-decimals="0" required>
-                                                </div><!-- End .cart-product-quantity -->                                 
-                                            </td>
-											<td class="total-col">$76.00</td>
-											<td class="remove-col"><button class="btn-remove"><i class="icon-close"></i></button></td>
-										</tr>
+									<tbody id="cart-items-tbody">
+										<!-- Cart items will be loaded dynamically -->
 									</tbody>
 								</table><!-- End .table table-wishlist -->
 
 	                			<div class="cart-bottom">
 			            			<div class="cart-discount">
-			            				<form action="#">
+			            				<form action="#" id="coupon-form">
 			            					<div class="input-group">
-				        						<input type="text" class="form-control" required placeholder="coupon code">
+				        						<input type="text" class="form-control" id="coupon-code-input" placeholder="coupon code">
 				        						<div class="input-group-append">
 													<button class="btn btn-outline-primary-2" type="submit"><i class="icon-long-arrow-right"></i></button>
 												</div><!-- .End .input-group-append -->
 			        						</div><!-- End .input-group -->
+			        						<div id="coupon-message" class="mt-2" style="display: none;"></div>
 			            				</form>
 			            			</div><!-- End .cart-discount -->
 
@@ -661,51 +624,23 @@
 	                					<tbody>
 	                						<tr class="summary-subtotal">
 	                							<td>Subtotal:</td>
-	                							<td>$160.00</td>
+	                							<td id="cart-subtotal">$0.00</td>
 	                						</tr><!-- End .summary-subtotal -->
 	                						<tr class="summary-shipping">
 	                							<td>Shipping:</td>
 	                							<td>&nbsp;</td>
 	                						</tr>
 
-	                						<tr class="summary-shipping-row">
-	                							<td>
-													<div class="custom-control custom-radio">
-														<input type="radio" id="free-shipping" name="shipping" class="custom-control-input">
-														<label class="custom-control-label" for="free-shipping">Free Shipping</label>
-													</div><!-- End .custom-control -->
-	                							</td>
-	                							<td>$0.00</td>
-	                						</tr><!-- End .summary-shipping-row -->
+	                						<!-- Shipping options will be loaded dynamically from API -->
 
-	                						<tr class="summary-shipping-row">
-	                							<td>
-	                								<div class="custom-control custom-radio">
-														<input type="radio" id="standart-shipping" name="shipping" class="custom-control-input">
-														<label class="custom-control-label" for="standart-shipping">Standart:</label>
-													</div><!-- End .custom-control -->
-	                							</td>
-	                							<td>$10.00</td>
-	                						</tr><!-- End .summary-shipping-row -->
-
-	                						<tr class="summary-shipping-row">
-	                							<td>
-	                								<div class="custom-control custom-radio">
-														<input type="radio" id="express-shipping" name="shipping" class="custom-control-input">
-														<label class="custom-control-label" for="express-shipping">Express:</label>
-													</div><!-- End .custom-control -->
-	                							</td>
-	                							<td>$20.00</td>
-	                						</tr><!-- End .summary-shipping-row -->
-
-	                						<tr class="summary-shipping-estimate">
-	                							<td>Estimate for Your Country<br> <a href="dashboard.html">Change address</a></td>
+	                						<tr class="summary-shipping-estimate" id="shipping-estimate-row">
+	                							<td>Estimate for Your Country<br> <a href="dashboard.html" id="change-address-link" style="display: none;">Change address</a></td>
 	                							<td>&nbsp;</td>
 	                						</tr><!-- End .summary-shipping-estimate -->
 
 	                						<tr class="summary-total">
 	                							<td>Total:</td>
-	                							<td>$160.00</td>
+	                							<td id="cart-total">$0.00</td>
 	                						</tr><!-- End .summary-total -->
 	                					</tbody>
 	                				</table><!-- End .table table-summary -->
@@ -1092,8 +1027,215 @@
     <script src="assets/js/superfish.min.js"></script>
     <script src="assets/js/owl.carousel.min.js"></script>
     <script src="assets/js/bootstrap-input-spinner.js"></script>
+    <!-- Config and Cart JS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/cart.js"></script>
+    <script src="assets/js/delivery.js"></script>
+    <script src="assets/js/coupon.js"></script>
     <!-- Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script>
+        // Load and render cart items
+        async function renderCart() {
+            const cartData = await CartManager.getCartItems();
+            const tbody = document.getElementById('cart-items-tbody');
+            
+            if (!cartData.success || cartData.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Your cart is empty</td></tr>';
+                document.getElementById('cart-subtotal').textContent = 'ILS 0.00';
+                document.getElementById('cart-total').textContent = 'ILS 0.00';
+                return;
+            }
+            
+            tbody.innerHTML = cartData.items.map(item => {
+                // Calculate price after discount
+                const discount = item.discount || 0;
+                const originalPrice = item.price || 0;
+                const priceAfterDiscount = discount > 0 ? originalPrice * (1 - discount) : originalPrice;
+                const totalAfterDiscount = priceAfterDiscount * item.quantity;
+                
+                // Build variant info display
+                const variantInfo = [];
+                if (item.colorName) {
+                    variantInfo.push(`<span class="text-muted small"><strong>Color:</strong> ${item.colorName}</span>`);
+                }
+                if (item.sizeName) {
+                    variantInfo.push(`<span class="text-muted small"><strong>Size:</strong> ${item.sizeName}</span>`);
+                }
+                const variantHtml = variantInfo.length > 0 ? `<div class="mt-2">${variantInfo.join('<br>')}</div>` : '';
+                
+                return `
+                <tr data-product-id="${item.productId}">
+                    <td class="product-col">
+                        <div class="product">
+                            <figure class="product-media">
+                                <a href="product.html?id=${item.productId}">
+                                    <img src="${item.mainImageUrl || item.productImageUrl || 'assets/images/products/error/error.png'}" alt="${item.productName}" onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">
+                                </a>
+                            </figure>
+                            <h3 class="product-title">
+                                <a href="product.html?id=${item.productId}">${item.productName}</a>
+                            </h3>
+                            ${variantHtml}
+                        </div>
+                    </td>
+                    <td class="price-col">
+                        ${discount > 0 
+                            ? `<span class="new-price">ILS ${priceAfterDiscount.toFixed(2)}</span><br><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.9em;">ILS ${originalPrice.toFixed(2)}</span>`
+                            : `<span>ILS ${priceAfterDiscount.toFixed(2)}</span>`}
+                    </td>
+                    <td class="quantity-col">
+                        <div class="cart-product-quantity">
+                            <input type="number" class="form-control cart-quantity-input" 
+                                   value="${item.quantity}" min="1" max="10" step="1" 
+                                   data-product-id="${item.productId}"
+                                   data-color-id="${item.colorId || ''}"
+                                   data-size-id="${item.sizeId || ''}"
+                                   required>
+                        </div>
+                    </td>
+                    <td class="total-col">
+                        ${discount > 0 
+                            ? `<span class="new-price">ILS ${totalAfterDiscount.toFixed(2)}</span><br><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.9em;">ILS ${(originalPrice * item.quantity).toFixed(2)}</span>`
+                            : `<span>ILS ${totalAfterDiscount.toFixed(2)}</span>`}
+                    </td>
+                    <td class="remove-col">
+                        <button class="btn-remove" data-product-id="${item.productId}" data-color-id="${item.colorId || ''}" data-size-id="${item.sizeId || ''}">
+                            <i class="icon-close"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+            
+            // Update totals - calculate from items with discounts
+            const subtotal = cartData.items.reduce((sum, item) => {
+                const discount = item.discount || 0;
+                const priceAfterDiscount = discount > 0 ? item.price * (1 - discount) : item.price;
+                return sum + (priceAfterDiscount * item.quantity);
+            }, 0);
+            document.getElementById('cart-subtotal').textContent = `ILS ${subtotal.toFixed(2)}`;
+            updateCartTotal();
+            
+            // Attach event listeners
+            attachCartEventListeners();
+        }
+        
+        function updateCartTotal() {
+            const subtotalText = document.getElementById('cart-subtotal').textContent;
+            const subtotal = parseFloat(subtotalText.replace(/[ILS$,\s]/g, ''));
+            const shipping = parseFloat(document.querySelector('input[name="shipping"]:checked')?.value || 0);
+            const discount = CouponManager.getDiscountAmount(subtotal);
+            const total = subtotal + shipping - discount;
+            document.getElementById('cart-total').textContent = `ILS ${Math.max(0, total).toFixed(2)}`;
+        }
+        
+        function attachCartEventListeners() {
+            // Remove item buttons
+            document.querySelectorAll('.btn-remove').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const productId = parseInt(this.getAttribute('data-product-id'));
+                    const colorId = this.getAttribute('data-color-id') ? parseInt(this.getAttribute('data-color-id')) : null;
+                    const sizeId = this.getAttribute('data-size-id') ? parseInt(this.getAttribute('data-size-id')) : null;
+                    const result = await CartManager.removeFromCart(productId, colorId, sizeId);
+                    if (result.success) {
+                        await renderCart();
+                        // Update navbar cart
+                        if (typeof CartManager !== 'undefined' && CartManager.updateNavbarCart) {
+                            await CartManager.updateNavbarCart();
+                        }
+                    } else {
+                        if (typeof notyf !== 'undefined') {
+                            notyf.error(result.message || 'Failed to remove item');
+                        } else {
+                            alert(result.message || 'Failed to remove item');
+                        }
+                    }
+                });
+            });
+            
+            // Quantity change inputs
+            document.querySelectorAll('.cart-quantity-input').forEach(input => {
+                input.addEventListener('change', async function() {
+                    const productId = parseInt(this.getAttribute('data-product-id'));
+                    const colorId = this.getAttribute('data-color-id') ? parseInt(this.getAttribute('data-color-id')) : null;
+                    const sizeId = this.getAttribute('data-size-id') ? parseInt(this.getAttribute('data-size-id')) : null;
+                    const quantity = parseInt(this.value);
+                    if (quantity > 0) {
+                        const result = await CartManager.updateQuantity(productId, quantity, colorId, sizeId);
+                        if (result.success) {
+                            await renderCart();
+                            // Update navbar cart
+                            if (typeof CartManager !== 'undefined' && CartManager.updateNavbarCart) {
+                                await CartManager.updateNavbarCart();
+                            }
+                        } else {
+                            if (typeof notyf !== 'undefined') {
+                                notyf.error(result.message || 'Failed to update quantity');
+                            } else {
+                                alert(result.message || 'Failed to update quantity');
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Shipping radio buttons
+            document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+                radio.addEventListener('change', updateCartTotal);
+            });
+        }
+        
+        // Check if user is logged in and show/hide change address link
+        function updateChangeAddressVisibility() {
+            const changeAddressLink = document.getElementById('change-address-link');
+            if (changeAddressLink) {
+                if (CartManager.isAuthenticated()) {
+                    changeAddressLink.style.display = 'inline';
+                } else {
+                    changeAddressLink.style.display = 'none';
+                }
+            }
+        }
+        
+        // Load cart on page load
+        $(document).ready(async function() {
+            // Check authentication and update UI
+            updateChangeAddressVisibility();
+            
+            // Load shipping options (you can get sectionId and cityId from user profile if logged in)
+            await DeliveryManager.loadShippingOptions();
+            
+            // Load cart items
+            await renderCart();
+            
+            // Handle coupon form submission
+            $('#coupon-form').on('submit', async function(e) {
+                e.preventDefault();
+                const couponCode = $('#coupon-code-input').val().trim();
+                const messageDiv = $('#coupon-message');
+                
+                if (!couponCode) {
+                    messageDiv.removeClass('text-success').addClass('text-danger').text('Please enter a coupon code').show();
+                    return;
+                }
+                
+                const result = await CouponManager.applyCoupon(couponCode);
+                if (result.success) {
+                    messageDiv.removeClass('text-danger').addClass('text-success').text(result.message).show();
+                    updateCartTotal();
+                    if (typeof notyf !== 'undefined') {
+                        notyf.success(result.message);
+                    }
+                } else {
+                    messageDiv.removeClass('text-success').addClass('text-danger').text(result.message).show();
+                    if (typeof notyf !== 'undefined') {
+                        notyf.error(result.message);
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 
 

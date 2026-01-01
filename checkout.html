@@ -581,71 +581,57 @@
             					<label for="checkout-discount-input" class="text-truncate">Have a coupon? <span>Click here to enter your code</span></label>
             				</form>
             			</div><!-- End .checkout-discount -->
-            			<form action="#">
+            			<form id="checkout-form" action="#">
 		                	<div class="row">
 		                		<div class="col-lg-9">
 		                			<h2 class="checkout-title">Billing Details</h2><!-- End .checkout-title -->
 		                				<div class="row">
 		                					<div class="col-sm-6">
 		                						<label>First Name *</label>
-		                						<input type="text" class="form-control" required>
+		                						<input type="text" class="form-control" id="checkout-firstname" name="firstName" required>
 		                					</div><!-- End .col-sm-6 -->
 
 		                					<div class="col-sm-6">
 		                						<label>Last Name *</label>
-		                						<input type="text" class="form-control" required>
+		                						<input type="text" class="form-control" id="checkout-lastname" name="lastName" required>
 		                					</div><!-- End .col-sm-6 -->
 		                				</div><!-- End .row -->
 
-	            						<label>Company Name (Optional)</label>
-	            						<input type="text" class="form-control">
-
-	            						<label>Country *</label>
-	            						<input type="text" class="form-control" required>
-
 	            						<label>Street address *</label>
-	            						<input type="text" class="form-control" placeholder="House number and Street name" required>
-	            						<input type="text" class="form-control" placeholder="Appartments, suite, unit etc ..." required>
+	            						<input type="text" class="form-control" id="checkout-address" name="address" placeholder="House number and Street name" required>
 
 	            						<div class="row">
 		                					<div class="col-sm-6">
 		                						<label>Town / City *</label>
-		                						<input type="text" class="form-control" required>
+		                						<input type="text" class="form-control" id="checkout-city" name="city" required>
 		                					</div><!-- End .col-sm-6 -->
 
 		                					<div class="col-sm-6">
 		                						<label>State / County *</label>
-		                						<input type="text" class="form-control" required>
+		                						<input type="text" class="form-control" id="checkout-state" name="state" required>
 		                					</div><!-- End .col-sm-6 -->
 		                				</div><!-- End .row -->
 
 		                				<div class="row">
 		                					<div class="col-sm-6">
 		                						<label>Postcode / ZIP *</label>
-		                						<input type="text" class="form-control" required>
+		                						<input type="text" class="form-control" id="checkout-postcode" name="postcode" required>
 		                					</div><!-- End .col-sm-6 -->
 
 		                					<div class="col-sm-6">
 		                						<label>Phone *</label>
-		                						<input type="tel" class="form-control" required>
+		                						<input type="tel" class="form-control" id="checkout-phone" name="phone" required>
 		                					</div><!-- End .col-sm-6 -->
 		                				</div><!-- End .row -->
 
 	                					<label>Email address *</label>
-	        							<input type="email" class="form-control" required>
+	        							<input type="email" class="form-control" id="checkout-email" name="email" required>
 
-	        							<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="checkout-create-acc">
-											<label class="custom-control-label" for="checkout-create-acc">Create an account?</label>
-										</div><!-- End .custom-checkbox -->
-
-										<div class="custom-control custom-checkbox">
-											<input type="checkbox" class="custom-control-input" id="checkout-diff-address">
-											<label class="custom-control-label" for="checkout-diff-address">Ship to a different address?</label>
-										</div><!-- End .custom-checkbox -->
+	                					<label>Discount Code (optional)</label>
+	        							<input type="text" class="form-control" id="checkout-discount" name="discountCode" placeholder="Enter discount code">
 
 	                					<label>Order notes (optional)</label>
-	        							<textarea class="form-control" cols="30" rows="4" placeholder="Notes about your order, e.g. special notes for delivery"></textarea>
+	        							<textarea class="form-control" id="checkout-notes" name="notes" cols="30" rows="4" placeholder="Notes about your order, e.g. special notes for delivery"></textarea>
 		                		</div><!-- End .col-lg-9 -->
 		                		<aside class="col-lg-3">
 		                			<div class="summary">
@@ -659,111 +645,65 @@
 		                						</tr>
 		                					</thead>
 
+		                					<tbody id="checkout-items-tbody">
+		                						<!-- Cart items will be loaded dynamically -->
+		                					</tbody>
 		                					<tbody>
-		                						<tr>
-		                							<td><a href="#">Beige knitted elastic runner shoes</a></td>
-		                							<td>$84.00</td>
-		                						</tr>
-
-		                						<tr>
-		                							<td><a href="#">Blue utility pinafore denimdress</a></td>
-		                							<td>$76,00</td>
-		                						</tr>
 		                						<tr class="summary-subtotal">
 		                							<td>Subtotal:</td>
-		                							<td>$160.00</td>
+		                							<td id="checkout-subtotal">$0.00</td>
 		                						</tr><!-- End .summary-subtotal -->
 		                						<tr>
 		                							<td>Shipping:</td>
-		                							<td>Free shipping</td>
+		                							<td id="checkout-shipping">Free shipping</td>
 		                						</tr>
 		                						<tr class="summary-total">
 		                							<td>Total:</td>
-		                							<td>$160.00</td>
+		                							<td id="checkout-total">$0.00</td>
 		                						</tr><!-- End .summary-total -->
 		                					</tbody>
 		                				</table><!-- End .table table-summary -->
 
 		                				<div class="accordion-summary" id="accordion-payment">
 										    <div class="card">
-										        <div class="card-header" id="heading-1">
+										        <div class="card-header" id="heading-cash">
 										            <h2 class="card-title">
-										                <a role="button" data-toggle="collapse" href="#collapse-1" aria-expanded="true" aria-controls="collapse-1">
-										                    Direct bank transfer
+										                <a role="button" data-toggle="collapse" href="#collapse-cash" aria-expanded="true" aria-controls="collapse-cash">
+										                    <input type="radio" name="paymentMethod" value="cash" id="payment-cash" checked style="margin-right: 10px;">
+										                    <label for="payment-cash" style="margin: 0; cursor: pointer;">Cash on Delivery</label>
 										                </a>
 										            </h2>
 										        </div><!-- End .card-header -->
-										        <div id="collapse-1" class="collapse show" aria-labelledby="heading-1" data-parent="#accordion-payment">
+										        <div id="collapse-cash" class="collapse show" aria-labelledby="heading-cash" data-parent="#accordion-payment">
 										            <div class="card-body">
-										                Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your order will not be shipped until the funds have cleared in our account.
+										                Pay with cash when your order is delivered. Please have the exact amount ready.
 										            </div><!-- End .card-body -->
 										        </div><!-- End .collapse -->
 										    </div><!-- End .card -->
 
 										    <div class="card">
-										        <div class="card-header" id="heading-2">
+										        <div class="card-header" id="heading-visa">
 										            <h2 class="card-title">
-										                <a class="collapsed" role="button" data-toggle="collapse" href="#collapse-2" aria-expanded="false" aria-controls="collapse-2">
-										                    Check payments
+										                <a class="collapsed" role="button" data-toggle="collapse" href="#collapse-visa" aria-expanded="false" aria-controls="collapse-visa">
+										                    <input type="radio" name="paymentMethod" value="visa" id="payment-visa" style="margin-right: 10px;">
+										                    <label for="payment-visa" style="margin: 0; cursor: pointer;">Credit Card (Visa/Stripe)</label>
+										                    <img src="assets/images/payments-summary.png" alt="payments cards" style="margin-left: 10px;">
 										                </a>
 										            </h2>
 										        </div><!-- End .card-header -->
-										        <div id="collapse-2" class="collapse" aria-labelledby="heading-2" data-parent="#accordion-payment">
+										        <div id="collapse-visa" class="collapse" aria-labelledby="heading-visa" data-parent="#accordion-payment">
 										            <div class="card-body">
-										                Ipsum dolor sit amet, consectetuer adipiscing elit. Donec odio. Quisque volutpat mattis eros. Nullam malesuada erat ut turpis. 
-										            </div><!-- End .card-body -->
-										        </div><!-- End .collapse -->
-										    </div><!-- End .card -->
-
-										    <div class="card">
-										        <div class="card-header" id="heading-3">
-										            <h2 class="card-title">
-										                <a class="collapsed" role="button" data-toggle="collapse" href="#collapse-3" aria-expanded="false" aria-controls="collapse-3">
-										                    Cash on delivery
-										                </a>
-										            </h2>
-										        </div><!-- End .card-header -->
-										        <div id="collapse-3" class="collapse" aria-labelledby="heading-3" data-parent="#accordion-payment">
-										            <div class="card-body">Quisque volutpat mattis eros. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec odio. Quisque volutpat mattis eros. 
-										            </div><!-- End .card-body -->
-										        </div><!-- End .collapse -->
-										    </div><!-- End .card -->
-
-										    <div class="card">
-										        <div class="card-header" id="heading-4">
-										            <h2 class="card-title">
-										                <a class="collapsed" role="button" data-toggle="collapse" href="#collapse-4" aria-expanded="false" aria-controls="collapse-4">
-										                    PayPal <small class="float-right paypal-link">What is PayPal?</small>
-										                </a>
-										            </h2>
-										        </div><!-- End .card-header -->
-										        <div id="collapse-4" class="collapse" aria-labelledby="heading-4" data-parent="#accordion-payment">
-										            <div class="card-body">
-										                Nullam malesuada erat ut turpis. Suspendisse urna nibh, viverra non, semper suscipit, posuere a, pede. Donec nec justo eget felis facilisis fermentum.
-										            </div><!-- End .card-body -->
-										        </div><!-- End .collapse -->
-										    </div><!-- End .card -->
-
-										    <div class="card">
-										        <div class="card-header" id="heading-5">
-										            <h2 class="card-title">
-										                <a class="collapsed" role="button" data-toggle="collapse" href="#collapse-5" aria-expanded="false" aria-controls="collapse-5">
-										                    Credit Card (Stripe)
-										                    <img src="assets/images/payments-summary.png" alt="payments cards">
-										                </a>
-										            </h2>
-										        </div><!-- End .card-header -->
-										        <div id="collapse-5" class="collapse" aria-labelledby="heading-5" data-parent="#accordion-payment">
-										            <div class="card-body"> Donec nec justo eget felis facilisis fermentum.Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Donec odio. Quisque volutpat mattis eros. Lorem ipsum dolor sit ame.
+										                Pay securely with your credit card through Stripe. You will be redirected to a secure payment page.
 										            </div><!-- End .card-body -->
 										        </div><!-- End .collapse -->
 										    </div><!-- End .card -->
 										</div><!-- End .accordion -->
 
-		                				<button type="submit" class="btn btn-outline-primary-2 btn-order btn-block">
+		                				<button type="submit" class="btn btn-outline-primary-2 btn-order btn-block" id="checkout-submit-btn">
 		                					<span class="btn-text">Place Order</span>
 		                					<span class="btn-hover-text">Proceed to Checkout</span>
 		                				</button>
+		                				<div id="checkout-message" style="display: none; margin-top: 15px;"></div>
 		                			</div><!-- End .summary -->
 		                		</aside><!-- End .col-lg-3 -->
 		                	</div><!-- End .row -->
@@ -1143,8 +1083,105 @@
     <script src="assets/js/jquery.waypoints.min.js"></script>
     <script src="assets/js/superfish.min.js"></script>
     <script src="assets/js/owl.carousel.min.js"></script>
+    <!-- Config, Cart and Checkout JS -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/cart.js"></script>
+    <script src="assets/js/checkout.js"></script>
     <!-- Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script>
+        // Load and render checkout items
+        async function renderCheckout() {
+            const cartData = await CheckoutManager.loadCartForCheckout();
+            const tbody = document.getElementById('checkout-items-tbody');
+            
+            if (!cartData.success || cartData.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" class="text-center">Your cart is empty</td></tr>';
+                document.getElementById('checkout-subtotal').textContent = '$0.00';
+                document.getElementById('checkout-total').textContent = '$0.00';
+                return;
+            }
+            
+            tbody.innerHTML = cartData.items.map(item => `
+                <tr>
+                    <td><a href="product.html?id=${item.productId}">${item.productName} x ${item.quantity}</a></td>
+                    <td>$${item.totalPrice.toFixed(2)}</td>
+                </tr>
+            `).join('');
+            
+            // Update totals
+            const subtotal = cartData.totalAmount;
+            document.getElementById('checkout-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('checkout-total').textContent = `$${subtotal.toFixed(2)}`;
+        }
+        
+        // Handle checkout form submission
+        $('#checkout-form').on('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('checkout-submit-btn');
+            const messageDiv = document.getElementById('checkout-message');
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="btn-text">Processing...</span>';
+            messageDiv.style.display = 'none';
+            
+            // Get form data
+            const formData = {
+                firstName: document.getElementById('checkout-firstname').value,
+                lastName: document.getElementById('checkout-lastname').value,
+                address: document.getElementById('checkout-address').value,
+                phone: document.getElementById('checkout-phone').value,
+                email: document.getElementById('checkout-email').value,
+                discountCode: document.getElementById('checkout-discount').value || null,
+                deliveryCost: 0, // You can add delivery cost calculation here
+                paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
+            };
+            
+            try {
+                const result = await CheckoutManager.processCheckout(formData);
+                
+                if (result.success) {
+                    if (result.url) {
+                        // Redirect to payment page (Visa)
+                        window.location.href = result.url;
+                    } else {
+                        // Cash payment - show success
+                        messageDiv.className = 'alert alert-success';
+                        messageDiv.textContent = result.message || 'Order placed successfully! Your tracking code: ' + (result.trackingCode || 'N/A');
+                        messageDiv.style.display = 'block';
+                        
+                        // Clear cart
+                        CartManager.saveCartToCookie([]);
+                        
+                        // Redirect after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 3000);
+                    }
+                } else {
+                    messageDiv.className = 'alert alert-danger';
+                    messageDiv.textContent = result.message || 'Failed to process checkout. Please try again.';
+                    messageDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span class="btn-text">Place Order</span><span class="btn-hover-text">Proceed to Checkout</span>';
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
+                messageDiv.className = 'alert alert-danger';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="btn-text">Place Order</span><span class="btn-hover-text">Proceed to Checkout</span>';
+            }
+        });
+        
+        // Load checkout on page load
+        $(document).ready(function() {
+            renderCheckout();
+        });
+    </script>
 </body>
 
 

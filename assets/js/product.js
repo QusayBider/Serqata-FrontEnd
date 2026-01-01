@@ -2,16 +2,23 @@ const loader = document.querySelector('.loader');
 const ViewMoreProductsBtn = document.querySelector('.ViewMoreProductsBtn');
 
 
+// Helper function to check if product is in wishlist
+const isProductInWishlist = (productId) => {
+    if (typeof WishlistManager !== 'undefined' && WishlistManager.loadWishlist) {
+        const wishlist = WishlistManager.loadWishlist();
+        return wishlist.includes(parseInt(productId));
+    }
+    return false;
+};
+
 const getAllProducts = async () => {
   try {
     const response = await fetch(API_CONFIG.getApiUrl('Products/GetAllProducts'));
-    console.log("Response from products API:", response);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json(); 
-    console.log("Fetched products:", data);
     return data;
   } catch (error) {
     console.error("Failed to fetch products:", error);
@@ -27,7 +34,6 @@ const getAllCategories = async () => {
     }
 
     const data = await response.json(); 
-    console.log("Fetched categories:", data);
     return data;
   } catch (error) {
     console.error("Failed to fetch categories:", error);
@@ -65,20 +71,20 @@ const getAllCategories = async () => {
 
 const displayALLProducts = async () => {
   const mainContainer = document.getElementById('recent-arrivals-container');
+  const loaderElement = mainContainer.querySelector('.loader');
+  
   try{
-    console.log("Starting to fetch products...");
+    // Show loader if it exists
+    if (loaderElement) {
+      loaderElement.style.display = 'block';
+    }
+    
     const allProducts = await getAllProducts();
-    console.log("Raw allProducts response:", allProducts);
-    
     const allCategories = await getAllCategories();
-    console.log("Raw allCategories response:", allCategories);
     
-    const products = Array.isArray(allProducts) ? allProducts : (allProducts.data || []);
-    const categories = Array.isArray(allCategories) ? allCategories : (allCategories.data || []);
-    
-    console.log("Parsed products array:", products);
-    console.log("Parsed categories array:", categories);
-    
+    const products = Array.isArray(allProducts) ? allProducts : (allProducts.success ? allProducts.data : []);
+    const categories = Array.isArray(allCategories) ? allCategories : (allCategories.success ? allCategories.data : []);
+
     // Create a map for quick category lookup by ID
     const categoryMap = {};
     if (Array.isArray(categories)) {
@@ -86,73 +92,163 @@ const displayALLProducts = async () => {
         categoryMap[cat.id] = cat.name;
       });
     }
-      console.log("Category map:", categoryMap);
-      console.log("Displaying products:", products);
+    
+    // Remove loader from container
+    if (loaderElement) {
+      loaderElement.remove();
+    }
+    
+    if (products.length === 0) {
+      mainContainer.innerHTML = "<p class='text-center'>No products available.</p>";
+      if (ViewMoreProductsBtn) ViewMoreProductsBtn.classList.add('hidden');
+      return;
+    }
+    
     const result = products
       .map((product) => {
+        // Ensure product has an ID
+        if (!product.id) {
+          console.error('Product missing ID:', product);
+          return '';
+        }
+        
         const categoryName = categoryMap[product.categoryId] || product.category || 'Uncategorized';
+        const mainImageUrl = product.mainImageUrl || (product.mainImage ? `${API_CONFIG.BASE_URL}/Images/${product.mainImage}` : 'assets/images/products/error/error.png');
+        const productId = parseInt(product.id);
+        const inWishlist = isProductInWishlist(productId);
+        const wishlistClass = inWishlist ? 'added' : '';
+        const wishlistIcon = inWishlist ? 'icon-heart' : 'icon-heart-o';
+        
         return `
         <div class="col-6 col-md-4">
-                <div class="product product-4">
+                <div class="product product-4" data-product-id="${productId}">
                     <figure class="product-media">
                         ${product.discount ? `<span class="product-label label-primary">Sale</span>` : ''}
-                        <a href="product.html?id=${product.id}">
-                            <img src="${product.mainImageUrl}" alt="${product.name}" class="product-image">
-                            ${product.subImagesUrl?.map(img => `<img src="${img}" alt="${product.name}" class="product-image-hover">`).join('')}
+                        <a href="product.html?id=${productId}">
+                            <img src="${mainImageUrl}" alt="${product.name}" class="product-image" onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">
+                            ${product.subImagesUrl && Array.isArray(product.subImagesUrl) ? product.subImagesUrl.map(img => `<img src="${img}" alt="${product.name}" class="product-image-hover" onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">`).join('') : ''}
                         </a>
                         <div class="product-action-vertical">
-                            <a href="#" class="btn-product-icon btn-wishlist" data-product-id="${product.id}" onclick="addToWishlistHandler(event, ${product.id})"><span>add to wishlist</span></a>
+                            <a href="#" class="btn-product-icon btn-wishlist ${wishlistClass}" data-product-id="${productId}" onclick="addToWishlistHandler(event, ${productId})" title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
+                                <i class="${wishlistIcon}"></i>
+                                <span>${inWishlist ? 'remove from wishlist' : 'add to wishlist'}</span>
+                            </a>
                             <a href="popup/quickView.html" class="btn-product-icon btn-quickview"><span>Quick view</span></a>
                         </div>
                         <div class="product-action">
-                            <a href="#" class="btn-product btn-cart"><span>add to cart</span></a>
+                            <a href="#" class="btn-product btn-cart" data-product-id="${productId}"><span>add to cart</span></a>
                         </div>
                     </figure>
                     <div class="product-body">
                         <div class="product-cat">
                             <a href="#">${categoryName}</a>
                         </div>
-                        <h3 class="product-title"><a href="product.html?id=${product.id}">${product.name}</a></h3>
+                        <h3 class="product-title"><a href="product.html?id=${productId}">${product.name}</a></h3>
                         <div class="product-price">
                             ${product.discount
-                                ? `<span class="new-price">Now ILs ${(product.price)*(1 - product.discount)}</span><span class="old-price">Was ILs ${product.price}</span>` 
-                                : `ILs ${product.price}`}
+                                ? `<span class="new-price">Now ILs ${(product.price * (1 - product.discount)).toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>` 
+                                : `ILs ${product.price.toFixed(2)}`}
                         </div>
                     </div>
                 </div>
             </div>
       `;
       })
+      .filter(html => html !== '') // Remove empty entries
       .join(" ");
-    mainContainer.insertAdjacentHTML('afterbegin', result);
-    if (products.length === 0) {
-      mainContainer.innerHTML = "<p>No products available.</p>";
-      ViewMoreProductsBtn.classList.add('hidden');
+    mainContainer.innerHTML = result;
+    
+    if (ViewMoreProductsBtn) {
+      ViewMoreProductsBtn.classList.remove('hidden');
     }
-    ViewMoreProductsBtn.classList.remove('hidden');
+
+    if (typeof $ !== 'undefined') {
+      $(document).trigger('productsLoaded');
+    }
   }
   catch(error ){
-    mainContainer.innerHTML = "<div class=\"loader\">Loading...</div>";
     console.error("Error displaying products:", error);
-    loader.classList.remove("hidden");
-    ViewMoreProductsBtn.classList.add('hidden');
-
-}
-  finally {
-    loader.classList.add("hidden");
+    mainContainer.innerHTML = "<div class='alert alert-danger text-center'>Error loading products. Please refresh the page.</div>";
+    if (ViewMoreProductsBtn) ViewMoreProductsBtn.classList.add('hidden');
   }
 };
 displayALLProducts();
 
-// Handle wishlist button click
+// Handle wishlist button click (toggle functionality)
 function addToWishlistHandler(event, productId) {
   event.preventDefault();
+  event.stopPropagation();
   
-  // Check if WishlistManager is available
-  if(typeof window.addToWishlist === 'function') {
-    window.addToWishlist(productId);
+  const isInWishlist = isProductInWishlist(productId);
+  
+  if (isInWishlist) {
+    // Remove from wishlist
+    if (typeof WishlistManager !== 'undefined' && WishlistManager.removeItem) {
+      WishlistManager.removeItem(productId);
+      notyf.success('Product removed from wishlist!');
+      updateWishlistButtonUI(productId, false);
+      if (typeof updateWishlistCount === 'function') {
+        updateWishlistCount();
+      }
+      // Refresh products to update all wishlist buttons
+      if (typeof displayALLProducts === 'function') {
+        displayALLProducts();
+      }
+    }
   } else {
-    console.error('Wishlist functionality not loaded. Make sure Wishlist.js is included in your HTML.');
-    notyf.error('Wishlist functionality is not available. Please refresh the page.');
+    // Add to wishlist
+    if(typeof window.addToWishlist === 'function') {
+      window.addToWishlist(productId);
+      updateWishlistButtonUI(productId, true);
+      // Refresh products to update all wishlist buttons
+      if (typeof displayALLProducts === 'function') {
+        displayALLProducts();
+      }
+    } else {
+      console.error('Wishlist functionality not loaded. Make sure Wishlist.js is included in your HTML.');
+      notyf.error('Wishlist functionality is not available. Please refresh the page.');
+    }
   }
+}
+
+// Update wishlist button UI
+function updateWishlistButtonUI(productId, isInWishlist) {
+  const wishlistButtons = document.querySelectorAll(`.btn-wishlist[data-product-id="${productId}"]`);
+  wishlistButtons.forEach(btn => {
+    // Remove all duplicate icons - ensure only ONE icon exists
+    const existingIcons = btn.querySelectorAll('i');
+    if (existingIcons.length > 1) {
+      // Keep only the first icon, remove all others
+      for (let i = 1; i < existingIcons.length; i++) {
+        existingIcons[i].remove();
+      }
+    }
+    
+    // Get the existing icon (should always exist from HTML template)
+    const icon = btn.querySelector('i');
+    if (!icon) {
+      // Icon should always exist, but if it doesn't, skip update to prevent creating duplicates
+      console.warn(`Wishlist button for product ${productId} is missing icon element`);
+      return;
+    }
+    
+    // Update the existing icon only
+    if (isInWishlist) {
+      btn.classList.add('added');
+      icon.className = 'icon-heart';
+      const span = btn.querySelector('span');
+      if (span) {
+        span.textContent = 'remove from wishlist';
+      }
+      btn.setAttribute('title', 'Remove from wishlist');
+    } else {
+      btn.classList.remove('added');
+      icon.className = 'icon-heart-o';
+      const span = btn.querySelector('span');
+      if (span) {
+        span.textContent = 'add to wishlist';
+      }
+      btn.setAttribute('title', 'Add to wishlist');
+    }
+  });
 }
