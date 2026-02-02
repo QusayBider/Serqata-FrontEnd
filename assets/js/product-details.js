@@ -654,12 +654,7 @@ const ProductDetailsManager = {
 
         const product = productData.data;
         this.currentProduct = product;
-        
-        // Show loaders for all sections
-        this.showLoader('product-gallery-section', 'Loading product images...');
-        this.showLoader('product-details-section', 'Loading product details...');
-        this.showLoader('product-details-tab-section', 'Loading product information...');
-        
+ 
         // Get categories for display
         let categoryName = 'Uncategorized';
         try {
@@ -687,11 +682,14 @@ const ProductDetailsManager = {
         await this.buildProductDetails(product, categoryName);
         await this.buildProductTabs(product, categoryName);
         
-        // Load colors and sizes from API
-        await this.getAllColors();
-        await this.getAllSizes();
+        // Use colors and sizes from product API first (product.colors: [{ id, name, hexCode }], product.sizes: [{ id, name }])
+        // Only fetch global Colors/Sizes APIs when product doesn't have them (fallback)
+        const hasProductColors = product.colors && Array.isArray(product.colors) && product.colors.length > 0;
+        const hasProductSizes = product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0;
+        if (!hasProductColors) await this.getAllColors();
+        if (!hasProductSizes) await this.getAllSizes();
 
-        // Render colors and sizes
+        // Render colors and sizes (from product API or from global APIs)
         await this.renderColors(product);
         await this.renderSizes(product);
         
@@ -710,7 +708,7 @@ const ProductDetailsManager = {
         const section = document.getElementById('you-may-also-like-section');
         if (!section) return;
         
-        this.showLoader('you-may-also-like-section', 'Loading related products...');
+       
         
         try {
             // Fetch all products
@@ -902,7 +900,7 @@ const ProductDetailsManager = {
         return shuffled.slice(0, count);
     },
 
-    // Render colors
+    // Render colors (API: product.colors = [{ id, name, hexCode }])
     async renderColors(product) {
         const colorContainer = document.querySelector('#product-colors-container') || document.querySelector('.product-nav .product-nav-thumbs');
         if (!colorContainer) return;
@@ -1029,12 +1027,11 @@ const ProductDetailsManager = {
         });
     },
 
-    // Render sizes
+    // Render sizes (API: product.sizes = [{ id, name }])
     async renderSizes(product) {
         const sizeSelect = document.querySelector('#size');
         if (!sizeSelect) return;
 
-        // Get product sizes
         let productSizes = [];
         
         if (product.sizes && Array.isArray(product.sizes)) {

@@ -42,7 +42,7 @@ const CategoryManager = {
                         <div class="col-lg-6">
                             <div class="banner banner-hover">
                                 <a href="category-fullwidth.html?categoryId=${firstCategory.id}">
-                                    <img src="${firstCategory.image}" alt="${firstCategory.name}" onerror="this.src='assets/images/demos/demo-18/banners/banner-1.jpg'">
+                                    <img src="${firstCategory.image}" alt="${firstCategory.name}" onerror="this.src='assets/images/products/error/error.png'">
                                 </a>
                                 <div class="banner-content">
                                     <h3 class="banner-title text-white"><a href="category-fullwidth.html?categoryId=${firstCategory.id}">${firstCategory.name}</a></h3>
@@ -60,7 +60,7 @@ const CategoryManager = {
                         <div class="col-sm-6 col-lg-3">
                             <div class="banner banner-hover">
                                 <a href="category-fullwidth.html?categoryId=${secondCategory.id}">
-                                    <img src="${secondCategory.image}" alt="${secondCategory.name}" onerror="this.src='assets/images/demos/demo-18/banners/banner-2.jpg'">
+                                    <img src="${secondCategory.image}" alt="${secondCategory.name}" onerror="this.src='assets/images/products/error/error.png'">
                                 </a>
                                 <div class="banner-content">
                                     <h3 class="banner-title text-white"><a href="category-fullwidth.html?categoryId=${secondCategory.id}">${secondCategory.name}</a></h3>
@@ -72,14 +72,14 @@ const CategoryManager = {
                 }
                 
                 if (categories.length > 2) {
-                    const thirdCategory = categories[2];
-                    const fourthCategory = categories[3];
+                    const thirdCategory = categories[4];
+                    const fourthCategory = categories[7];
                     
                     html += `
                         <div class="col-sm-6 col-lg-3">
                             <div class="banner banner-hover">
                                 <a href="category-fullwidth.html?categoryId=${thirdCategory.id}">
-                                    <img src="${thirdCategory.image}" alt="${thirdCategory.name}" onerror="this.src='assets/images/demos/demo-18/banners/banner-3.jpg'">
+                                    <img src="${thirdCategory.image}" alt="${thirdCategory.name}" onerror="this.src='assets/images/products/error/error.png'">
                                 </a>
                                 <div class="banner-content">
                                     <h3 class="banner-title text-white"><a href="category-fullwidth.html?categoryId=${thirdCategory.id}">${thirdCategory.name}</a></h3>
@@ -89,7 +89,7 @@ const CategoryManager = {
                             ${fourthCategory ? `
                             <div class="banner banner-hover">
                                 <a href="category-fullwidth.html?categoryId=${fourthCategory.id}">
-                                    <img src="${fourthCategory.image }" alt="${fourthCategory.name}" onerror="this.src='assets/images/demos/demo-18/banners/banner-4.jpg'">
+                                    <img src="${fourthCategory.image }" alt="${fourthCategory.name}" onerror="this.src='assets/images/products/error/error.png'">
                                 </a>
                                 <div class="banner-content">
                                     <h3 class="banner-title text-white"><a href="category-fullwidth.html?categoryId=${fourthCategory.id}">${fourthCategory.name}</a></h3>
@@ -110,7 +110,7 @@ const CategoryManager = {
                         <div class="col-lg-6">
                             <div class="banner banner-hover">
                                 <a href="category-fullwidth.html">
-                                    <img src="assets/images/demos/demo-18/banners/banner-1.jpg" alt="Banner">
+                                    <img src="assets/images/products/error/error.png" alt="error" onerror="this.src='assets/images/products/error/error.png'">
                                 </a>
                                 <div class="banner-content">
                                     <h3 class="banner-title text-white"><a href="category-fullwidth.html">Shop Now</a></h3>
@@ -163,148 +163,86 @@ const CategoryManager = {
         return categoryId ? parseInt(categoryId) : null;
     },
 
-    // Load and display products filtered by category
-    async loadProductsByCategory(containerId) {
-        const categoryId = this.getCategoryIdFromUrl();
-        
-        if (!categoryId) {
-            console.log('No category ID in URL, loading all products');
-            // If no category ID, you might want to load all products
-            return null;
-        }
-
-        try {
-            const productsData = await this.getProductsByCategory(categoryId);
-            const container = document.getElementById(containerId);
-            
-            if (!container) {
-                console.error('Container not found:', containerId);
-                return;
-            }
-
-            if (productsData.success && productsData.data && productsData.data.length > 0) {
-                const products = productsData.data;
+ 
+    attachProductEventHandlers(container) {
+            container.querySelectorAll('.btn-wishlist').forEach(button => {
+            button.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent any other handlers
                 
-                // Helper function to check if product is in wishlist
-                const isProductInWishlist = (productId) => {
-                    if (typeof WishlistManager !== 'undefined' && WishlistManager.loadWishlist) {
-                        const wishlist = WishlistManager.loadWishlist();
-                        return wishlist.includes(parseInt(productId));
-                    }
-                    return false;
-                };
-
-                // Render products
-                const productsHtml = products.map(product => {
-                    const mainImage = product.mainImage 
-                        ? `${API_CONFIG.BASE_URL}/Images/${product.mainImage}` 
-                        : 'assets/images/products/product-1.jpg';
-                    
-                    const inWishlist = isProductInWishlist(product.id);
-                    const wishlistClass = inWishlist ? 'added' : '';
-                    const wishlistIcon = inWishlist ? 'icon-heart' : 'icon-heart-o';
-                    
-                    return `
-                        <div class="col-6 col-md-4 col-lg-4 col-xl-3 col-xxl-2">
-                            <div class="product">
-                                <figure class="product-media">
-                                    <a href="product.html?id=${product.id}">
-                                        <img src="${mainImage}" alt="${product.name}" class="product-image" onerror="this.src='assets/images/products/product-1.jpg'">
-                                    </a>
-                                    <div class="product-action-vertical">
-                                        <a href="#" class="btn-product-icon btn-wishlist btn-expandable ${wishlistClass}" data-product-id="${product.id}" title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
-                                            <i class="${wishlistIcon}"></i>
-                                            <span>${inWishlist ? 'remove from wishlist' : 'add to wishlist'}</span>
-                                        </a>
-                                    </div>
-                                    <div class="product-action action-icon-top">
-                                        <a href="#" class="btn-product btn-cart" data-product-id="${product.id}" title="Add to cart">
-                                            <span>add to cart</span>
-                                        </a>
-                                        <a href="popup/quickView.html" class="btn-product btn-quickview" title="Quick view">
-                                            <span>quick view</span>
-                                        </a>
-                                        <a href="#" class="btn-product btn-compare" title="Compare">
-                                            <span>compare</span>
-                                        </a>
-                                    </div>
-                                </figure>
-                                <div class="product-body">
-                                    <div class="product-cat">
-                                        <a href="#">${product.category?.name || 'Category'}</a>
-                                    </div>
-                                    <h3 class="product-title">
-                                        <a href="product.html?id=${product.id}">${product.name}</a>
-                                    </h3>
-                                    <div class="product-price">
-                                        $${product.price?.toFixed(2) || '0.00'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                container.innerHTML = productsHtml;
+                const productId = parseInt(this.getAttribute('data-product-id'));
                 
-                // Update page title if category name is available
-                const categoryData = await this.getAllCategories();
-                if (categoryData.success && categoryData.data) {
-                    const category = categoryData.data.find(cat => cat.id === categoryId);
-                    if (category) {
-                        // Update document title
-                        document.title = `${category.name} - Molla`;
+                if (typeof WishlistManager !== 'undefined' && WishlistManager.toggleWishlist) {
+                    try {
+                        const wasInWishlist = this.classList.contains('added');
+                        const result = await WishlistManager.toggleWishlist(productId);
                         
-                        // Update page heading
-                        const pageTitle = document.querySelector('#category-page-title, .page-title');
-                        if (pageTitle) {
-                            const span = pageTitle.querySelector('span');
-                            if (span) {
-                                pageTitle.innerHTML = `${category.name}<span>Shop</span>`;
-                            } else {
-                                pageTitle.textContent = category.name;
+                        // Update button appearance
+                        const icon = this.querySelector('i');
+                        const span = this.querySelector('span');
+                        
+                        if (result && result.added === false) {
+                            // Was in wishlist, now removed
+                            this.classList.remove('added');
+                            if (icon) icon.className = 'icon-heart-o';
+                            if (span) span.textContent = 'add to wishlist';
+                            this.title = 'Add to wishlist';
+                            
+                            if (window.notyf) {
+                                window.notyf.success(result.message || 'Product removed from wishlist');
+                            }
+                        } else {
+                            // Was not in wishlist, now added
+                            this.classList.add('added');
+                            if (icon) icon.className = 'icon-heart';
+                            if (span) span.textContent = 'remove from wishlist';
+                            this.title = 'Remove from wishlist';
+                            
+                            if (window.notyf) {
+                                window.notyf.success(result.message || 'Product added to wishlist');
                             }
                         }
-                        
-                        // Update breadcrumb
-                        const breadcrumbActive = document.querySelector('#breadcrumb-category, .breadcrumb-item.active');
-                        if (breadcrumbActive) {
-                            breadcrumbActive.textContent = category.name;
+                    } catch (error) {
+                        console.error('Wishlist error:', error);
+                        if (window.notyf) {
+                            window.notyf.error('An error occurred while updating wishlist');
                         }
                     }
+                } else {
+                    if (window.notyf) {
+                        window.notyf.error('Wishlist feature is not available');
+                    }
                 }
-            } else {
-                container.innerHTML = `
-                    <div class="col-12 text-center">
-                        <p class="text-muted">No products found in this category.</p>
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('Error loading products by category:', error);
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.innerHTML = `
-                    <div class="col-12 text-center">
-                        <p class="text-danger">Error loading products. Please try again later.</p>
-                    </div>
-                `;
-            }
-        }
+            });
+        });
+
+        // Quick View buttons
+        container.querySelectorAll('.btn-quickview').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.notyf) {
+                    window.notyf.info('Quick view feature coming soon');
+                }
+            });
+        });
+
+        // Compare buttons
+        container.querySelectorAll('.btn-compare').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.notyf) {
+                    window.notyf.info('Compare feature coming soon');
+                }
+            });
+        });
     }
 };
 
-// Make CategoryManager globally available
 window.CategoryManager = CategoryManager;
-
-// Auto-load categories on index page
 $(document).ready(function() {
-    // Check if we're on index page and categories container exists
     if (document.getElementById('categories-banner-container')) {
         CategoryManager.loadCategoriesForIndex();
     }
     
-    // Check if we're on category page and need to filter products
-    // This will be handled by the page-specific script in category-fullwidth.html
 });
 

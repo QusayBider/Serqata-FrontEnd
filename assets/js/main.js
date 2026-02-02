@@ -28,6 +28,19 @@ $(document).ready(function () {
 		e.stopPropagation();
 	});
 
+	// Header search: redirect to category page with search param
+	$(document).on('submit', '.header-search form', function (e) {
+		var $q = $(this).find('input[name="q"], input#q');
+		if ($q.length) {
+			var q = ($q.val() || '').trim();
+			if (q) {
+				e.preventDefault();
+				window.location.href = 'category-fullwidth.html?search=' + encodeURIComponent(q);
+				return false;
+			}
+		}
+	});
+
 	// Sticky header 
     var catDropdown = $('.category-dropdown'),
         catInitVal = catDropdown.data('visible');
@@ -183,9 +196,16 @@ $(document).ready(function () {
 		    })
 		});
 
-		// Update Price Range
+		// Update Price Range display (e.g. "$0 - $200")
 		priceSlider.noUiSlider.on('update', function( values, handle ){
-			$('#filter-price-range').text(values.join(' - '));
+			$('#filter-price-range').text('$' + values[0] + ' - $' + values[1]);
+		});
+		// Wire price filter to FilterManager (category page)
+		priceSlider.noUiSlider.on('set', function( values ){
+			if (typeof FilterManager !== 'undefined' && FilterManager.applyFilters) {
+				FilterManager.priceRange = { min: parseInt(values[0], 10) || 0, max: parseInt(values[1], 10) || 10000 };
+				FilterManager.applyFilters('category-products');
+			}
 		});
 	}
 

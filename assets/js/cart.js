@@ -239,9 +239,11 @@ const CartManager = {
                     let colors = [];
                     let sizes = [];
                     
+                    // Only fetch colors if API endpoint exists (silently fail if 404)
                     try {
-                        const colorsResponse = await fetch(API_CONFIG.getApiUrl('Colors'));
-                        if (colorsResponse.ok) {
+                        const colorsResponse = await fetch(API_CONFIG.getApiUrl('Colors')).catch(() => null);
+                        
+                        if (colorsResponse && colorsResponse.ok && colorsResponse.status !== 404) {
                             const colorsData = await colorsResponse.json();
                             if (colorsData.success && colorsData.data) {
                                 colors = Array.isArray(colorsData.data) ? colorsData.data : [colorsData.data];
@@ -250,13 +252,15 @@ const CartManager = {
                             }
                         }
                     } catch (colorError) {
-                        // Colors API not available or failed - continue without color names
-                        console.warn('Could not fetch colors:', colorError);
+                        // Colors API not available or failed - silently continue without color names
+                        // Don't log to console to avoid cluttering
                     }
                     
+                    // Only fetch sizes if API endpoint exists (silently fail if 404)
                     try {
-                        const sizesResponse = await fetch(API_CONFIG.getApiUrl('Sizes'));
-                        if (sizesResponse.ok) {
+                        const sizesResponse = await fetch(API_CONFIG.getApiUrl('Sizes')).catch(() => null);
+                        
+                        if (sizesResponse && sizesResponse.ok && sizesResponse.status !== 404) {
                             const sizesData = await sizesResponse.json();
                             if (sizesData.success && sizesData.data) {
                                 sizes = Array.isArray(sizesData.data) ? sizesData.data : [sizesData.data];
@@ -265,8 +269,8 @@ const CartManager = {
                             }
                         }
                     } catch (sizeError) {
-                        // Sizes API not available or failed - continue without size names
-                        console.warn('Could not fetch sizes:', sizeError);
+                        // Sizes API not available or failed - silently continue without size names
+                        // Don't log to console to avoid cluttering
                     }
                     
                     if (productsData.success) {
@@ -274,21 +278,29 @@ const CartManager = {
                         const cartItems = cart.map(cartItem => {
                             const product = products.find(p => p.id === cartItem.productId);
                             if (product) {
-                                // Get color and size names (optional)
+                                // Resolve color/size names: prefer product.colors and product.sizes from API ({ id, name, hexCode } / { id, name })
                                 let colorName = null;
                                 let sizeName = null;
                                 
-                                if (cartItem.colorId && colors.length > 0) {
-                                    const color = colors.find(c => (c.id || c.colorId) === cartItem.colorId);
-                                    if (color) {
-                                        colorName = color.name || color.colorName;
+                                if (cartItem.colorId) {
+                                    if (product.colors && Array.isArray(product.colors)) {
+                                        const color = product.colors.find(c => (c.id || c.colorId) === cartItem.colorId);
+                                        if (color) colorName = color.name || color.colorName;
+                                    }
+                                    if (colorName == null && colors.length > 0) {
+                                        const color = colors.find(c => (c.id || c.colorId) === cartItem.colorId);
+                                        if (color) colorName = color.name || color.colorName;
                                     }
                                 }
                                 
-                                if (cartItem.sizeId && sizes.length > 0) {
-                                    const size = sizes.find(s => (s.id || s.sizeId) === cartItem.sizeId);
-                                    if (size) {
-                                        sizeName = size.name || size.sizeName || size.value;
+                                if (cartItem.sizeId) {
+                                    if (product.sizes && Array.isArray(product.sizes)) {
+                                        const size = product.sizes.find(s => (s.id || s.sizeId) === cartItem.sizeId);
+                                        if (size) sizeName = size.name || size.sizeName || size.value;
+                                    }
+                                    if (sizeName == null && sizes.length > 0) {
+                                        const size = sizes.find(s => (s.id || s.sizeId) === cartItem.sizeId);
+                                        if (size) sizeName = size.name || size.sizeName || size.value;
                                     }
                                 }
 
@@ -543,9 +555,13 @@ const CartManager = {
                     const result = await CartManager.removeFromCart(productId, colorId, sizeId);
                     if (result.success) {
                         await CartManager.updateNavbarCart();
-                        notyf.success('Item removed from cart');
+                        if (window.notyf) {
+                            window.notyf.success('Item removed from cart');
+                        }
                     } else {
-                        notyf.error(result.message || 'Failed to remove item');
+                        if (window.notyf) {
+                            window.notyf.error(result.message || 'Failed to remove item from cart');
+                        }
                     }
                 });
             });
@@ -629,7 +645,9 @@ $(document).ready(async function() {
             console.error('Product ID not found. Button:', $button[0]);
             console.error('Button classes:', $button.attr('class'));
             console.error('Button data attributes:', $button[0] ? $button[0].attributes : 'no element');
-            notyf.error('Product ID not found. Please try again.');
+            if (window.notyf) {
+                window.notyf.error('Product ID not found. Please try again.');
+            }
             return;
         }
         
@@ -637,7 +655,9 @@ $(document).ready(async function() {
         productId = parseInt(productId);
         if (isNaN(productId) || productId <= 0) {
             console.error('Invalid product ID:', productId);
-            notyf.error('Invalid product ID. Please try again.');
+            if (window.notyf) {
+                window.notyf.error('Invalid product ID. Please try again.');
+            }
             return;
         }
         
@@ -659,7 +679,9 @@ $(document).ready(async function() {
             
             if (result && result.success) {
                 // Show success notification immediately
-                notyf.success(result.message || 'Product added to cart!');
+                if (window.notyf) {
+                    window.notyf.success(result.message || 'Product added to cart successfully');
+                }
                 
                 // Update cart count from actual cart data (single source of truth)
                 // For immediate feedback, update count optimistically, then refresh from actual data
@@ -681,11 +703,15 @@ $(document).ready(async function() {
             } else {
                 // Show error message
                 const errorMsg = result ? (result.message || 'Failed to add product to cart') : 'Failed to add product to cart';
-                notyf.error(errorMsg);
+                if (window.notyf) {
+                    window.notyf.error(errorMsg);
+                }
             }
         } catch (error) {
             console.error('Error adding to cart:', error);
-            notyf.error('An error occurred. Please try again.');
+            if (window.notyf) {
+                window.notyf.error('An error occurred. Please try again.');
+            }
         } finally {
             // Re-enable button
             $button.prop('disabled', false).html(originalText);

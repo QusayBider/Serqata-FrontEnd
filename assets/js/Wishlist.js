@@ -145,6 +145,28 @@ const WishlistManager = {
     // Get wishlist count
     getCount: function() {
         return this.loadWishlist().length;
+    },
+
+    // Toggle wishlist item (add if not exists, remove if exists)
+    toggleWishlist: function(productId) {
+        const id = parseInt(productId, 10);
+        const wishlist = this.loadWishlist();
+        const exists = wishlist.includes(id);
+        
+        if (exists) {
+            this.removeItem(id);
+            return { success: true, added: false, message: 'Product removed from wishlist' };
+        } else {
+            const added = this.addItem(id);
+            return { success: true, added: added, message: 'Product added to wishlist' };
+        }
+    },
+
+    // Check if product is in wishlist
+    isInWishlist: function(productId) {
+        const id = parseInt(productId, 10);
+        const wishlist = this.loadWishlist();
+        return wishlist.includes(id);
     }
 };
 

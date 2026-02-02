@@ -1,1 +1,0 @@
-# Serqata-FrontEnd

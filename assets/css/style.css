@@ -36,3 +36,12 @@
 .hidden{
   display: none !important;
 }
+.loader{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.header-search-extended .form-control{
+  color: #fff !important;
+}

@@ -13,7 +13,7 @@ const isProductInWishlist = (productId) => {
 
 const getAllProducts = async () => {
   try {
-    const response = await fetch(API_CONFIG.getApiUrl('Products/GetAllProducts'));
+    const response = await fetch(API_CONFIG.getApiUrl('Products/GetAllProducts?NumberOfPage=1&PageSize=6'));
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -148,6 +148,11 @@ const displayALLProducts = async () => {
                             ${product.discount
                                 ? `<span class="new-price">Now ILs ${(product.price * (1 - product.discount)).toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>` 
                                 : `ILs ${product.price.toFixed(2)}`}
+                        </div>
+                        <div class="product-nav product-nav-dots ml-1">
+                            ${product.colors && Array.isArray(product.colors) ? product.colors.map((color, index) => `
+                                <a href="product.html?id=${productId}" class="${index === 0 ? 'active' : ''}" style="background: ${color.hexCode || color.hex || color.code || '#cccccc'};" title="${color.name || 'Color'}"><span class="sr-only">${color.name || 'Color'}</span></a>
+                            `).join('') : ``}
                         </div>
                     </div>
                 </div>
