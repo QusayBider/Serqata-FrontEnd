@@ -22,7 +22,7 @@ const FilterManager = {
             }
 
             const data = await response.json();
-            
+
             // Handle different response formats (API: { id, name, hexCode })
             if (data.success && data.data) {
                 return Array.isArray(data.data) ? data.data : [data.data];
@@ -31,7 +31,7 @@ const FilterManager = {
             } else if (data.data && Array.isArray(data.data)) {
                 return data.data;
             }
-            
+
             return [];
         } catch (error) {
             console.error("Failed to fetch colors:", error);
@@ -110,7 +110,7 @@ const FilterManager = {
                 colors = this.getColorsFromProducts(products);
             }
             const container = document.querySelector(containerSelector);
-            
+
             if (!container) {
                 console.warn('Color filter container not found:', containerSelector);
                 return;
@@ -126,7 +126,7 @@ const FilterManager = {
                 const hexColor = color.hexCode || color.hex || color.colorCode || '#cccccc';
                 const colorName = color.name || color.colorName || 'Color';
                 const colorId = color.id || color.colorId;
-                
+
                 return `
                     <a href="#" 
                        class="color-filter-item" 
@@ -157,7 +157,7 @@ const FilterManager = {
     toggleColorFilter(element) {
         const colorId = parseInt(element.getAttribute('data-color-id'));
         const isSelected = element.classList.contains('selected');
-        
+
         if (isSelected) {
             element.classList.remove('selected');
             this.selectedColors = this.selectedColors.filter(id => id !== colorId);
@@ -433,7 +433,7 @@ const FilterManager = {
     // Render products
     async renderProducts(products, containerId) {
         const container = document.getElementById(containerId);
-        
+
         if (!container) {
             console.warn('Product container not found:', containerId);
             return;
@@ -481,7 +481,7 @@ const FilterManager = {
                 // If it's a full URL
                 if (product.mainImage.startsWith('http')) {
                     mainImage = product.mainImage;
-                } 
+                }
                 // If it's a path with /Images/
                 else if (product.mainImage.includes('/Images/')) {
                     mainImage = `${API_CONFIG.BASE_URL}${product.mainImage}`;
@@ -491,20 +491,20 @@ const FilterManager = {
                     mainImage = `${API_CONFIG.BASE_URL}/Images/${product.mainImage}`;
                 }
             } else if (product.image) {
-                mainImage = product.image.startsWith('http') 
-                    ? product.image 
+                mainImage = product.image.startsWith('http')
+                    ? product.image
                     : `${API_CONFIG.BASE_URL}/Images/${product.image}`;
             } else if (product.mainImageUrl) {
                 mainImage = product.mainImageUrl;
             }
-            
+
             const categoryName = categoryMap[product.categoryId] || product.category?.name || 'Uncategorized';
             const discount = product.discount || 0;
-            const finalPrice = discount > 0 ? product.price * (1 - discount) : product.price;
+            const finalPrice = discount > 0 ? product.price * (1 - discount / 100) : product.price;
             const inWishlist = isProductInWishlist(product.id);
             const wishlistClass = inWishlist ? 'added' : '';
             const wishlistIcon = inWishlist ? 'icon-heart' : 'icon-heart-o';
-            
+
             // Get product colors for color dots
             const colorDots = product.colors && Array.isArray(product.colors) && product.colors.length > 0
                 ? product.colors.map((color, index) => `
@@ -513,7 +513,7 @@ const FilterManager = {
                     </a>
                 `).join('')
                 : '';
-            
+
             // Calculate ratings (assuming rating is out of 5)
             const rating = product.rating || 0;
             const ratingPercentage = (rating / 5) * 100;
@@ -556,9 +556,9 @@ const FilterManager = {
                                 <a href="product.html?id=${product.id}">${product.name}</a>
                             </h3><!-- End .product-title -->
                             <div class="product-price">
-                                ${discount > 0 
-                                    ? `<span class="new-price">Now ILs ${finalPrice.toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
-                                    : `ILs ${product.price.toFixed(2)}`}
+                                ${discount > 0
+                    ? `<span class="new-price">Now ILs ${finalPrice.toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
+                    : `ILs ${product.price.toFixed(2)}`}
                             </div><!-- End .product-price -->
                             <div class="ratings-container">
                                 <div class="ratings">
@@ -617,31 +617,31 @@ const FilterManager = {
     attachProductEventHandlers(container) {
         // Note: Add to Cart buttons are handled by cart.js via event delegation
         // We only need to handle Wishlist buttons here
-        
+
         // Wishlist buttons
         container.querySelectorAll('.btn-wishlist').forEach(button => {
-            button.addEventListener('click', async function(e) {
+            button.addEventListener('click', async function (e) {
                 e.preventDefault();
                 e.stopPropagation(); // Prevent any other handlers
-                
+
                 const productId = parseInt(this.getAttribute('data-product-id'));
-                
+
                 if (typeof WishlistManager !== 'undefined' && WishlistManager.toggleWishlist) {
                     try {
                         const wasInWishlist = this.classList.contains('added');
                         const result = await WishlistManager.toggleWishlist(productId);
-                        
+
                         // Update button appearance
                         const icon = this.querySelector('i');
                         const span = this.querySelector('span');
-                        
+
                         if (result && result.added === false) {
                             // Was in wishlist, now removed
                             this.classList.remove('added');
                             if (icon) icon.className = 'icon-heart-o';
                             if (span) span.textContent = 'add to wishlist';
                             this.title = 'Add to wishlist';
-                            
+
                             if (window.notyf) {
                                 window.notyf.success(result.message || 'Product removed from wishlist');
                             }
@@ -651,7 +651,7 @@ const FilterManager = {
                             if (icon) icon.className = 'icon-heart';
                             if (span) span.textContent = 'remove from wishlist';
                             this.title = 'Remove from wishlist';
-                            
+
                             if (window.notyf) {
                                 window.notyf.success(result.message || 'Product added to wishlist');
                             }
@@ -672,7 +672,7 @@ const FilterManager = {
 
         // Quick View buttons
         container.querySelectorAll('.btn-quickview').forEach(button => {
-            button.addEventListener('click', function(e) {
+            button.addEventListener('click', function (e) {
                 e.preventDefault();
                 if (window.notyf) {
                     window.notyf.info('Quick view feature coming soon');
@@ -682,7 +682,7 @@ const FilterManager = {
 
         // Compare buttons
         container.querySelectorAll('.btn-compare').forEach(button => {
-            button.addEventListener('click', function(e) {
+            button.addEventListener('click', function (e) {
                 e.preventDefault();
                 if (window.notyf) {
                     window.notyf.info('Compare feature coming soon');

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -27,6 +28,7 @@
     <!-- Main CSS File -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/demos/demo-18.css">
+    <link rel="stylesheet" href="assets/css/custom-categories.css">
     <!-- Notyf CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
     <!-- Custom CSS to remove duplicate heart icon from btn-wishlist -->
@@ -42,21 +44,22 @@
     <div class="page-wrapper">
         <header class="header header-11">
             <div class="container-fluid">
-                    <div class="header-right p-2 ">
-                        <ul class="top-menu">
-                            <li>
-                                <a href="#">Links</a>
-                                <ul>
-                                    <li><a href="tel:#"><i class="icon-phone"></i>Call: +0123 456 789</a></li>
-                                    <li><a href="wishlist.html"><i class="icon-heart-o"></i>Wishlist <span>(3)</span></a></li>
-                                    <li><a href="about.html">About Us</a></li>
-                                    <li><a href="contact.html">Contact Us</a></li>
-                                    <li><a href="#signin-modal" data-toggle="modal"><i class="icon-user"></i>Login</a></li>
-                                </ul>
-                            </li>
-                        </ul><!-- End .top-menu -->
-                    </div><!-- End .header-right -->
-                </div>
+                <div class="header-right p-2 ">
+                    <ul class="top-menu">
+                        <li>
+                            <a href="#">Links</a>
+                            <ul>
+                                <li><a href="tel:#"><i class="icon-phone"></i>Call: +0123 456 789</a></li>
+                                <li><a href="wishlist.html"><i class="icon-heart-o"></i>Wishlist <span>(3)</span></a>
+                                </li>
+                                <li><a href="about.html">About Us</a></li>
+                                <li><a href="contact.html">Contact Us</a></li>
+                                <li><a href="#signin-modal" data-toggle="modal"><i class="icon-user"></i>Login</a></li>
+                            </ul>
+                        </li>
+                    </ul><!-- End .top-menu -->
+                </div><!-- End .header-right -->
+            </div>
             <div class="header-middle sticky-header">
                 <div class="container-fluid">
                     <div class="header-left">
@@ -73,14 +76,14 @@
                                 </li>
                                 <li>
                                     <a href="" class="sf-with-ul">Pages</a>
-                                     <ul>
-                                    <li> <a href="./product-category-fullwidth.html">Categories</a></li>
-                                    <li><a href="./cart.html">Cart</a></li>
-                                    <li><a href="./wishlist.html">Wishlist</a></li>
-                                    <li><a href="./contact.html">Contact</a></li>
-                                    <li><a href="./coming-soon.html">Coming Soon</a></li>
-                                    <li><a href="./login.html">Login</a></li>
-                                </ul>
+                                    <ul>
+                                        <li> <a href="./product-category-fullwidth.html">Categories</a></li>
+                                        <li><a href="./cart.html">Cart</a></li>
+                                        <li><a href="./wishlist.html">Wishlist</a></li>
+                                        <li><a href="./contact.html">Contact</a></li>
+                                        <li><a href="./coming-soon.html">Coming Soon</a></li>
+                                        <li><a href="./login.html">Login</a></li>
+                                    </ul>
                                 </li>
                             </ul><!-- End .menu -->
                         </nav><!-- End .main-nav -->
@@ -93,7 +96,7 @@
 
                     <div class="header-center ">
                         <a href="index.html" class="logo">
-                            <img src="assets/images/demos/demo-18/logo.png" alt="Serqata Logo" width="82" height="25">
+                            <img src="assets/images/logo.png" alt="Serqata Logo" width="200" height="30">
                         </a>
                     </div><!-- End .header-center -->
 
@@ -103,19 +106,21 @@
                             <form action="#" method="get">
                                 <div class="header-search-wrapper">
                                     <label for="q" class="sr-only">Search</label>
-                                    <input type="search" class="form-control white" name="q" id="q" placeholder="Search product ..." required>
+                                    <input type="search" class="form-control white" name="q" id="q"
+                                        placeholder="Search product ..." required>
                                     <button class="btn btn-primary" type="submit"><i class="icon-search"></i></button>
                                 </div><!-- End .header-search-wrapper -->
                             </form>
                         </div><!-- End .header-search -->
-                        
+
                         <a href="wishlist.html" class="wishlist-link">
                             <i class="icon-heart-o"></i>
                             <span class="wishlist-count "></span>
                         </a>
 
                         <div class="dropdown cart-dropdown">
-                            <a href="#" class="dropdown-toggle" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-display="static">
+                            <a href="#" class="dropdown-toggle" role="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false" data-display="static">
                                 <i class="icon-shopping-cart"></i>
                                 <span class="cart-count">0</span>
                             </a>
@@ -133,7 +138,8 @@
 
                                 <div class="dropdown-cart-action">
                                     <a href="cart.html" class="btn btn-primary">View Cart</a>
-                                    <a href="checkout.html" class="btn btn-outline-primary-2"><span>Checkout</span><i class="icon-long-arrow-right"></i></a>
+                                    <a href="checkout.html" class="btn btn-outline-primary-2"><span>Checkout</span><i
+                                            class="icon-long-arrow-right"></i></a>
                                 </div><!-- End .dropdown-cart-total -->
                             </div><!-- End .dropdown-menu -->
                         </div><!-- End .cart-dropdown -->
@@ -144,36 +150,8 @@
 
         <main class="main">
             <div class="intro-slider-container mb-3 mb-lg-5">
-                <div class="intro-slider owl-carousel owl-theme owl-nav-inside owl-light" data-toggle="owl" data-owl-options='{"dots": true, "nav": false}'>
-                    <div class="intro-slide" style="background-image: url(assets/images/demos/demo-18/slider/slide-1.jpg);">
-                        <div class="container">
-                            <div class="intro-content text-center">
-                                <h3 class="intro-subtitle cross-txt text-primary">SEASONAL PICKS</h3><!-- End .h3 intro-subtitle -->
-                                <h1 class="intro-title text-white">Summer Sale</h1><!-- End .intro-title -->
-                                <div class="intro-text text-white">up to 70% off</div><!-- End .intro-text -->
-                                <div class="intro-action cross-txt">
-                                    <a href="category.html" class="btn btn-outline-white">
-                                        <span>Discover More</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div><!-- End .intro-content -->
-                    </div><!-- End .intro-slide -->
-
-                    <div class="intro-slide" style="background-image: url(assets/images/demos/demo-18/slider/slide-2.jpg);">
-                        <div class="container">
-                            <div class="intro-content text-center">
-                                <h3 class="intro-subtitle text-primary cross-txt">Women's Accessories</h3><!-- End .h3 intro-subtitle -->
-                                <h1 class="intro-title text-white">Save up to</h1><!-- End .intro-title -->
-                                <div class="intro-text text-white">30-50% off</div><!-- End .intro-text -->
-                                <div class="intro-action cross-txt">
-                                    <a href="category.html" class="btn btn-outline-white">
-                                        <span>Discover More</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div><!-- End .intro-content -->
-                    </div><!-- End .intro-slide -->
+                <div class="intro-slider owl-carousel owl-theme owl-nav-inside owl-light">
+                    <!-- Slides handled by assets/js/advertisements.js -->
                 </div><!-- End .intro-slider owl-carousel owl-simple -->
 
                 <span class="slider-loader text-white"></span>
@@ -181,201 +159,43 @@
 
             <div class="container-fluid banners">
                 <div class="row" id="categories-banner-container">
-                    <!-- Categories will be loaded dynamically from API -->
-                    <div class="col-12 text-center">
+                  
                         <div class="loader">Loading categories...</div>
-                    </div>
+                    
                 </div><!-- End .row -->
+                <div class="more-container text-center mt-3 mb-3" id="categories-view-more-container"
+                    style="display: none;">
+                    <button class="btn btn-outline-primary-2 btn-more"  id="btn-view-more-categories">
+                       <span>View More Categories</span>
+                        <i class="icon-long-arrow-right"></i>    
+                    </button>
+                </div>
             </div><!-- End .container -->
 
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-lg-9">
+                    <div class="col-lg-9" id="recent-arrivals-col">
                         <h2 class="title">Recent Arrivals</h2>
-                          
-
                         <div class="products-container mb-7">
                             <div id="recent-arrivals-container" class="row justify-content-center">
-                              <div class="loader">Loading...</div>
+                                <div class="loader">Loading...</div>
                             </div>
                             <div class="more-container text-center mt-0 mb-0 ViewMoreProductsBtn hidden">
-                                    <a href="category.html" class="btn btn-outline-primary-2 btn-more">
-                                        <span>View more Products</span>
-                                    </a>
-                                </div>
+                                <a href="category.html" class="btn btn-outline-primary-2 btn-more">
+                                    <span>View more Products</span>
+                                </a>
+                            </div>
                         </div><!-- End .products -->
                     </div><!-- End .col-lg-9 -->
 
-                    <aside class="col-lg-3">
+                    <aside class="col-lg-3 Advertisement-smallClass">
                         <div class="sidebar sidebar-home">
                             <div class="row">
                                 <div class="col-sm-6 col-lg-12">
-                                    <div class="widget widget-products">
-                                        <h4 class="widget-title">Best Selling</h4><!-- End .widget-title -->
-
-                                        <div class="products">
-                                            <div class="product product-sm">
-                                                <figure class="product-media">
-                                                    <a href="product.html">
-                                                        <img src="assets/images/demos/demo-18/products/small/product-1.jpg" alt="Product image" class="product-image">
-                                                    </a>
-                                                </figure>
-
-                                                <div class="product-body">
-                                                    <div class="product-cat">
-                                                        <a href="#">Clothing</a>
-                                                    </div><!-- End .product-cat -->
-                                                    <h5 class="product-title"><a href="product.html">V-neck buttoned blouse</a></h5><!-- End .product-title -->
-                                                    <div class="product-price">
-                                                        <span class="new-price">Now $17.99</span>
-                                                        <span class="old-price">Was $32.99</span>
-                                                    </div><!-- End .product-price -->
-                                                </div><!-- End .product-body -->
-                                            </div><!-- End .product product-sm -->
-
-                                            <div class="product product-sm">
-                                                <figure class="product-media">
-                                                    <a href="product.html">
-                                                        <img src="assets/images/demos/demo-18/products/small/product-2.jpg" alt="Product image" class="product-image">
-                                                    </a>
-                                                </figure>
-
-                                                <div class="product-body">
-                                                    <div class="product-cat">
-                                                        <a href="#">Shoes</a>
-                                                    </div><!-- End .product-cat -->
-                                                    <h5 class="product-title"><a href="product.html">Slides with a bow</a></h5><!-- End .product-title -->
-                                                    <div class="product-price">
-                                                        $17.99
-                                                    </div><!-- End .product-price -->
-                                                </div><!-- End .product-body -->
-                                            </div><!-- End .product product-sm -->
-
-                                            <div class="product product-sm">
-                                                <figure class="product-media">
-                                                    <a href="product.html">
-                                                        <img src="assets/images/demos/demo-18/products/small/product-3.jpg" alt="Product image" class="product-image">
-                                                    </a>
-                                                </figure>
-
-                                                <div class="product-body">
-                                                    <div class="product-cat">
-                                                        <a href="#">Clothing</a>
-                                                    </div><!-- End .product-cat -->
-                                                    <h5 class="product-title"><a href="product.html">Paper bag skirt</a></h5><!-- End .product-title -->
-                                                    <div class="product-price">
-                                                        $19.99
-                                                    </div><!-- End .product-price -->
-                                                </div><!-- End .product-body -->
-                                            </div><!-- End .product product-sm -->
-
-                                            <div class="product product-sm">
-                                                <figure class="product-media">
-                                                    <a href="product.html">
-                                                        <img src="assets/images/demos/demo-18/products/small/product-4.jpg" alt="Product image" class="product-image">
-                                                    </a>
-                                                </figure>
-
-                                                <div class="product-body">
-                                                    <div class="product-cat">
-                                                        <a href="#">Handbags</a>
-                                                    </div><!-- End .product-cat -->
-                                                    <h5 class="product-title"><a href="product.html">Foldaway waist bag</a></h5><!-- End .product-title -->
-                                                    <div class="product-price">
-                                                        $9.99
-                                                    </div><!-- End .product-price -->
-                                                </div><!-- End .product-body -->
-                                            </div><!-- End .product product-sm -->
-                                        </div><!-- End .products -->
-                                    </div><!-- End .widget widget-products -->
-                                </div><!-- End .col-sm-6 col-lg-12 -->
-
-                                <div class="col-sm-6 col-lg-12">
-                                    <div class="widget widget-subscribe" style="background-image: url(assets/images/demos/demo-18/bg-newsletter.jpg);">
-                                        <h2 class="widget-title">Sign up for email <br>& get 25% off </h2><!-- End .widget-title -->
-                                        <p>Subcribe to get information about products and coupons</p>
-
-                                        <form action="#">
-                                            <input type="email" class="form-control" placeholder="Enter your Email Address" required>
-
-                                            <input type="submit" class="btn btn-outline-white" value="Subscribe">
-                                        </form>
-                                        
-                                    </div><!-- End .widget widget-banner -->
-                                </div><!-- End .col-sm-6 col-lg-12 -->
-
-                                <div class="col-sm-6 col-lg-12">
-                                    <div class="widget widget-banner">
-                                        <div class="banner banner-overlay">
-                                            <a href="#">
-                                                <img src="assets/images/demos/demo-18/banners/banner-5.jpg" alt="Banner">
-                                            </a>
-
-                                            <div class="banner-content">
-                                                <h4 class="banner-subtitle"><a href="#">Spring 2019</a></h4><!-- End .banner-title -->
-                                                <h3 class="banner-title"><a href="#">SAVE UP TO <br>50% OFF</a></h3><!-- End .banner-title -->
-                                                <a href="#" class="banner-link">Shop Now</a>
-                                            </div><!-- End .banner-content -->
-                                        </div><!-- End .banner -->
-                                    </div><!-- End .widget widget-banner -->
-                                </div><!-- End .col-sm-6 col-lg-12 -->
-
-                                <div class="col-sm-6 col-lg-12">
                                     <div class="widget widget-posts">
-                                        <h4 class="widget-title">New Blog Posts</h4><!-- End .widget-title -->
-
-                                        <div class="owl-carousel owl-simple" data-toggle="owl" 
-                                            data-owl-options='{
-                                                "nav":false, 
-                                                "dots": true, 
-                                                "loop": false, 
-                                                "autoHeight": true
-                                            }'>
-                                            <article class="entry">
-                                                <figure class="entry-media">
-                                                    <a href="single.html">
-                                                        <img src="assets/images/demos/demo-18/blog/post-1.jpg" alt="image desc">
-                                                    </a>
-                                                </figure><!-- End .entry-media -->
-
-                                                <div class="entry-body">
-                                                    <div class="entry-meta">
-                                                        <a href="#">Nov 22, 2018</a>, 0 Comments
-                                                    </div><!-- End .entry-meta -->
-
-                                                    <h5 class="entry-title">
-                                                        <a href="single.html">Sed adipiscing ornare.</a>
-                                                    </h5><!-- End .entry-title -->
-
-                                                    <div class="entry-content">
-                                                        <p>Lorem ipsum dolor sit amet, consec tetuer adipiscing elit. Donec odio</p>
-                                                        <a href="single.html" class="read-more">Read More</a>
-                                                    </div><!-- End .entry-content -->
-                                                </div><!-- End .entry-body -->
-                                            </article><!-- End .entry -->
-
-                                            <article class="entry">
-                                                <figure class="entry-media">
-                                                    <a href="single.html">
-                                                        <img src="assets/images/demos/demo-18/blog/post-2.jpg" alt="image desc">
-                                                    </a>
-                                                </figure><!-- End .entry-media -->
-
-                                                <div class="entry-body">
-                                                    <div class="entry-meta">
-                                                        <a href="#">Nov 22, 2018</a>, 0 Comments
-                                                    </div><!-- End .entry-meta -->
-
-                                                    <h5 class="entry-title">
-                                                        <a href="single.html">Aenean dignissim pellente sque felis.</a>
-                                                    </h5><!-- End .entry-title -->
-
-                                                    <div class="entry-content">
-                                                        <p>Suspendisse urna nibh, viverra non, semper suscipit, posuere a, pede ...</p>
-                                                        <a href="single.html" class="read-more">Read More</a>
-                                                    </div><!-- End .entry-content -->
-                                                </div><!-- End .entry-body -->
-                                            </article><!-- End .entry -->
+                                        <h4 class="widget-title">New Advertisements</h4><!-- End .widget-title -->
+                                        <div class="owl-carousel owl-simple ad-posts-slider">
+                                            <!-- Ads handled by assets/js/advertisements.js -->
                                         </div><!-- End .owl-carousel -->
                                     </div><!-- End .widget widget-posts -->
                                 </div><!-- End .col-sm-6 col-lg-12 -->
@@ -384,15 +204,15 @@
                     </aside>
                 </div><!-- End .row -->
 
-            <div class="bg-lighter pt-5 pb-5">
-                <div class="container-fluid">
-                    <div class="heading text-center">
-                        <h2 class="title instagram">Let Us Inspire You On Instagram</h2><!-- End .title -->
-                        <p class="title-desc">Donec nec justo eget felis facilisis fermentum.</p><!-- End .title-desc -->
-                    </div><!-- End .heading -->
+                <div class="bg-lighter pt-5 pb-5">
+                    <div class="container-fluid">
+                        <div class="heading text-center">
+                            <h2 class="title instagram">Let Us Inspire You On Instagram</h2><!-- End .title -->
+                            <p class="title-desc">Donec nec justo eget felis facilisis fermentum.</p>
+                            <!-- End .title-desc -->
+                        </div><!-- End .heading -->
 
-                    <div class="owl-carousel owl-simple mb-3" data-toggle="owl" 
-                        data-owl-options='{
+                        <div class="owl-carousel owl-simple mb-3" data-toggle="owl" data-owl-options='{
                             "nav": false, 
                             "dots": false,
                             "items": 5,
@@ -416,55 +236,55 @@
                                 }
                             }
                         }'>
-                        <div class="instagram-feed">
-                            <img src="assets/images/demos/demo-18/instagram/1.jpg" alt="img">
+                            <div class="instagram-feed">
+                                <img src="assets/images/demos/demo-18/instagram/1.jpg" alt="img">
 
-                            <div class="instagram-feed-content">
-                                <a href="#"><i class="icon-heart-o"></i>466</a>
-                                <a href="#"><i class="icon-comments"></i>65</a>
-                            </div><!-- End .instagram-feed-content -->
-                        </div><!-- End .instagram-feed -->
+                                <div class="instagram-feed-content">
+                                    <a href="#"><i class="icon-heart-o"></i>466</a>
+                                    <a href="#"><i class="icon-comments"></i>65</a>
+                                </div><!-- End .instagram-feed-content -->
+                            </div><!-- End .instagram-feed -->
 
-                        <div class="instagram-feed">
-                            <img src="assets/images/demos/demo-18/instagram/2.jpg" alt="img">
+                            <div class="instagram-feed">
+                                <img src="assets/images/demos/demo-18/instagram/2.jpg" alt="img">
 
-                            <div class="instagram-feed-content">
-                                <a href="#"><i class="icon-heart-o"></i>280</a>
-                                <a href="#"><i class="icon-comments"></i>22</a>
-                            </div><!-- End .instagram-feed-content -->
-                        </div><!-- End .instagram-feed -->
+                                <div class="instagram-feed-content">
+                                    <a href="#"><i class="icon-heart-o"></i>280</a>
+                                    <a href="#"><i class="icon-comments"></i>22</a>
+                                </div><!-- End .instagram-feed-content -->
+                            </div><!-- End .instagram-feed -->
 
-                        <div class="instagram-feed">
-                            <img src="assets/images/demos/demo-18/instagram/3.jpg" alt="img">
+                            <div class="instagram-feed">
+                                <img src="assets/images/demos/demo-18/instagram/3.jpg" alt="img">
 
-                            <div class="instagram-feed-content">
-                                <a href="#"><i class="icon-heart-o"></i>123</a>
-                                <a href="#"><i class="icon-comments"></i>10</a>
-                            </div><!-- End .instagram-feed-content -->
-                        </div><!-- End .instagram-feed -->
-                        <div class="instagram-feed">
-                            <img src="assets/images/demos/demo-18/instagram/4.jpg" alt="img">
+                                <div class="instagram-feed-content">
+                                    <a href="#"><i class="icon-heart-o"></i>123</a>
+                                    <a href="#"><i class="icon-comments"></i>10</a>
+                                </div><!-- End .instagram-feed-content -->
+                            </div><!-- End .instagram-feed -->
+                            <div class="instagram-feed">
+                                <img src="assets/images/demos/demo-18/instagram/4.jpg" alt="img">
 
-                            <div class="instagram-feed-content">
-                                <a href="#"><i class="icon-heart-o"></i>290</a>
-                                <a href="#"><i class="icon-comments"></i>0</a>
-                            </div><!-- End .instagram-feed-content -->
-                        </div><!-- End .instagram-feed -->
-                        <div class="instagram-feed">
-                            <img src="assets/images/demos/demo-18/instagram/5.jpg" alt="img">
+                                <div class="instagram-feed-content">
+                                    <a href="#"><i class="icon-heart-o"></i>290</a>
+                                    <a href="#"><i class="icon-comments"></i>0</a>
+                                </div><!-- End .instagram-feed-content -->
+                            </div><!-- End .instagram-feed -->
+                            <div class="instagram-feed">
+                                <img src="assets/images/demos/demo-18/instagram/5.jpg" alt="img">
 
-                            <div class="instagram-feed-content">
-                                <a href="#"><i class="icon-heart-o"></i>582</a>
-                                <a href="#"><i class="icon-comments"></i>98</a>
-                            </div><!-- End .instagram-feed-content -->
-                        </div><!-- End .instagram-feed -->
-                    </div><!-- End .owl-carousel -->
+                                <div class="instagram-feed-content">
+                                    <a href="#"><i class="icon-heart-o"></i>582</a>
+                                    <a href="#"><i class="icon-comments"></i>98</a>
+                                </div><!-- End .instagram-feed-content -->
+                            </div><!-- End .instagram-feed -->
+                        </div><!-- End .owl-carousel -->
 
-                    <div class="more-container text-center">
-                        <a href="#" class="btn btn-outline-primary-2 btn-more">@Molla Instagram</a>
-                    </div><!-- End .more-container -->
-                </div><!-- End .container -->
-            </div><!-- End .bg-lighter pt-5 pb-5 -->
+                        <div class="more-container text-center">
+                            <a href="#" class="btn btn-outline-primary-2 btn-more">@Molla Instagram</a>
+                        </div><!-- End .more-container -->
+                    </div><!-- End .container -->
+                </div><!-- End .bg-lighter pt-5 pb-5 -->
         </main><!-- End .main -->
 
         <footer class="footer footer-dark">
@@ -483,7 +303,7 @@
                                 </div><!-- End .icon-box-content -->
                             </div><!-- End .icon-box -->
                         </div><!-- End .col-sm-6 col-lg-3 -->
-                        
+
                         <div class="col-sm-6 col-lg-3">
                             <div class="icon-box icon-box-side">
                                 <span class="icon-box-icon">
@@ -530,15 +350,22 @@
                     <div class="row">
                         <div class="col-sm-6 col-lg-3">
                             <div class="widget widget-about">
-                                <img src="assets/images/demos/demo-18/logo-footer.png" class="footer-logo" alt="Footer Logo" width="82" height="25">
-                                <p>Praesent dapibus, neque id cursus ucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. </p>
+                                <img src="assets/images/demos/demo-18/logo-footer.png" class="footer-logo"
+                                    alt="Footer Logo" width="82" height="25">
+                                <p>Praesent dapibus, neque id cursus ucibus, tortor neque egestas augue, eu vulputate
+                                    magna eros eu erat. </p>
 
                                 <div class="social-icons">
-                                    <a href="#" class="social-icon" title="Facebook" target="_blank"><i class="icon-facebook-f"></i></a>
-                                    <a href="#" class="social-icon" title="Twitter" target="_blank"><i class="icon-twitter"></i></a>
-                                    <a href="#" class="social-icon" title="Instagram" target="_blank"><i class="icon-instagram"></i></a>
-                                    <a href="#" class="social-icon" title="Youtube" target="_blank"><i class="icon-youtube"></i></a>
-                                    <a href="#" class="social-icon" title="Pinterest" target="_blank"><i class="icon-pinterest"></i></a>
+                                    <a href="#" class="social-icon" title="Facebook" target="_blank"><i
+                                            class="icon-facebook-f"></i></a>
+                                    <a href="#" class="social-icon" title="Twitter" target="_blank"><i
+                                            class="icon-twitter"></i></a>
+                                    <a href="#" class="social-icon" title="Instagram" target="_blank"><i
+                                            class="icon-instagram"></i></a>
+                                    <a href="#" class="social-icon" title="Youtube" target="_blank"><i
+                                            class="icon-youtube"></i></a>
+                                    <a href="#" class="social-icon" title="Pinterest" target="_blank"><i
+                                            class="icon-pinterest"></i></a>
                                 </div><!-- End .soial-icons -->
                             </div><!-- End .widget about-widget -->
                         </div><!-- End .col-sm-6 col-lg-3 -->
@@ -591,7 +418,8 @@
 
             <div class="footer-bottom">
                 <div class="container-fluid">
-                    <p class="footer-copyright">Copyright © 2019 Molla Store. All Rights Reserved.</p><!-- End .footer-copyright -->
+                    <p class="footer-copyright">Copyright © 2019 Molla Store. All Rights Reserved.</p>
+                    <!-- End .footer-copyright -->
                     <figure class="footer-payments">
                         <img src="assets/images/payments.png" alt="Payment methods" width="272" height="20">
                     </figure><!-- End .footer-payments -->
@@ -610,10 +438,11 @@
 
             <form action="#" method="get" class="mobile-search">
                 <label for="mobile-search" class="sr-only">Search</label>
-                <input type="search" class="form-control" name="mobile-search" id="mobile-search" placeholder="Search in..." required>
+                <input type="search" class="form-control" name="mobile-search" id="mobile-search"
+                    placeholder="Search in..." required>
                 <button class="btn btn-primary" type="submit"><i class="icon-search"></i></button>
             </form>
-            
+
             <nav class="mobile-nav">
                 <ul class="mobile-menu">
                     <li class="active">
@@ -626,10 +455,12 @@
                             <li><a href="category-2cols.html">Shop Grid 2 Columns</a></li>
                             <li><a href="category.html">Shop Grid 3 Columns</a></li>
                             <li><a href="category-4cols.html">Shop Grid 4 Columns</a></li>
-                            <li><a href="category-boxed.html"><span>Shop Boxed No Sidebar<span class="tip tip-hot">Hot</span></span></a></li>
+                            <li><a href="category-boxed.html"><span>Shop Boxed No Sidebar<span
+                                            class="tip tip-hot">Hot</span></span></a></li>
                             <li><a href="category-fullwidth.html">Shop Fullwidth No Sidebar</a></li>
                             <li><a href="product-category-boxed.html">Product Category Boxed</a></li>
-                            <li><a href="product-category-fullwidth.html"><span>Product Category Fullwidth<span class="tip tip-new">New</span></span></a></li>
+                            <li><a href="product-category-fullwidth.html"><span>Product Category Fullwidth<span
+                                            class="tip tip-new">New</span></span></a></li>
                             <li><a href="cart.html">Cart</a></li>
                             <li><a href="checkout.html">Checkout</a></li>
                             <li><a href="wishlist.html">Wishlist</a></li>
@@ -641,7 +472,8 @@
                         <ul>
                             <li><a href="product.html">Default</a></li>
                             <li><a href="product-centered.html">Centered</a></li>
-                            <li><a href="product-extended.html"><span>Extended Info<span class="tip tip-new">New</span></span></a></li>
+                            <li><a href="product-extended.html"><span>Extended Info<span
+                                            class="tip tip-new">New</span></span></a></li>
                             <li><a href="product-gallery.html">Gallery</a></li>
                             <li><a href="product-sticky.html">Sticky Info</a></li>
                             <li><a href="product-sidebar.html">Boxed With Sidebar</a></li>
@@ -717,7 +549,7 @@
                     </li>
                     <li>
                         <a href="elements-list.html">Elements</a>
-                        
+
                     </li>
                 </ul>
             </nav><!-- End .mobile-nav -->
@@ -744,23 +576,28 @@
                         <div class="form-tab">
                             <ul class="nav nav-pills nav-fill" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active" id="signin-tab" data-toggle="tab" href="#signin" role="tab" aria-controls="signin" aria-selected="true">Sign In</a>
+                                    <a class="nav-link active" id="signin-tab" data-toggle="tab" href="#signin"
+                                        role="tab" aria-controls="signin" aria-selected="true">Sign In</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="register-tab" data-toggle="tab" href="#register" role="tab" aria-controls="register" aria-selected="false">Register</a>
+                                    <a class="nav-link" id="register-tab" data-toggle="tab" href="#register" role="tab"
+                                        aria-controls="register" aria-selected="false">Register</a>
                                 </li>
                             </ul>
                             <div class="tab-content" id="tab-content-5">
-                                <div class="tab-pane fade show active" id="signin" role="tabpanel" aria-labelledby="signin-tab">
+                                <div class="tab-pane fade show active" id="signin" role="tabpanel"
+                                    aria-labelledby="signin-tab">
                                     <form action="#">
                                         <div class="form-group">
                                             <label for="singin-email">Username or email address *</label>
-                                            <input type="text" class="form-control" id="singin-email" name="singin-email" required>
+                                            <input type="text" class="form-control" id="singin-email"
+                                                name="singin-email" required>
                                         </div><!-- End .form-group -->
 
                                         <div class="form-group">
                                             <label for="singin-password">Password *</label>
-                                            <input type="password" class="form-control" id="singin-password" name="singin-password" required>
+                                            <input type="password" class="form-control" id="singin-password"
+                                                name="singin-password" required>
                                         </div><!-- End .form-group -->
 
                                         <div class="form-footer">
@@ -770,8 +607,10 @@
                                             </button>
 
                                             <div class="custom-control custom-checkbox">
-                                                <input type="checkbox" class="custom-control-input" id="signin-remember">
-                                                <label class="custom-control-label" for="signin-remember">Remember Me</label>
+                                                <input type="checkbox" class="custom-control-input"
+                                                    id="signin-remember">
+                                                <label class="custom-control-label" for="signin-remember">Remember
+                                                    Me</label>
                                             </div><!-- End .custom-checkbox -->
 
                                             <a href="#" class="forgot-link">Forgot Your Password?</a>
@@ -799,12 +638,14 @@
                                     <form action="#">
                                         <div class="form-group">
                                             <label for="register-email">Your email address *</label>
-                                            <input type="email" class="form-control" id="register-email" name="register-email" required>
+                                            <input type="email" class="form-control" id="register-email"
+                                                name="register-email" required>
                                         </div><!-- End .form-group -->
 
                                         <div class="form-group">
                                             <label for="register-password">Password *</label>
-                                            <input type="password" class="form-control" id="register-password" name="register-password" required>
+                                            <input type="password" class="form-control" id="register-password"
+                                                name="register-password" required>
                                         </div><!-- End .form-group -->
 
                                         <div class="form-footer">
@@ -814,8 +655,10 @@
                                             </button>
 
                                             <div class="custom-control custom-checkbox">
-                                                <input type="checkbox" class="custom-control-input" id="register-policy" required>
-                                                <label class="custom-control-label" for="register-policy">I agree to the <a href="#">privacy policy</a> *</label>
+                                                <input type="checkbox" class="custom-control-input" id="register-policy"
+                                                    required>
+                                                <label class="custom-control-label" for="register-policy">I agree to the
+                                                    <a href="#">privacy policy</a> *</label>
                                             </div><!-- End .custom-checkbox -->
                                         </div><!-- End .form-footer -->
                                     </form>
@@ -851,12 +694,14 @@
                 <div class="row no-gutters bg-white newsletter-popup-content">
                     <div class="col-xl-3-5col col-lg-7 banner-content-wrap">
                         <div class="banner-content text-center">
-                            <img src="assets/images/popup/newsletter/logo.png" class="logo" alt="logo" width="60" height="15">
+                            <img src="./assets/images/logo.png" class="logo" alt="logo" width="60" height="15">
                             <h2 class="banner-title">get <span>25<light>%</light></span> off</h2>
-                            <p>Subscribe to the Molla eCommerce newsletter to receive timely updates from your favorite products.</p>
+                            <p>Subscribe to the Molla eCommerce newsletter to receive timely updates from your favorite
+                                products.</p>
                             <form action="#">
                                 <div class="input-group input-group-round">
-                                    <input type="email" class="form-control form-control-white" placeholder="Your Email Address" aria-label="Email Adress" required>
+                                    <input type="email" class="form-control form-control-white"
+                                        placeholder="Your Email Address" aria-label="Email Adress" required>
                                     <div class="input-group-append">
                                         <button class="btn" type="submit"><span>go</span></button>
                                     </div><!-- .End .input-group-append -->
@@ -864,12 +709,13 @@
                             </form>
                             <div class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input" id="register-policy-2" required>
-                                <label class="custom-control-label" for="register-policy-2">Do not show this popup again</label>
+                                <label class="custom-control-label" for="register-policy-2">Do not show this popup
+                                    again</label>
                             </div><!-- End .custom-checkbox -->
                         </div>
                     </div>
                     <div class="col-xl-2-5col col-lg-5 ">
-                        <img src="assets/images/popup/newsletter/img-1.jpg" class="newsletter-img" alt="newsletter">
+                        <img src="" class="newsletter-img" alt="newsletter">
                     </div>
                 </div>
             </div>
@@ -886,21 +732,23 @@
     <script src="./assets/js/jquery.magnific-popup.min.js"></script>
     <!-- Main JS File -->
     <script src="./assets/js/main.js"></script>
-    <script src="./assets/js/demos/demo-18.js"></script>
-    <!-- Notyf JS -->
-    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-    <script>
-      // Initialize global Notyf instance
-      window.notyf = new Notyf({
-        duration: 3000,
-        position: { x: 'right', y: 'bottom' }
-      });
-    </script>
     <script src="./assets/js/config.js"></script>
     <script src="./assets/js/cart.js"></script>
     <script src="./assets/js/product.js"></script>
     <script src="./assets/js/Wishlist.js"></script>
     <script src="./assets/js/categories.js"></script>
+    <script src="./assets/js/advertisements.js"></script>
+    <!-- Notyf JS -->
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script>
+        window.notyf = new Notyf({
+            duration: 3000,
+            position: {
+                x: 'right', y: 'bottom'
+            }
+        });
+    </script>
+   
 </body>
 
 

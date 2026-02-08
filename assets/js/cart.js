@@ -5,38 +5,38 @@ const CartManager = {
     productsCache: null,
 
     // Check if user is authenticated
-    isAuthenticated: function() {
+    isAuthenticated: function () {
         return localStorage.getItem('isAuthenticated') === 'true';
     },
 
     // Get authentication token
-    getToken: function() {
+    getToken: function () {
         return localStorage.getItem('authToken');
     },
 
     // Cookie management
-    setCookie: function(name, value, days) {
+    setCookie: function (name, value, days) {
         const date = new Date();
         date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
         const expires = "expires=" + date.toUTCString();
         const cookieValue = JSON.stringify(value);
         const domain = API_CONFIG ? API_CONFIG.getDomain() : window.location.hostname;
-        const domainAttr = (domain === 'localhost' || domain === '127.0.0.1') 
-            ? '' 
+        const domainAttr = (domain === 'localhost' || domain === '127.0.0.1')
+            ? ''
             : ";domain=." + domain;
         document.cookie = name + "=" + cookieValue + ";" + expires + ";path=/" + domainAttr;
     },
 
-    getCookie: function(name) {
+    getCookie: function (name) {
         const nameEQ = name + "=";
         const cookies = document.cookie.split(';');
-        for(let i = 0; i < cookies.length; i++) {
+        for (let i = 0; i < cookies.length; i++) {
             let cookie = cookies[i].trim();
-            if(cookie.indexOf(nameEQ) === 0) {
+            if (cookie.indexOf(nameEQ) === 0) {
                 const value = cookie.substring(nameEQ.length);
                 try {
                     return JSON.parse(value);
-                } catch(e) {
+                } catch (e) {
                     console.error('Error parsing cookie:', e);
                     return null;
                 }
@@ -46,7 +46,7 @@ const CartManager = {
     },
 
     // Load cart from cookie (returns array of {productId, quantity})
-    loadCartFromCookie: function() {
+    loadCartFromCookie: function () {
         const cart = this.getCookie(this.cookieName);
         if (!cart || !Array.isArray(cart)) {
             return [];
@@ -55,11 +55,10 @@ const CartManager = {
     },
 
     // Save cart to cookie
-    saveCartToCookie: function(cart) {
+    saveCartToCookie: function (cart) {
         this.setCookie(this.cookieName, cart, this.cookieExpireDays);
     },
 
-    // Add product to cart (logged in user - save to database)
     async addToCartAPI(productId, quantity = 1, colorId = null, sizeId = null) {
         try {
             const token = this.getToken();
@@ -90,15 +89,15 @@ const CartManager = {
             });
 
             const data = await response.json();
-            
+
             if (response.ok && data.success) {
                 // Trigger custom event for immediate UI update
                 if (typeof window !== 'undefined' && window.dispatchEvent) {
-                    window.dispatchEvent(new CustomEvent('cartUpdated', { 
-                        detail: { productId, quantity, action: 'added' } 
+                    window.dispatchEvent(new CustomEvent('cartUpdated', {
+                        detail: { productId, quantity, action: 'added' }
                     }));
                 }
-                
+
                 return { success: true, message: data.message || 'Product added to cart' };
             } else {
                 return { success: false, message: data.message || 'Failed to add product to cart' };
@@ -113,39 +112,39 @@ const CartManager = {
     addToCartCookie(productId, quantity = 1, colorId = null, sizeId = null) {
         try {
             let cart = this.loadCartFromCookie();
-            
+
             // Ensure cart is an array
             if (!Array.isArray(cart)) {
                 cart = [];
             }
-            
+
             // Check if same product with same color and size already exists
-            const existingItem = cart.find(item => 
-                item.productId === productId && 
-                (item.colorId || null) === (colorId || null) && 
+            const existingItem = cart.find(item =>
+                item.productId === productId &&
+                (item.colorId || null) === (colorId || null) &&
                 (item.sizeId || null) === (sizeId || null)
             );
-            
+
             if (existingItem) {
                 existingItem.quantity += quantity;
             } else {
-                cart.push({ 
-                    productId: productId, 
+                cart.push({
+                    productId: productId,
                     quantity: quantity,
                     colorId: colorId || null,
                     sizeId: sizeId || null
                 });
             }
-            
+
             this.saveCartToCookie(cart);
-            
+
             // Trigger custom event for immediate UI update
             if (typeof window !== 'undefined' && window.dispatchEvent) {
-                window.dispatchEvent(new CustomEvent('cartUpdated', { 
-                    detail: { productId, quantity, action: 'added' } 
+                window.dispatchEvent(new CustomEvent('cartUpdated', {
+                    detail: { productId, quantity, action: 'added' }
                 }));
             }
-            
+
             return { success: true, message: 'Product added to cart' };
         } catch (error) {
             console.error('Error adding to cart cookie:', error);
@@ -189,29 +188,64 @@ const CartManager = {
                 });
 
                 const data = await response.json();
-                
+
                 if (response.ok && data.success) {
-                    // Process items to include proper image URLs with fallback and discount info
                     const items = (data.data.items || []).map(item => {
-                        // Calculate price with discount if available
-                        const discount = item.discount || item.product?.discount || 0;
-                        const originalPrice = item.price || item.product?.price || 0;
-                        const priceAfterDiscount = discount > 0 ? originalPrice * (1 - discount) : originalPrice;
+                        const discount = item.discount || item.product?.discount || (item.price && typeof item.price === 'object' ? item.price.discount : 0) || 0;
+                        let originalPrice = 0;
+                        if (typeof item.price === 'number') {
+                            originalPrice = item.price;
+                        } else if (item.price && typeof item.price === 'object') {
+                            originalPrice = item.price.price || (item.price.product ? item.price.product.price : 0);
+                        } else {
+                            originalPrice = item.product?.price || 0;
+                        }
+
+                        const priceAfterDiscount = discount > 0 ? originalPrice * (1 - discount / 100) : originalPrice;
                         const totalPrice = priceAfterDiscount * (item.quantity || 1);
-                        
+                        const originalTotalPrice = originalPrice * (item.quantity || 1);
+
                         return {
                             ...item,
                             price: originalPrice,
                             discount: discount,
                             priceAfterDiscount: priceAfterDiscount,
                             totalPrice: totalPrice,
+                            originalTotalPrice: originalTotalPrice,
                             mainImageUrl: item.mainImageUrl || item.productImageUrl || item.product?.mainImageUrl || (item.mainImage ? `${API_CONFIG.BASE_URL}/Images/${item.mainImage}` : 'assets/images/products/error/error.png'),
                             productImageUrl: item.productImageUrl || item.mainImageUrl || item.product?.mainImageUrl || (item.mainImage ? `${API_CONFIG.BASE_URL}/Images/${item.mainImage}` : 'assets/images/products/error/error.png')
                         };
                     });
-                    // Calculate total amount from items with discounts
+                    // Calculate totals
                     const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
-                    return { success: true, items: items, totalAmount: totalAmount };
+                    const originalTotalAmount = items.reduce((sum, item) => sum + item.originalTotalPrice, 0);
+
+                    // Centralized Best Discount Logic
+                    const productDiscountBenefit = Math.max(0, originalTotalAmount - totalAmount);
+                    let couponBenefit = 0;
+                    let appliedCoupon = null;
+
+                    if (typeof CouponManager !== 'undefined') {
+                        appliedCoupon = CouponManager.loadCouponFromStorage();
+                        if (appliedCoupon) {
+                            couponBenefit = CouponManager.getDiscountAmount(originalTotalAmount);
+                        }
+                    }
+
+                    const useCoupon = couponBenefit > productDiscountBenefit;
+                    const discountSource = useCoupon ? 'coupon' : 'product';
+                    const bestTotalAmount = useCoupon ? (originalTotalAmount - couponBenefit) : totalAmount;
+
+                    return {
+                        success: true,
+                        items: items,
+                        totalAmount: totalAmount,
+                        originalTotalAmount: originalTotalAmount,
+                        bestTotalAmount: bestTotalAmount,
+                        discountSource: discountSource,
+                        couponBenefit: couponBenefit,
+                        appliedCoupon: appliedCoupon
+                    };
                 } else {
                     return { success: false, items: [], totalAmount: 0 };
                 }
@@ -222,27 +256,25 @@ const CartManager = {
         } else {
             // Load from cookies
             const cart = this.loadCartFromCookie();
-            
+
             // Fetch product details for cart items
             if (cart.length > 0) {
                 try {
                     // Fetch products (required)
                     const productsResponse = await fetch(API_CONFIG.getApiUrl('Products/GetAllProducts'));
-                    
+
                     if (!productsResponse.ok) {
                         throw new Error(`Failed to fetch products: ${productsResponse.status}`);
                     }
-                    
+
                     const productsData = await productsResponse.json();
-                    
-                    // Fetch colors and sizes (optional - handle errors gracefully)
+
                     let colors = [];
                     let sizes = [];
-                    
-                    // Only fetch colors if API endpoint exists (silently fail if 404)
+
                     try {
-                        const colorsResponse = await fetch(API_CONFIG.getApiUrl('Colors')).catch(() => null);
-                        
+                        const colorsResponse = await fetch(API_CONFIG.getApiUrl('Colors/GetAllColors')).catch(() => null);
+
                         if (colorsResponse && colorsResponse.ok && colorsResponse.status !== 404) {
                             const colorsData = await colorsResponse.json();
                             if (colorsData.success && colorsData.data) {
@@ -252,14 +284,13 @@ const CartManager = {
                             }
                         }
                     } catch (colorError) {
-                        // Colors API not available or failed - silently continue without color names
-                        // Don't log to console to avoid cluttering
+
                     }
-                    
+
                     // Only fetch sizes if API endpoint exists (silently fail if 404)
                     try {
-                        const sizesResponse = await fetch(API_CONFIG.getApiUrl('Sizes')).catch(() => null);
-                        
+                        const sizesResponse = await fetch(API_CONFIG.getApiUrl('Sizes/GetAllSizes')).catch(() => null);
+
                         if (sizesResponse && sizesResponse.ok && sizesResponse.status !== 404) {
                             const sizesData = await sizesResponse.json();
                             if (sizesData.success && sizesData.data) {
@@ -269,19 +300,17 @@ const CartManager = {
                             }
                         }
                     } catch (sizeError) {
-                        // Sizes API not available or failed - silently continue without size names
-                        // Don't log to console to avoid cluttering
+
                     }
-                    
+
                     if (productsData.success) {
                         const products = productsData.data || [];
                         const cartItems = cart.map(cartItem => {
                             const product = products.find(p => p.id === cartItem.productId);
                             if (product) {
-                                // Resolve color/size names: prefer product.colors and product.sizes from API ({ id, name, hexCode } / { id, name })
                                 let colorName = null;
                                 let sizeName = null;
-                                
+
                                 if (cartItem.colorId) {
                                     if (product.colors && Array.isArray(product.colors)) {
                                         const color = product.colors.find(c => (c.id || c.colorId) === cartItem.colorId);
@@ -292,7 +321,7 @@ const CartManager = {
                                         if (color) colorName = color.name || color.colorName;
                                     }
                                 }
-                                
+
                                 if (cartItem.sizeId) {
                                     if (product.sizes && Array.isArray(product.sizes)) {
                                         const size = product.sizes.find(s => (s.id || s.sizeId) === cartItem.sizeId);
@@ -307,8 +336,9 @@ const CartManager = {
                                 // Calculate price with discount
                                 const discount = product.discount || 0;
                                 const originalPrice = product.price || 0;
-                                const priceAfterDiscount = discount > 0 ? originalPrice * (1 - discount) : originalPrice;
+                                const priceAfterDiscount = discount > 0 ? originalPrice * (1 - discount / 100) : originalPrice;
                                 const totalPrice = priceAfterDiscount * cartItem.quantity;
+                                const originalTotalPrice = originalPrice * cartItem.quantity;
 
                                 return {
                                     productId: product.id,
@@ -323,27 +353,53 @@ const CartManager = {
                                     sizeName: sizeName,
                                     mainImageUrl: product.mainImageUrl || (product.mainImage ? `${API_CONFIG.BASE_URL}/Images/${product.mainImage}` : 'assets/images/products/error/error.png'),
                                     productImageUrl: product.mainImageUrl || (product.mainImage ? `${API_CONFIG.BASE_URL}/Images/${product.mainImage}` : 'assets/images/products/error/error.png'),
-                                    totalPrice: totalPrice
+                                    totalPrice: totalPrice,
+                                    originalTotalPrice: originalTotalPrice
                                 };
                             }
                             return null;
                         }).filter(item => item !== null);
-                        
+
                         const totalAmount = cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
-                        return { success: true, items: cartItems, totalAmount: totalAmount };
+                        const originalTotalAmount = cartItems.reduce((sum, item) => sum + item.originalTotalPrice, 0);
+
+                        // Centralized Best Discount Logic
+                        const productDiscountBenefit = Math.max(0, originalTotalAmount - totalAmount);
+                        let couponBenefit = 0;
+                        let appliedCoupon = null;
+
+                        if (typeof CouponManager !== 'undefined') {
+                            appliedCoupon = CouponManager.loadCouponFromStorage();
+                            if (appliedCoupon) {
+                                couponBenefit = CouponManager.getDiscountAmount(originalTotalAmount);
+                            }
+                        }
+
+                        const useCoupon = couponBenefit > productDiscountBenefit;
+                        const discountSource = useCoupon ? 'coupon' : 'product';
+                        const bestTotalAmount = useCoupon ? (originalTotalAmount - couponBenefit) : totalAmount;
+
+                        return {
+                            success: true,
+                            items: cartItems,
+                            totalAmount: totalAmount,
+                            originalTotalAmount: originalTotalAmount,
+                            bestTotalAmount: bestTotalAmount,
+                            discountSource: discountSource,
+                            couponBenefit: couponBenefit,
+                            appliedCoupon: appliedCoupon
+                        };
                     }
                 } catch (error) {
                     console.error('Error fetching products for cart:', error);
-                    // Return empty cart on error rather than breaking
                     return { success: true, items: [], totalAmount: 0 };
                 }
             }
-            
+
             return { success: true, items: [], totalAmount: 0 };
         }
     },
 
-    // Remove product from cart
     async removeFromCart(productId, colorId = null, sizeId = null) {
         if (this.isAuthenticated()) {
             try {
@@ -356,7 +412,7 @@ const CartManager = {
                 if (params.toString()) {
                     url += '?' + params.toString();
                 }
-                
+
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
@@ -373,10 +429,10 @@ const CartManager = {
         } else {
             // Remove from cookies - match by productId, colorId, and sizeId
             let cart = this.loadCartFromCookie();
-            cart = cart.filter(item => 
-                !(item.productId === productId && 
-                  (item.colorId || null) === (colorId || null) && 
-                  (item.sizeId || null) === (sizeId || null))
+            cart = cart.filter(item =>
+                !(item.productId === productId &&
+                    (item.colorId || null) === (colorId || null) &&
+                    (item.sizeId || null) === (sizeId || null))
             );
             this.saveCartToCookie(cart);
             return { success: true, message: 'Product removed from cart' };
@@ -386,8 +442,7 @@ const CartManager = {
     // Update quantity
     async updateQuantity(productId, quantity, colorId = null, sizeId = null) {
         if (this.isAuthenticated()) {
-            // For authenticated users, we need to use increase/decrease endpoints
-            // This is a simplified version - you might want to implement proper quantity update
+
             try {
                 const token = this.getToken();
                 // First get current cart to find current quantity
@@ -397,19 +452,19 @@ const CartManager = {
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 const cartData = await cartResponse.json();
                 if (cartData.success && cartData.data.items) {
                     // Find item matching productId, colorId, and sizeId
-                    const item = cartData.data.items.find(i => 
-                        i.productId === productId && 
-                        (i.colorId || null) === (colorId || null) && 
+                    const item = cartData.data.items.find(i =>
+                        i.productId === productId &&
+                        (i.colorId || null) === (colorId || null) &&
                         (i.sizeId || null) === (sizeId || null)
                     );
                     if (item) {
                         const currentQty = item.quantity;
                         const diff = quantity - currentQty;
-                        
+
                         if (diff > 0) {
                             // Increase - add color and size params if needed
                             let url = API_CONFIG.getApiUrl(`Customer/Carts/IncreaseCartItemQuantity/${productId}?quantity=${diff}`);
@@ -419,7 +474,7 @@ const CartManager = {
                             if (params.toString()) {
                                 url += '&' + params.toString();
                             }
-                            
+
                             const response = await fetch(url, {
                                 method: 'POST',
                                 headers: {
@@ -437,7 +492,7 @@ const CartManager = {
                             if (params.toString()) {
                                 url += '&' + params.toString();
                             }
-                            
+
                             const response = await fetch(url, {
                                 method: 'POST',
                                 headers: {
@@ -457,9 +512,9 @@ const CartManager = {
         } else {
             // Update in cookies - match by productId, colorId, and sizeId
             let cart = this.loadCartFromCookie();
-            const item = cart.find(i => 
-                i.productId === productId && 
-                (i.colorId || null) === (colorId || null) && 
+            const item = cart.find(i =>
+                i.productId === productId &&
+                (i.colorId || null) === (colorId || null) &&
                 (i.sizeId || null) === (sizeId || null)
             );
             if (item) {
@@ -486,7 +541,7 @@ const CartManager = {
         const cartDropdown = document.querySelector('.dropdown-cart-products');
         const cartCount = document.querySelector('.cart-count');
         const cartTotal = document.querySelector('.cart-total-price');
-        
+
         // Update cart count - always use the actual cart data (single source of truth)
         if (cartCount) {
             const actualCount = cartData.success ? cartData.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
@@ -498,7 +553,7 @@ const CartManager = {
                 cartCount.style.display = '';
             }
         }
-        
+
         // Update cart dropdown content
         if (cartDropdown) {
             if (!cartData.success || cartData.items.length === 0) {
@@ -508,14 +563,14 @@ const CartManager = {
                 }
                 return;
             }
-            
+
             // Render cart items in dropdown
             cartDropdown.innerHTML = cartData.items.slice(0, 3).map(item => {
                 const variantInfo = [];
                 if (item.colorName) variantInfo.push(`Color: ${item.colorName}`);
                 if (item.sizeName) variantInfo.push(`Size: ${item.sizeName}`);
                 const variantText = variantInfo.length > 0 ? `<div class="text-muted small">${variantInfo.join(', ')}</div>` : '';
-                
+
                 return `
                 <div class="product" data-product-id="${item.productId}" data-color-id="${item.colorId || ''}" data-size-id="${item.sizeId || ''}">
                     <div class="product-cart-details">
@@ -525,7 +580,7 @@ const CartManager = {
                         ${variantText}
                         <span class="cart-product-info">
                             <span class="cart-product-qty">${item.quantity}</span>
-                            x $${item.price.toFixed(2)}
+                            x ILS ${item.priceAfterDiscount.toFixed(2)}
                         </span>
                     </div>
                     <figure class="product-image-container">
@@ -539,15 +594,15 @@ const CartManager = {
                 </div>
             `;
             }).join('');
-            
+
             // Update total
             if (cartTotal) {
-                cartTotal.textContent = `$${cartData.totalAmount.toFixed(2)}`;
+                cartTotal.textContent = `ILS ${Math.round(cartData.bestTotalAmount)}`;
             }
-            
+
             // Attach remove item listeners
             cartDropdown.querySelectorAll('.navbar-remove-item').forEach(btn => {
-                btn.addEventListener('click', async function(e) {
+                btn.addEventListener('click', async function (e) {
                     e.preventDefault();
                     const productId = parseInt(this.getAttribute('data-product-id'));
                     const colorId = this.getAttribute('data-color-id') ? parseInt(this.getAttribute('data-color-id')) : null;
@@ -571,65 +626,56 @@ const CartManager = {
 
 window.CartManager = CartManager;
 
-$(document).ready(async function() {
-    // Initialize navbar cart on page load
+$(document).ready(async function () {
     await CartManager.updateNavbarCart();
-    
-    // Listen for cart update events - just trigger full update (no manual count increment to avoid double counting)
-    window.addEventListener('cartUpdated', async function(event) {
-        // Don't manually update count here - let updateNavbarCart() handle it from actual cart data
-        // This prevents double-counting issues
+
+    window.addEventListener('cartUpdated', async function (event) {
+
         if (CartManager.updateNavbarCart) {
-            // Small delay to ensure cart is saved, then update from actual data
             setTimeout(async () => {
                 await CartManager.updateNavbarCart().catch(err => console.error('Error updating cart:', err));
-            }, 300); // 300ms delay to ensure cart is saved
+            }, 300);
         }
     });
-    
-    // Update navbar cart periodically (every 5 seconds) if on pages with cart
+
     if (document.querySelector('.cart-dropdown')) {
         setInterval(async () => {
             await CartManager.updateNavbarCart();
         }, 5000);
     }
     // Handle add to cart buttons (only for non-product-details pages)
-    $(document).on('click', '.btn-cart, .add-to-cart-btn', async function(e) {
+    $(document).on('click', '.btn-cart, .add-to-cart-btn', async function (e) {
         // Skip if this is on product details page (it has its own handler)
         const $clickedElement = $(e.target);
-        const $button = $clickedElement.hasClass('btn-cart') || $clickedElement.hasClass('add-to-cart-btn') 
-            ? $clickedElement 
+        const $button = $clickedElement.hasClass('btn-cart') || $clickedElement.hasClass('add-to-cart-btn')
+            ? $clickedElement
             : $clickedElement.closest('.btn-cart, .add-to-cart-btn');
-        
+
         if ($button.length === 0) {
             return;
         }
-        
-        if ($button.closest('.product-details-action').length > 0 || 
+
+        if ($button.closest('.product-details-action').length > 0 ||
             $button.closest('.product-details').length > 0 ||
             window.location.pathname.includes('product.html')) {
             // Let product-details.js handle it
             return;
         }
-        
+
         e.preventDefault();
         e.stopPropagation();
-        
-        // Get product ID from data attribute - try multiple methods
+
         let productId = $button.data('product-id');
-        
-        // Try attr as fallback (sometimes data() doesn't work with dynamically added elements)
+
         if (!productId) {
             productId = $button.attr('data-product-id');
         }
-        
-        // If not found, try to get from parent element
+
         if (!productId) {
-            productId = $button.closest('[data-product-id]').attr('data-product-id') || 
-                       $button.closest('[data-product-id]').data('product-id');
+            productId = $button.closest('[data-product-id]').attr('data-product-id') ||
+                $button.closest('[data-product-id]').data('product-id');
         }
-        
-        // Try to get from the button's href if it contains product.html?id=
+
         if (!productId) {
             const href = $button.attr('href');
             if (href && href.includes('product.html?id=')) {
@@ -639,8 +685,7 @@ $(document).ready(async function() {
                 }
             }
         }
-        
-        // Debug: log if product ID is not found
+
         if (!productId) {
             console.error('Product ID not found. Button:', $button[0]);
             console.error('Button classes:', $button.attr('class'));
@@ -650,8 +695,7 @@ $(document).ready(async function() {
             }
             return;
         }
-        
-        // Convert to integer
+
         productId = parseInt(productId);
         if (isNaN(productId) || productId <= 0) {
             console.error('Invalid product ID:', productId);
@@ -660,31 +704,29 @@ $(document).ready(async function() {
             }
             return;
         }
-        
+
         // Get quantity if available
         const quantityInput = $button.closest('.product-details-action, .product, .product-4').find('input[type="number"]');
         const quantity = quantityInput.length > 0 ? parseInt(quantityInput.val()) || 1 : 1;
-        
+
         // Disable button temporarily
         const originalText = $button.html();
         $button.prop('disabled', true).html('<span>Adding...</span>');
-        
+
         try {
             // Check if CartManager is available
             if (typeof CartManager === 'undefined') {
                 throw new Error('CartManager is not available');
             }
-            
+
             const result = await CartManager.addToCart(productId, quantity);
-            
+
             if (result && result.success) {
                 // Show success notification immediately
                 if (window.notyf) {
                     window.notyf.success(result.message || 'Product added to cart successfully');
                 }
-                
-                // Update cart count from actual cart data (single source of truth)
-                // For immediate feedback, update count optimistically, then refresh from actual data
+
                 const cartCountElement = document.querySelector('.cart-count');
                 if (cartCountElement) {
                     const currentCount = parseInt(cartCountElement.textContent) || 0;
@@ -692,13 +734,11 @@ $(document).ready(async function() {
                     cartCountElement.textContent = optimisticCount;
                     cartCountElement.style.display = optimisticCount > 0 ? '' : 'none';
                 }
-                
-                // Update full navbar cart from actual data - delay to ensure cart is saved
+
                 if (CartManager.updateNavbarCart) {
-                    // Wait a bit to ensure cart is saved (especially for API calls)
                     setTimeout(async () => {
                         await CartManager.updateNavbarCart();
-                    }, 300); // 300ms delay to ensure cart is saved
+                    }, 300);
                 }
             } else {
                 // Show error message

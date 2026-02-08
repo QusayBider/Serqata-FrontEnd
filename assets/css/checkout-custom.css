@@ -1,0 +1,52 @@
+/* Custom styles for checkout phone code select */
+#checkout-phone-code {
+    font-size: 14px;
+    padding-right: 8px;
+}
+
+/* Improve select display on small screens */
+@media (max-width: 576px) {
+    #checkout-phone-code {
+        font-size: 13px;
+        padding: 0.375rem 0.5rem;
+    }
+
+    #checkout-phone-code option {
+        font-size: 13px;
+    }
+}
+
+/* Ensure phone code and phone number are aligned properly */
+.row>[class*='col-'] {
+    padding-right: 7.5px;
+    padding-left: 7.5px;
+}
+
+/* Fix coupon input label overlap when value exists */
+.checkout-discount input:not(:placeholder-shown)+label,
+.checkout-discount input:focus+label {
+    display: none;
+}
+
+.checkout-discount input.has-value+label {
+    display: none;
+}
+
+/* Delivery estimation message styling */
+.delivery-estimation-message {
+    text-align: left;
+    margin: 15px auto;
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 600px;
+}
+
+.delivery-estimation-message strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}

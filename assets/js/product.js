@@ -4,11 +4,11 @@ const ViewMoreProductsBtn = document.querySelector('.ViewMoreProductsBtn');
 
 // Helper function to check if product is in wishlist
 const isProductInWishlist = (productId) => {
-    if (typeof WishlistManager !== 'undefined' && WishlistManager.loadWishlist) {
-        const wishlist = WishlistManager.loadWishlist();
-        return wishlist.includes(parseInt(productId));
-    }
-    return false;
+  if (typeof WishlistManager !== 'undefined' && WishlistManager.loadWishlist) {
+    const wishlist = WishlistManager.loadWishlist();
+    return wishlist.includes(parseInt(productId));
+  }
+  return false;
 };
 
 const getAllProducts = async () => {
@@ -18,7 +18,7 @@ const getAllProducts = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json(); 
+    const data = await response.json();
     return data;
   } catch (error) {
     console.error("Failed to fetch products:", error);
@@ -33,7 +33,7 @@ const getAllCategories = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json(); 
+    const data = await response.json();
     return data;
   } catch (error) {
     console.error("Failed to fetch categories:", error);
@@ -42,46 +42,46 @@ const getAllCategories = async () => {
 };
 
 
- /* async function loadProducts() {
-    try {
-        const sidebarContainer = document.getElementById('best-selling-container');
-       sidebarContainer.innerHTML = data.bestSellers.map(product => `
-            <div class="product product-sm">
-                <figure class="product-media">
-                    <a href="product.html?id=${product.id}">
-                        <img src="${product.smallImage}" alt="${product.name}" class="product-image">
-                    </a>
-                </figure>
-                <div class="product-body">
-                    <div class="product-cat">
-                        <a href="#">${product.category}</a>
-                    </div>
-                    <h5 class="product-title"><a href="product.html?id=${product.id}">${product.name}</a></h5>
-                    <div class="product-price">$${product.price}</div>
-                </div>
-            </div>
-        `).join('');
+/* async function loadProducts() {
+   try {
+       const sidebarContainer = document.getElementById('best-selling-container');
+      sidebarContainer.innerHTML = data.bestSellers.map(product => `
+           <div class="product product-sm">
+               <figure class="product-media">
+                   <a href="product.html?id=${product.id}">
+                       <img src="${product.smallImage}" alt="${product.name}" class="product-image">
+                   </a>
+               </figure>
+               <div class="product-body">
+                   <div class="product-cat">
+                       <a href="#">${product.category}</a>
+                   </div>
+                   <h5 class="product-title"><a href="product.html?id=${product.id}">${product.name}</a></h5>
+                   <div class="product-price">$${product.price}</div>
+               </div>
+           </div>
+       `).join('');
 
-    } catch (error) {
-        console.error("Error fetching products:", error);
-        loader.classList.remove('hidden');
-        ViewMoreProductsBtn.classList.add('hidden');
-    }
+   } catch (error) {
+       console.error("Error fetching products:", error);
+       loader.classList.remove('hidden');
+       ViewMoreProductsBtn.classList.add('hidden');
+   }
 }*/
 
 const displayALLProducts = async () => {
   const mainContainer = document.getElementById('recent-arrivals-container');
   const loaderElement = mainContainer.querySelector('.loader');
-  
-  try{
+
+  try {
     // Show loader if it exists
     if (loaderElement) {
       loaderElement.style.display = 'block';
     }
-    
+
     const allProducts = await getAllProducts();
     const allCategories = await getAllCategories();
-    
+
     const products = Array.isArray(allProducts) ? allProducts : (allProducts.success ? allProducts.data : []);
     const categories = Array.isArray(allCategories) ? allCategories : (allCategories.success ? allCategories.data : []);
 
@@ -92,18 +92,18 @@ const displayALLProducts = async () => {
         categoryMap[cat.id] = cat.name;
       });
     }
-    
+
     // Remove loader from container
     if (loaderElement) {
       loaderElement.remove();
     }
-    
+
     if (products.length === 0) {
       mainContainer.innerHTML = "<p class='text-center'>No products available.</p>";
       if (ViewMoreProductsBtn) ViewMoreProductsBtn.classList.add('hidden');
       return;
     }
-    
+
     const result = products
       .map((product) => {
         // Ensure product has an ID
@@ -111,14 +111,14 @@ const displayALLProducts = async () => {
           console.error('Product missing ID:', product);
           return '';
         }
-        
+
         const categoryName = categoryMap[product.categoryId] || product.category || 'Uncategorized';
         const mainImageUrl = product.mainImageUrl || (product.mainImage ? `${API_CONFIG.BASE_URL}/Images/${product.mainImage}` : 'assets/images/products/error/error.png');
         const productId = parseInt(product.id);
         const inWishlist = isProductInWishlist(productId);
         const wishlistClass = inWishlist ? 'added' : '';
         const wishlistIcon = inWishlist ? 'icon-heart' : 'icon-heart-o';
-        
+
         return `
         <div class="col-6 col-md-4">
                 <div class="product product-4" data-product-id="${productId}">
@@ -146,8 +146,8 @@ const displayALLProducts = async () => {
                         <h3 class="product-title"><a href="product.html?id=${productId}">${product.name}</a></h3>
                         <div class="product-price">
                             ${product.discount
-                                ? `<span class="new-price">Now ILs ${(product.price * (1 - product.discount)).toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>` 
-                                : `ILs ${product.price.toFixed(2)}`}
+            ? `<span class="new-price">Now ILs ${(product.price * (1 - product.discount / 100)).toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
+            : `ILs ${product.price.toFixed(2)}`}
                         </div>
                         <div class="product-nav product-nav-dots ml-1">
                             ${product.colors && Array.isArray(product.colors) ? product.colors.map((color, index) => `
@@ -162,7 +162,7 @@ const displayALLProducts = async () => {
       .filter(html => html !== '') // Remove empty entries
       .join(" ");
     mainContainer.innerHTML = result;
-    
+
     if (ViewMoreProductsBtn) {
       ViewMoreProductsBtn.classList.remove('hidden');
     }
@@ -171,7 +171,7 @@ const displayALLProducts = async () => {
       $(document).trigger('productsLoaded');
     }
   }
-  catch(error ){
+  catch (error) {
     console.error("Error displaying products:", error);
     mainContainer.innerHTML = "<div class='alert alert-danger text-center'>Error loading products. Please refresh the page.</div>";
     if (ViewMoreProductsBtn) ViewMoreProductsBtn.classList.add('hidden');
@@ -183,9 +183,9 @@ displayALLProducts();
 function addToWishlistHandler(event, productId) {
   event.preventDefault();
   event.stopPropagation();
-  
+
   const isInWishlist = isProductInWishlist(productId);
-  
+
   if (isInWishlist) {
     // Remove from wishlist
     if (typeof WishlistManager !== 'undefined' && WishlistManager.removeItem) {
@@ -202,7 +202,7 @@ function addToWishlistHandler(event, productId) {
     }
   } else {
     // Add to wishlist
-    if(typeof window.addToWishlist === 'function') {
+    if (typeof window.addToWishlist === 'function') {
       window.addToWishlist(productId);
       updateWishlistButtonUI(productId, true);
       // Refresh products to update all wishlist buttons
@@ -228,7 +228,7 @@ function updateWishlistButtonUI(productId, isInWishlist) {
         existingIcons[i].remove();
       }
     }
-    
+
     // Get the existing icon (should always exist from HTML template)
     const icon = btn.querySelector('i');
     if (!icon) {
@@ -236,7 +236,7 @@ function updateWishlistButtonUI(productId, isInWishlist) {
       console.warn(`Wishlist button for product ${productId} is missing icon element`);
       return;
     }
-    
+
     // Update the existing icon only
     if (isInWishlist) {
       btn.classList.add('added');

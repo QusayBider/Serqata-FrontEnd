@@ -1,194 +1,267 @@
-// Delivery/Shipping Management System
+
 const DeliveryManager = {
-    deliveryOptions: [],
-    selectedDelivery: null,
+    deliverySections: [],
+    freeDeliveryAboveAmount: 0,
+    selectedSection: null,
+    selectedCity: null,
 
-    // Get delivery options by section and city
-    async getDeliveryOptions(sectionId = null, cityId = null) {
+    // Fetch delivery costs by section (all sections with cities)
+    async getDeliveryCostsBySection() {
         try {
-            let url = API_CONFIG.getApiUrl('Deliveries');
-            const params = new URLSearchParams();
-            
-            if (sectionId) {
-                params.append('sectionId', sectionId);
-            }
-            if (cityId) {
-                params.append('cityId', cityId);
-            }
-            
-            if (params.toString()) {
-                url += '?' + params.toString();
-            }
-            
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+            const response = await fetch(API_CONFIG.getApiUrl('DeliveryCosts/GetBySection'));
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-            console.log("Fetched delivery options:", data);
-            
-            // Handle different response formats
             if (data.success && data.data) {
-                this.deliveryOptions = Array.isArray(data.data) ? data.data : [data.data];
+                this.deliverySections = Array.isArray(data.data) ? data.data : [data.data];
             } else if (Array.isArray(data)) {
-                this.deliveryOptions = data;
-            } else if (data.data && Array.isArray(data.data)) {
-                this.deliveryOptions = data.data;
+                this.deliverySections = data;
             } else {
-                this.deliveryOptions = [];
+                this.deliverySections = [];
             }
-            
-            return this.deliveryOptions;
+            return this.deliverySections;
         } catch (error) {
-            console.error("Failed to fetch delivery options:", error);
-            this.deliveryOptions = [];
+            console.error('Failed to fetch delivery costs:', error);
+            this.deliverySections = [];
             return [];
         }
     },
 
-    // Get all sections (for address selection)
-    async getSections() {
+    // Fetch company settings for free delivery threshold
+    async getCompanySettings() {
         try {
-            const response = await fetch(API_CONFIG.getApiUrl('Sections'));
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+            const response = await fetch(API_CONFIG.getApiUrl('Company/GetAllCompanies'));
+            if (!response.ok) return;
             const data = await response.json();
-            
-            if (data.success && data.data) {
-                return Array.isArray(data.data) ? data.data : [data.data];
-            } else if (Array.isArray(data)) {
-                return data;
+            const list = (data.success && data.data) ? (Array.isArray(data.data) ? data.data : [data.data]) : (Array.isArray(data) ? data : []);
+            const company = list && list.length > 0 ? list[0] : null;
+            if (company && (company.freeDeliveryAboveAmount != null || company.freeDeliveryAbove != null)) {
+                this.freeDeliveryAboveAmount = parseFloat(company.freeDeliveryAboveAmount ?? company.freeDeliveryAbove) || 0;
             }
-            
-            return [];
         } catch (error) {
-            console.error("Failed to fetch sections:", error);
-            return [];
+            console.error('Failed to fetch company settings:', error);
         }
     },
 
-    // Get all cities
-    async getCities() {
-        try {
-            const response = await fetch(API_CONFIG.getApiUrl('Cities'));
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+    getShippingCost(cartSubtotal) {
+        const subtotal = parseFloat(cartSubtotal) || 0;
 
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                return Array.isArray(data.data) ? data.data : [data.data];
-            } else if (Array.isArray(data)) {
-                return data;
-            }
-            
-            return [];
-        } catch (error) {
-            console.error("Failed to fetch cities:", error);
-            return [];
+        // Step 1: Check for "checked by team" (-1) status first
+        let rawCost = 0;
+        if (this.selectedCity != null && this.selectedCity.cost != null) {
+            rawCost = parseFloat(this.selectedCity.cost);
+        } else if (this.selectedSection != null && this.selectedSection.cost != null) {
+            rawCost = parseFloat(this.selectedSection.cost);
         }
+
+        if (rawCost === -1) {
+            return -1;
+        }
+
+        // Step 2: Check for free delivery threshold
+        if (this.freeDeliveryAboveAmount > 0 && subtotal >= this.freeDeliveryAboveAmount) {
+            return 0;
+        }
+
+        return rawCost || 0;
     },
 
-    // Load and render shipping options
-    async loadShippingOptions(containerSelector = '.summary-shipping-row', sectionId = null, cityId = null) {
-        try {
-            const options = await this.getDeliveryOptions(sectionId, cityId);
-            const container = document.querySelector(containerSelector);
-            
-            if (!container) {
-                console.warn('Shipping container not found');
-                return;
+    // Check if delivery is free for given subtotal
+    isFreeDelivery(cartSubtotal) {
+        const subtotal = parseFloat(cartSubtotal) || 0;
+
+        // If cost is -1, it's NOT free delivery (must be checked by team)
+        if (this.getShippingCost(subtotal) === -1) {
+            return false;
+        }
+
+        return this.freeDeliveryAboveAmount > 0 && subtotal >= this.freeDeliveryAboveAmount;
+    },
+
+    // Load and render shipping / "Estimate for Your Country" UI
+    async loadShippingOptions() {
+        await this.getCompanySettings();
+        const sections = await this.getDeliveryCostsBySection();
+
+        const shippingRow = document.querySelector('.summary-shipping td:last-child');
+        const estimateRow = document.getElementById('shipping-estimate-row');
+        if (!estimateRow) return;
+
+        const estimateTd = document.getElementById('delivery-estimate-content') || estimateRow.querySelector('td');
+        if (!estimateTd) return;
+
+        // Build section/city dropdowns and cost display
+        if (sections.length === 0) {
+            estimateTd.innerHTML = '<span class="text-muted">No delivery options</span>';
+            if (shippingRow) shippingRow.textContent = 'ILS 0.00';
+            return;
+        }
+
+        const firstSection = sections[0];
+        const firstCities = firstSection.cities || [];
+        const firstCity = firstCities.length > 0 ? firstCities[0] : null;
+        this.selectedSection = firstSection;
+        this.selectedCity = firstCity;
+        const sectionSelectId = 'delivery-section-select';
+        const citySelectId = 'delivery-city-select';
+        const shippingCostSpanId = 'shipping-cost-display';
+
+        const sectionOptions = sections.map((s, i) =>
+            `<option value="${i}">${(s.sectionName || 'Country').replace(/</g, '&lt;')}</option>`
+        ).join('');
+        const cityOptions = firstCities.map((c) =>
+            `<option value="${c.id}" data-cost="${c.cost != null ? c.cost : (firstSection.cost != null ? firstSection.cost : 0)}">${(c.cityName || 'City').replace(/</g, '&lt;')}</option>`
+        ).join('');
+
+        estimateTd.innerHTML = `
+            <div class="delivery-estimate">
+                <label for="${sectionSelectId}" class="d-block mb-1">Country</label>
+                <select id="${sectionSelectId}" class="form-control form-control-sm mb-1">
+                    ${sectionOptions}
+                </select>
+                <label for="${citySelectId}" class="d-block mb-1">City</label>
+                <select id="${citySelectId}" class="form-control form-control-sm mb-1">
+                    ${cityOptions}
+                </select>
+            </div>
+           
+        `;
+
+        const sectionSelect = document.getElementById(sectionSelectId);
+        const citySelect = document.getElementById(citySelectId);
+        const shippingCostSpan = document.getElementById(shippingCostSpanId);
+
+        // Helper to save current selection to localStorage
+        const saveSelection = () => {
+            if (sectionSelect && sectionSelect.selectedIndex >= 0) {
+                const selectedOption = sectionSelect.options[sectionSelect.selectedIndex];
+                if (selectedOption) localStorage.setItem('shipping_country', selectedOption.text);
             }
-
-            // Find the parent tbody to insert rows
-            const tbody = container.closest('tbody') || container.parentElement;
-            if (!tbody) return;
-
-            // Remove existing shipping rows (except the header)
-            const existingRows = tbody.querySelectorAll('.summary-shipping-row');
-            existingRows.forEach(row => {
-                if (row.querySelector('input[name="shipping"]')) {
-                    row.remove();
-                }
-            });
-
-            if (options.length === 0) {
-                // Default free shipping option
-                const freeShippingRow = document.createElement('tr');
-                freeShippingRow.className = 'summary-shipping-row';
-                freeShippingRow.innerHTML = `
-                    <td>
-                        <div class="custom-control custom-radio">
-                            <input type="radio" id="free-shipping" name="shipping" class="custom-control-input" value="0" checked>
-                            <label class="custom-control-label" for="free-shipping">Free Shipping</label>
-                        </div>
-                    </td>
-                    <td>$0.00</td>
-                `;
-                tbody.insertBefore(freeShippingRow, tbody.querySelector('.summary-shipping-estimate'));
-                return;
+            if (citySelect && citySelect.selectedIndex >= 0) {
+                const selectedOption = citySelect.options[citySelect.selectedIndex];
+                if (selectedOption) localStorage.setItem('shipping_city', selectedOption.text);
             }
+        };
 
-            // Render delivery options
-            options.forEach((option, index) => {
-                const deliveryId = option.id || option.deliveryId;
-                const deliveryName = option.name || option.deliveryName || `Delivery Option ${index + 1}`;
-                const cost = option.cost || option.price || 0;
-                const isDefault = index === 0;
-
-                const row = document.createElement('tr');
-                row.className = 'summary-shipping-row';
-                row.innerHTML = `
-                    <td>
-                        <div class="custom-control custom-radio">
-                            <input type="radio" id="shipping-${deliveryId}" name="shipping" class="custom-control-input" value="${cost}" data-delivery-id="${deliveryId}" ${isDefault ? 'checked' : ''}>
-                            <label class="custom-control-label" for="shipping-${deliveryId}">${deliveryName}</label>
-                        </div>
-                    </td>
-                    <td>$${cost.toFixed(2)}</td>
-                `;
-                
-                // Insert before the estimate row
-                const estimateRow = tbody.querySelector('.summary-shipping-estimate');
-                if (estimateRow) {
-                    tbody.insertBefore(row, estimateRow);
+        const updateCityDropdown = (sectionIndex) => {
+            const section = sections[Number(sectionIndex)];
+            if (!section || !citySelect) return;
+            const cities = section.cities || [];
+            citySelect.innerHTML = cities.length
+                ? cities.map(c =>
+                    `<option value="${c.id}" data-cost="${c.cost != null ? c.cost : (section.cost != null ? section.cost : 0)}">${(c.cityName || 'City').replace(/</g, '&lt;')}</option>`
+                ).join('')
+                : `<option value="" data-cost="${section.cost != null ? section.cost : 0}">${(section.sectionName || 'Section').replace(/</g, '&lt;')}</option>`;
+            const first = cities[0];
+            DeliveryManager.selectedSection = section;
+            DeliveryManager.selectedCity = first || (cities.length === 0 ? { cost: section.cost } : null);
+            if (shippingCostSpan) {
+                const cost = first ? (first.cost != null ? first.cost : section.cost) : (section.cost != null ? section.cost : 0);
+                const deliveryNoteEl = document.getElementById('delivery-note');
+                if (cost === -1) {
+                    shippingCostSpan.innerHTML = '<span class="orderText">Delivery cost will be estimated by our team.</span>';
+                    if (deliveryNoteEl) deliveryNoteEl.innerHTML = '<span class="checkout-shipping text-left d-block">Delivery cost will be estimated by our team.</span>';
                 } else {
-                    tbody.appendChild(row);
+                    shippingCostSpan.textContent = 'ILS ' + (cost != null ? Number(cost).toFixed(2) : '0.00');
+                    if (deliveryNoteEl) deliveryNoteEl.textContent = '';
                 }
-            });
-
-            // Add event listeners for shipping selection
-            tbody.querySelectorAll('input[name="shipping"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    DeliveryManager.selectedDelivery = {
-                        id: this.getAttribute('data-delivery-id'),
-                        cost: parseFloat(this.value)
-                    };
-                    // Trigger cart total update
-                    if (typeof updateCartTotal === 'function') {
-                        updateCartTotal();
-                    }
-                });
-            });
-
-            // Set default selection
-            if (options.length > 0) {
-                const firstOption = options[0];
-                this.selectedDelivery = {
-                    id: firstOption.id || firstOption.deliveryId,
-                    cost: firstOption.cost || firstOption.price || 0
-                };
             }
-        } catch (error) {
-            console.error('Error loading shipping options:', error);
+            updateShippingRowDisplay();
+            if (typeof updateCartTotal === 'function') updateCartTotal();
+            saveSelection();
+        };
+
+        const updateShippingRowDisplay = () => {
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const subtotal = subtotalEl ? parseFloat(subtotalEl.textContent.replace(/[ILS$,\s]/g, '')) || 0 : 0;
+            const cost = DeliveryManager.getShippingCost(subtotal);
+            const isFree = DeliveryManager.isFreeDelivery(subtotal);
+            if (shippingRow) {
+                if (cost === -1) {
+                    shippingRow.innerHTML = '<span class="text-danger text-left d-block">Delivery cost will be estimated by our team.</span>';
+                } else {
+                    shippingRow.textContent = isFree ? 'Free' : ('ILS ' + cost.toFixed(2));
+                }
+            }
+            if (shippingCostSpan) {
+                const deliveryNoteEl = document.getElementById('delivery-note');
+                if (cost === -1) {
+                    shippingCostSpan.innerHTML = '<span class="orderText">Delivery cost will be estimated by our team.</span>';
+                    if (deliveryNoteEl) deliveryNoteEl.innerHTML = '<span class="checkout-shipping  text-left d-block">Delivery cost will be estimated by our team.</span>';
+                } else {
+                    shippingCostSpan.textContent = isFree ? 'Free (order above ILS ' + DeliveryManager.freeDeliveryAboveAmount + ')' : ('ILS ' + cost.toFixed(2));
+                    if (deliveryNoteEl) deliveryNoteEl.textContent = '';
+                }
+            }
+        };
+
+        sectionSelect.addEventListener('change', function () {
+            updateCityDropdown(this.value);
+        });
+
+        citySelect.addEventListener('change', function () {
+            const opt = this.options[this.selectedIndex];
+            const cost = opt ? parseFloat(opt.getAttribute('data-cost')) : 0;
+            DeliveryManager.selectedCity = {
+                id: this.value ? parseInt(this.value, 10) : null,
+                cityName: opt ? opt.textContent : '',
+                cost: cost
+            };
+            if (shippingCostSpan) {
+                const deliveryNoteEl = document.getElementById('delivery-note');
+                if (cost === -1) {
+                    shippingCostSpan.innerHTML = '<span class="orderText">Delivery cost will be estimated by our team.</span>';
+                    if (deliveryNoteEl) deliveryNoteEl.innerHTML = '<span class="checkout-shipping  text-left d-block">Delivery cost will be estimated by our team.</span>';
+                } else {
+                    shippingCostSpan.textContent = 'ILS ' + cost.toFixed(2);
+                    if (deliveryNoteEl) deliveryNoteEl.textContent = '';
+                }
+            }
+            updateShippingRowDisplay();
+            if (typeof updateCartTotal === 'function') updateCartTotal();
+            saveSelection();
+        });
+
+        // Initial display
+        updateShippingRowDisplay();
+        // Also save initial selection (usually the first one)
+        saveSelection();
+
+        if (shippingRow) {
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const subtotal = subtotalEl ? parseFloat(subtotalEl.textContent.replace(/[ILS$,\s]/g, '')) || 0 : 0;
+            const cost = this.getShippingCost(subtotal);
+            const isFree = this.isFreeDelivery(subtotal);
+            if (cost === -1) {
+                shippingRow.innerHTML = '<span class=".checkout-shipping text-left d-block">Delivery cost will be estimated by our team.</span>';
+            } else {
+                shippingRow.textContent = isFree ? 'Free' : ('ILS ' + cost.toFixed(2));
+            }
+        }
+    },
+
+    // Call after cart subtotal changes (e.g. after renderCart) to refresh shipping row and total
+    refreshShippingDisplay() {
+        const shippingRow = document.querySelector('.summary-shipping td:last-child');
+        const shippingCostSpan = document.getElementById('shipping-cost-display');
+        const subtotalEl = document.getElementById('cart-subtotal');
+        const subtotal = subtotalEl ? parseFloat(subtotalEl.textContent.replace(/[ILS$,\s]/g, '')) || 0 : 0;
+        const cost = this.getShippingCost(subtotal);
+        const isFree = this.isFreeDelivery(subtotal);
+        if (shippingRow) {
+            if (cost === -1) {
+                shippingRow.innerHTML = '<span class="checkout-shipping text-left d-block">Delivery cost will be estimated by our team.</span>';
+            } else {
+                shippingRow.textContent = isFree ? 'Free' : ('ILS ' + cost.toFixed(2));
+            }
+        }
+        if (shippingCostSpan) {
+            if (cost === -1) {
+                shippingCostSpan.innerHTML = '<span class="text-danger">Delivery cost will be estimated by our team.</span>';
+            } else {
+                shippingCostSpan.textContent = isFree ? 'Free (order above ILS ' + this.freeDeliveryAboveAmount + ')' : ('ILS ' + cost.toFixed(2));
+            }
         }
     }
 };
 
-// Make DeliveryManager globally available
 window.DeliveryManager = DeliveryManager;
-

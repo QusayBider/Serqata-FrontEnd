@@ -3,12 +3,12 @@ const WishlistManager = {
     cookieName: 'userWishlist',
     cookieExpireDays: 30,
     productsCache: null, // Cache for all products
-   
-    getApiUrl: function() {
+
+    getApiUrl: function () {
         return API_CONFIG ? API_CONFIG.getApiUrl('Products/GetAllProducts') : '';
     },
 
-    setCookie: function(name, value, days) {
+    setCookie: function (name, value, days) {
         const date = new Date();
         date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
         const expires = "expires=" + date.toUTCString();
@@ -16,24 +16,24 @@ const WishlistManager = {
         const cookieValue = JSON.stringify(value);
         // Get domain from global config if available
         const domain = API_CONFIG ? API_CONFIG.getDomain() : window.location.hostname;
-        const domainAttr = (domain === 'localhost' || domain === '127.0.0.1') 
-            ? '' 
+        const domainAttr = (domain === 'localhost' || domain === '127.0.0.1')
+            ? ''
             : ";domain=." + domain;
         document.cookie = name + "=" + cookieValue + ";" + expires + ";path=/" + domainAttr;
     },
 
     // Get cookie - Returns parsed JSON array
-    getCookie: function(name) {
+    getCookie: function (name) {
         const nameEQ = name + "=";
         const cookies = document.cookie.split(';');
-        for(let i = 0; i < cookies.length; i++) {
+        for (let i = 0; i < cookies.length; i++) {
             let cookie = cookies[i].trim();
-            if(cookie.indexOf(nameEQ) === 0) {
+            if (cookie.indexOf(nameEQ) === 0) {
                 const value = cookie.substring(nameEQ.length);
                 try {
                     const parsed = JSON.parse(value);
                     return parsed;
-                } catch(e) {
+                } catch (e) {
                     console.error('Error parsing cookie:', e);
                     return null;
                 }
@@ -43,27 +43,27 @@ const WishlistManager = {
     },
 
     // Load wishlist from cookie (returns array of product IDs only)
-    loadWishlist: function() {
+    loadWishlist: function () {
         const wishlist = this.getCookie(this.cookieName) || [];
         return wishlist;
     },
 
-    saveWishlist: function(productIds) {
+    saveWishlist: function (productIds) {
         // Ensure all IDs are numbers
         const numericIds = productIds.map(id => parseInt(id, 10));
         this.setCookie(this.cookieName, numericIds, this.cookieExpireDays);
     },
 
-    fetchAllProducts: async function() {
+    fetchAllProducts: async function () {
         // Return cached products if available
-        if(this.productsCache) {
+        if (this.productsCache) {
             return this.productsCache;
         }
 
         try {
-             const response = await fetch(this.getApiUrl());
-            if(!response.ok) {
-               
+            const response = await fetch(this.getApiUrl());
+            if (!response.ok) {
+
                 throw new Error(`API error: ${response.status}`);
             }
             const apiResponse = await response.json();
@@ -72,7 +72,7 @@ const WishlistManager = {
             // Cache the products
             this.productsCache = products;
             return this.productsCache;
-        } catch(error) {
+        } catch (error) {
             console.error('Error fetching products:', error);
             const html = document.getElementById('wishlistTable');
             html.innerHTML = `<div class="loader">Loading...</div>`;
@@ -80,39 +80,44 @@ const WishlistManager = {
         }
     },
 
-    fetchProductDetails: async function(productId) {
+    fetchProductDetails: async function (productId) {
         const products = await this.fetchAllProducts();
         // Ensure we're comparing as numbers
         const id = parseInt(productId, 10);
         const product = products.find(p => parseInt(p.id, 10) === id);
-        
-        if(!product) {
+
+        if (!product) {
             return null;
         }
+
+        const discount = product.discount || 0;
+        const finalPrice = discount > 0 ? product.price * (1 - discount / 100) : product.price;
 
         return {
             id: product.id,
             name: product.name,
-            price: '$' + product.price.toFixed(2),
-            image: product.mainImageUrl,
+            originalPrice: product.price,
+            price: 'ILS ' + finalPrice.toFixed(2),
+            finalPrice: finalPrice,
+            image: product.mainImageUrl || product.productImageUrl || (product.mainImage ? `${API_CONFIG.BASE_URL}/Images/${product.mainImage}` : 'assets/images/products/error/error.png'),
             stockStatus: product.quantity > 0 ? 'In stock' : 'Out of stock',
             description: product.description,
-            discount: product.discount,
+            discount: discount,
             quantity: product.quantity,
             status: product.status
         };
     },
 
     // Add item to wishlist (stores only product ID)
-    addItem: function(productId) {
+    addItem: function (productId) {
         const wishlist = this.loadWishlist();
-        
+
         // Ensure productId is a number
         const id = parseInt(productId, 10);
-        
+
         // Check if product already exists
         const exists = wishlist.includes(id);
-        if(!exists) {
+        if (!exists) {
             wishlist.push(id);
             this.saveWishlist(wishlist);
             return true;
@@ -121,7 +126,7 @@ const WishlistManager = {
     },
 
     // Remove item from wishlist
-    removeItem: function(productId) {
+    removeItem: function (productId) {
         const id = parseInt(productId, 10);
         let wishlist = this.loadWishlist();
         wishlist = wishlist.filter(pid => parseInt(pid, 10) !== id);
@@ -129,7 +134,7 @@ const WishlistManager = {
     },
 
     // Clear entire wishlist (properly delete the cookie)
-    clearWishlist: function() {
+    clearWishlist: function () {
         // Get domain from global config if available
         const domain = API_CONFIG ? API_CONFIG.getDomain() : window.location.hostname;
         // Delete cookie with multiple approaches to ensure it's deleted
@@ -143,16 +148,16 @@ const WishlistManager = {
     },
 
     // Get wishlist count
-    getCount: function() {
+    getCount: function () {
         return this.loadWishlist().length;
     },
 
     // Toggle wishlist item (add if not exists, remove if exists)
-    toggleWishlist: function(productId) {
+    toggleWishlist: function (productId) {
         const id = parseInt(productId, 10);
         const wishlist = this.loadWishlist();
         const exists = wishlist.includes(id);
-        
+
         if (exists) {
             this.removeItem(id);
             return { success: true, added: false, message: 'Product removed from wishlist' };
@@ -163,7 +168,7 @@ const WishlistManager = {
     },
 
     // Check if product is in wishlist
-    isInWishlist: function(productId) {
+    isInWishlist: function (productId) {
         const id = parseInt(productId, 10);
         const wishlist = this.loadWishlist();
         return wishlist.includes(id);
@@ -175,31 +180,31 @@ async function renderWishlist() {
     const wishlist = WishlistManager.loadWishlist();
     const wishlistBody = document.getElementById('wishlistBody');
     const emptyMessage = document.getElementById('emptyWishlist');
-    
-    if(!wishlistBody) {
+
+    if (!wishlistBody) {
         updateWishlistCount();
         return;
     }
-    
-    if(wishlist.length === 0) {
+
+    if (wishlist.length === 0) {
         wishlistBody.innerHTML = '';
-        if(emptyMessage) {
+        if (emptyMessage) {
             emptyMessage.style.display = 'block';
         }
         updateWishlistCount();
         return;
     }
 
-    if(emptyMessage) {
+    if (emptyMessage) {
         emptyMessage.style.display = 'none';
     }
-    
+
     let html = '';
-    
+
     // Fetch details for all products in wishlist
-    for(const productId of wishlist) {
+    for (const productId of wishlist) {
         const product = await WishlistManager.fetchProductDetails(productId);
-        if(product) {
+        if (product) {
             const inStock = product.stockStatus === 'In stock';
             html += `
                 <tr data-product-id="${product.id}">
@@ -215,15 +220,19 @@ async function renderWishlist() {
                             </h3>
                         </div>
                     </td>
-                    <td class="price-col">${product.price}</td>
+                    <td class="price-col">
+                        ${product.discount > 0
+                    ? `<span class="new-price">${product.price}</span><br><span class="old-price" style="text-decoration: line-through; color: #999; font-size: 0.8em;">Was ILS ${product.originalPrice.toFixed(2)}</span>`
+                    : product.price}
+                    </td>
                     <td class="stock-col"><span class="${inStock ? 'in-stock' : 'out-of-stock'}">${product.stockStatus}</span></td>
                     <td class="action-col">
-                        ${inStock ? 
-                            `<button class="btn btn-block btn-outline-primary-2 add-to-cart-btn" data-product-id="${product.id}">
+                        ${inStock ?
+                    `<button class="btn btn-block btn-outline-primary-2 add-to-cart-btn" data-product-id="${product.id}">
                                 <i class="icon-cart-plus"></i>Add to Cart
-                            </button>` : 
-                            `<button class="btn btn-block btn-outline-primary-2 disabled">Out of Stock</button>`
-                        }
+                            </button>` :
+                    `<button class="btn btn-block btn-outline-primary-2 disabled">Out of Stock</button>`
+                }
                     </td>
                     <td class="remove-col">
                         <button class="btn-remove remove-from-wishlist" data-product-id="${product.id}" title="Remove from wishlist">
@@ -244,7 +253,7 @@ async function renderWishlist() {
 function attachEventListeners() {
     // Remove from wishlist buttons
     document.querySelectorAll('.remove-from-wishlist').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const productId = this.getAttribute('data-product-id');
             WishlistManager.removeItem(productId);
             renderWishlist();
@@ -253,7 +262,7 @@ function attachEventListeners() {
 
     // Add to cart buttons
     document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const productId = this.getAttribute('data-product-id');
             notyf.success('Product added to cart!');
             // You can implement actual cart functionality here
@@ -263,12 +272,12 @@ function attachEventListeners() {
 
 // Update wishlist count in header
 function updateWishlistCount() {
-    const count = WishlistManager.getCount();    
+    const count = WishlistManager.getCount();
     const wishlistCountElements = document.querySelectorAll('.wishlist-count, .header-dropdown a[href="wishlist.html"] span');
-    
+
     wishlistCountElements.forEach(el => {
-        if(el) {
-            if(count > 0) {
+        if (el) {
+            if (count > 0) {
                 el.textContent = `${count}`;
                 el.classList.remove('hidden');
             } else {
@@ -280,16 +289,16 @@ function updateWishlistCount() {
 }
 
 // Initialize wishlist on page load
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     renderWishlist();
-    window.addToWishlist = function(productId) {
+    window.addToWishlist = function (productId) {
         const success = WishlistManager.addItem(productId);
-        if(success) {
+        if (success) {
             notyf.success('Product added to wishlist!');
             updateWishlistCount();
         } else {
             notyf.error('Product is already in your wishlist!');
         }
     };
-    
+
 });

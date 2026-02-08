@@ -5,7 +5,7 @@ const ProductDetailsManager = {
     selectedSize: null,
     allColors: [],
     allSizes: [],
-    
+
     // Check if product is in wishlist
     isProductInWishlist(productId) {
         if (typeof WishlistManager !== 'undefined' && WishlistManager.loadWishlist) {
@@ -14,7 +14,7 @@ const ProductDetailsManager = {
         }
         return false;
     },
-    
+
     // Show loader for a section
     showLoader(sectionId, message = 'Loading...') {
         const section = document.getElementById(sectionId);
@@ -27,7 +27,7 @@ const ProductDetailsManager = {
             `;
         }
     },
-    
+
     // Hide loader and show content
     hideLoader(sectionId) {
         const section = document.getElementById(sectionId);
@@ -55,7 +55,7 @@ const ProductDetailsManager = {
             }
 
             const data = await response.json();
-            
+
             if (data.success && data.data) {
                 this.allColors = Array.isArray(data.data) ? data.data : [data.data];
             } else if (Array.isArray(data)) {
@@ -63,7 +63,7 @@ const ProductDetailsManager = {
             } else {
                 this.allColors = [];
             }
-            
+
             return this.allColors;
         } catch (error) {
             console.error("Failed to fetch colors:", error);
@@ -81,7 +81,7 @@ const ProductDetailsManager = {
             }
 
             const data = await response.json();
-            
+
             if (data.success && data.data) {
                 this.allSizes = Array.isArray(data.data) ? data.data : [data.data];
             } else if (Array.isArray(data)) {
@@ -89,7 +89,7 @@ const ProductDetailsManager = {
             } else {
                 this.allSizes = [];
             }
-            
+
             return this.allSizes;
         } catch (error) {
             console.error("Failed to fetch sizes:", error);
@@ -103,12 +103,12 @@ const ProductDetailsManager = {
         try {
             // Try to get single product endpoint first
             let response = await fetch(API_CONFIG.getApiUrl(`Products/GetProductById/${productId}`));
-            
+
             // If that doesn't work, get all products and find the one
             if (!response.ok) {
                 response = await fetch(API_CONFIG.getApiUrl('Products/GetAllProducts'));
                 const data = await response.json();
-                
+
                 if (response.ok && data.success) {
                     const products = Array.isArray(data.data) ? data.data : [];
                     const product = products.find(p => p.id === productId);
@@ -118,9 +118,9 @@ const ProductDetailsManager = {
                 }
                 return { success: false, message: 'Product not found' };
             }
-            
+
             const data = await response.json();
-            
+
             if (response.ok && data.success) {
                 return { success: true, data: data.data || data };
             } else if (response.ok && Array.isArray(data)) {
@@ -129,7 +129,7 @@ const ProductDetailsManager = {
                     return { success: true, data: product };
                 }
             }
-            
+
             return { success: false, message: 'Product not found' };
         } catch (error) {
             console.error('Error fetching product:', error);
@@ -144,12 +144,12 @@ const ProductDetailsManager = {
         }
         return 'assets/images/products/error/error.png';
     },
-    
+
     // Build product gallery section
     async buildProductGallery(product) {
         const gallerySection = document.getElementById('product-gallery-section');
         if (!gallerySection) return;
-        
+
         try {
             // Collect all images
             let allImages = [];
@@ -210,9 +210,9 @@ const ProductDetailsManager = {
                     </div>
                 </div>
             `;
-            
+
             gallerySection.innerHTML = galleryHTML;
-            
+
             setTimeout(() => {
                 // Check if style already exists
                 let existingStyle = document.getElementById('product-gallery-item-style');
@@ -248,11 +248,11 @@ const ProductDetailsManager = {
                     `;
                     document.head.appendChild(style);
                 }
-                
+
                 // Ensure error handler is set on the main image after it's added to DOM
                 const mainImage = document.getElementById('product-zoom');
                 if (mainImage) {
-                    mainImage.onerror = function() {
+                    mainImage.onerror = function () {
                         this.onerror = null;
                         const errorImage = 'assets/images/products/error/error.png';
                         this.src = errorImage;
@@ -265,24 +265,24 @@ const ProductDetailsManager = {
             gallerySection.innerHTML = '<div class="alert alert-warning">Error loading product images</div>';
         }
     },
-    
+
     // Build product details section
     async buildProductDetails(product, categoryName) {
         const detailsSection = document.getElementById('product-details-section');
         if (!detailsSection) return;
-        
+
         try {
             const discount = product.discount || 0;
-            const finalPrice = discount > 0 ? product.price * (1 - discount) : product.price;
-            
+            const finalPrice = discount > 0 ? product.price * (1 - discount / 100) : product.price;
+
             const rating = product.rating || product.averageRating || 0;
             const ratingPercent = (rating / 5) * 100;
             const reviewsCount = product.reviewsCount || (product.reviews ? product.reviews.length : 0);
-            
-            const priceHTML = discount > 0 
+
+            const priceHTML = discount > 0
                 ? `<span class="new-price">Now ILs ${finalPrice.toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
                 : `ILs ${product.price.toFixed(2)}`;
-            
+
             const detailsHTML = `
                 <h1 class="product-title">${product.name || 'Product'}</h1>
                 <div class="ratings-container">
@@ -339,9 +339,9 @@ const ProductDetailsManager = {
                     </div>
                 </div>
             `;
-            
+
             detailsSection.innerHTML = detailsHTML;
-            
+
             // Add to cart button
             const addToCartBtn = detailsSection.querySelector('.btn-cart');
             if (addToCartBtn) {
@@ -351,7 +351,7 @@ const ProductDetailsManager = {
                     this.handleAddToCart(product);
                 });
             }
-            
+
             // Wishlist button
             const wishlistBtn = detailsSection.querySelector('.btn-wishlist');
             if (wishlistBtn) {
@@ -361,7 +361,7 @@ const ProductDetailsManager = {
                     this.handleAddToWishlist(product.id);
                 });
             }
-            
+
             // Social share buttons
             const socialButtons = detailsSection.querySelectorAll('.social-icon');
             socialButtons.forEach(btn => {
@@ -375,17 +375,17 @@ const ProductDetailsManager = {
             detailsSection.innerHTML = '<div class="alert alert-warning">Error loading product details</div>';
         }
     },
-    
+
     // Build product tabs section
     async buildProductTabs(product, categoryName) {
         const tabsSection = document.getElementById('product-details-tab-section');
         if (!tabsSection) return;
-        
+
         try {
-            const descriptionContent = product.description 
+            const descriptionContent = product.description
                 ? `<h3>Product Information</h3><p>${product.description}</p>${product.additionalInfo ? `<p>${product.additionalInfo}</p>` : ''}`
                 : `<h3>Product Information</h3><p>No description available for this product.</p>`;
-            
+
             let infoContent = '<h3>Information</h3>';
             if (product.specifications || product.details) {
                 const specs = product.specifications || product.details;
@@ -403,13 +403,13 @@ const ProductDetailsManager = {
             } else {
                 infoContent += '<p>No additional information available.</p>';
             }
-            
+
             if (product.weight || product.dimensions) {
                 infoContent += '<h3>Product Details</h3>';
                 if (product.weight) infoContent += `<p><strong>Weight:</strong> ${product.weight}</p>`;
                 if (product.dimensions) infoContent += `<p><strong>Dimensions:</strong> ${product.dimensions}</p>`;
             }
-            
+
             const reviewsCount = product.reviewsCount || (product.reviews ? product.reviews.length : 0);
             let reviewsContent = `<h3>Reviews (${reviewsCount})</h3>`;
             if (product.reviews && Array.isArray(product.reviews) && product.reviews.length > 0) {
@@ -441,7 +441,7 @@ const ProductDetailsManager = {
             } else {
                 reviewsContent += '<p>No reviews yet. Be the first to review this product!</p>';
             }
-            
+
             const tabsHTML = `
                 <ul class="nav nav-pills justify-content-center" role="tablist">
                     <li class="nav-item">
@@ -476,41 +476,41 @@ const ProductDetailsManager = {
                     </div>
                 </div>
             `;
-            
+
             tabsSection.innerHTML = tabsHTML;
         } catch (error) {
             console.error('Error building product tabs:', error);
             tabsSection.innerHTML = '<div class="alert alert-warning">Error loading product information</div>';
         }
     },
-    
+
     // Update sticky bar
     updateStickyBar(product) {
         const stickyImage = document.querySelector('.sticky-bar .product-media img');
         const stickyTitle = document.querySelector('.sticky-bar .product-title a');
         const stickyPrice = document.querySelector('.sticky-bar .product-price');
         const stickyCartBtn = document.querySelector('.sticky-bar .btn-cart');
-        
+
         if (stickyImage) {
             const mainImageUrl = this.getImageUrl(product, 'main');
             stickyImage.src = mainImageUrl;
-            stickyImage.onerror = function() {
+            stickyImage.onerror = function () {
                 this.onerror = null;
                 this.src = 'assets/images/products/error/error.png';
             };
         }
-        
+
         if (stickyTitle) {
             stickyTitle.textContent = product.name;
             stickyTitle.href = `product.html?id=${product.id}`;
         }
-        
+
         if (stickyPrice) {
             const discount = product.discount || 0;
-            const finalPrice = discount > 0 ? product.price * (1 - discount) : product.price;
+            const finalPrice = discount > 0 ? product.price * (1 - discount / 100) : product.price;
             stickyPrice.textContent = `ILs ${finalPrice.toFixed(2)}`;
         }
-        
+
         if (stickyCartBtn) {
             stickyCartBtn.setAttribute('data-product-id', product.id);
             const newStickyBtn = stickyCartBtn.cloneNode(true);
@@ -522,7 +522,7 @@ const ProductDetailsManager = {
             });
         }
     },
-    
+
     // Initialize zoom
     initializeZoom() {
         if (typeof $ !== 'undefined') {
@@ -537,7 +537,7 @@ const ProductDetailsManager = {
             $('.zoomContainer').remove();
             $('.product-gallery-item').off('click');
             $('#btn-product-gallery').off('click');
-            
+
             setTimeout(() => {
                 if ($.fn.elevateZoom && $zoomImage.length) {
                     const zoomImageUrl = $zoomImage.attr('data-zoom-image') || $zoomImage.attr('src');
@@ -555,37 +555,37 @@ const ProductDetailsManager = {
                         zoomImage: zoomImageUrl
                     });
                 }
-                
+
                 $('.product-gallery-item').off('click').on('click', function (e) {
                     e.preventDefault();
                     const $this = $(this);
                     let newImage = $this.attr('data-image');
                     let newZoomImage = $this.attr('data-zoom-image') || newImage;
-                    
+
                     // Fallback to error image if URL is empty or invalid
                     if (!newImage || newImage === '' || newImage === 'undefined') {
                         newImage = 'assets/images/products/error/error.png';
                         newZoomImage = 'assets/images/products/error/error.png';
                     }
-                    
+
                     // Set the image source with error handling
                     $zoomImage.attr('src', newImage);
                     $zoomImage.attr('data-zoom-image', newZoomImage);
                     $zoomImage.attr('alt', $this.find('img').attr('alt') || 'Product image');
-                    
+
                     // Add/update onerror handler for the new image
-                    $zoomImage.off('error').on('error', function() {
+                    $zoomImage.off('error').on('error', function () {
                         const errorImage = 'assets/images/products/error/error.png';
                         $(this).attr('src', errorImage);
                         $(this).attr('data-zoom-image', errorImage);
                         // Prevent infinite loop
                         $(this).off('error');
                     });
-                    
+
                     // Update active class
                     $('#product-zoom-gallery').find('a').removeClass('active');
                     $this.addClass('active');
-                    
+
                     // Update zoom plugin with new image
                     if ($zoomImage.data('elevateZoom')) {
                         const ez = $zoomImage.data('elevateZoom');
@@ -595,7 +595,7 @@ const ProductDetailsManager = {
                         ez.swaptheimage(finalImage, finalZoomImage);
                     }
                 });
-                
+
                 if ($.fn.magnificPopup) {
                     $('#btn-product-gallery').off('click').on('click', function (e) {
                         e.preventDefault();
@@ -619,7 +619,7 @@ const ProductDetailsManager = {
     // Render product details
     async renderProductDetails() {
         const productId = this.getProductIdFromUrl();
-        
+
         if (!productId) {
             const container = document.querySelector('.product-details') || document.querySelector('.product-details-top');
             if (container) {
@@ -632,7 +632,7 @@ const ProductDetailsManager = {
         this.currentProduct = null;
         this.selectedColor = null;
         this.selectedSize = null;
-        
+
         // Clear any existing zoom instances
         if (typeof $ !== 'undefined' && $('#product-zoom').length) {
             const $zoomImage = $('#product-zoom');
@@ -643,7 +643,7 @@ const ProductDetailsManager = {
         }
 
         const productData = await this.getProductById(productId);
-        
+
         if (!productData.success || !productData.data) {
             const container = document.querySelector('.product-details') || document.querySelector('.product-details-top');
             if (container) {
@@ -654,7 +654,7 @@ const ProductDetailsManager = {
 
         const product = productData.data;
         this.currentProduct = product;
- 
+
         // Get categories for display
         let categoryName = 'Uncategorized';
         try {
@@ -681,7 +681,7 @@ const ProductDetailsManager = {
         await this.buildProductGallery(product);
         await this.buildProductDetails(product, categoryName);
         await this.buildProductTabs(product, categoryName);
-        
+
         // Use colors and sizes from product API first (product.colors: [{ id, name, hexCode }], product.sizes: [{ id, name }])
         // Only fetch global Colors/Sizes APIs when product doesn't have them (fallback)
         const hasProductColors = product.colors && Array.isArray(product.colors) && product.colors.length > 0;
@@ -692,45 +692,45 @@ const ProductDetailsManager = {
         // Render colors and sizes (from product API or from global APIs)
         await this.renderColors(product);
         await this.renderSizes(product);
-        
+
         // Update sticky bar
         this.updateStickyBar(product);
-        
+
         // Initialize zoom
         this.initializeZoom();
-        
+
         // Load "You May Also Like" products
         await this.loadRelatedProducts(product.id);
     },
-    
+
     // Load random products for "You May Also Like" section
     async loadRelatedProducts(currentProductId) {
         const section = document.getElementById('you-may-also-like-section');
         if (!section) return;
-        
-       
-        
+
+
+
         try {
             // Fetch all products
             const response = await fetch(API_CONFIG.getApiUrl('Products/GetAllProducts'));
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const data = await response.json();
             const allProducts = Array.isArray(data) ? data : (data.success ? data.data : []);
-            
+
             // Filter out current product and get random products
             const otherProducts = allProducts.filter(p => p.id !== currentProductId);
-            
+
             // Get random products (up to 8)
             const randomProducts = this.getRandomProducts(otherProducts, 8);
-            
+
             if (randomProducts.length === 0) {
                 section.innerHTML = '<p class="text-center text-muted">No related products available.</p>';
                 return;
             }
-            
+
             // Fetch categories for display
             let categoryMap = {};
             try {
@@ -744,7 +744,7 @@ const ProductDetailsManager = {
             } catch (error) {
                 console.warn('Error fetching categories for related products:', error);
             }
-            
+
             // Build products HTML
             let productsHTML = '';
             randomProducts.forEach(product => {
@@ -752,11 +752,11 @@ const ProductDetailsManager = {
                 const mainImageUrl = product.mainImageUrl || (product.mainImage ? `${API_CONFIG.BASE_URL}/Images/${product.mainImage}` : 'assets/images/products/error/error.png');
                 const productId = product.id;
                 const discount = product.discount || 0;
-                const finalPrice = discount > 0 ? product.price * (1 - discount) : product.price;
+                const finalPrice = discount > 0 ? product.price * (1 - discount / 100) : product.price;
                 const rating = product.rating || product.averageRating || 0;
                 const ratingPercent = (rating / 5) * 100;
                 const reviewsCount = product.reviewsCount || (product.reviews ? product.reviews.length : 0);
-                
+
                 productsHTML += `
                     <div class="product product-7 text-center">
                         <figure class="product-media">
@@ -782,9 +782,9 @@ const ProductDetailsManager = {
                             </div>
                             <h3 class="product-title"><a href="product.html?id=${productId}">${product.name}</a></h3>
                             <div class="product-price">
-                                ${discount > 0 
-                                    ? `<span class="new-price">Now ILs ${finalPrice.toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
-                                    : `ILs ${product.price.toFixed(2)}`}
+                                ${discount > 0
+                        ? `<span class="new-price">Now ILs ${finalPrice.toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
+                        : `ILs ${product.price.toFixed(2)}`}
                             </div>
                             <div class="ratings-container">
                                 <div class="ratings">
@@ -796,7 +796,7 @@ const ProductDetailsManager = {
                     </div>
                 `;
             });
-            
+
             // Build carousel HTML
             const carouselHTML = `
                 <div class="owl-carousel owl-simple carousel-equal-height carousel-with-shadow" id="related-products-carousel" data-toggle="owl" 
@@ -828,9 +828,9 @@ const ProductDetailsManager = {
                     ${productsHTML}
                 </div>
             `;
-            
+
             section.innerHTML = carouselHTML;
-            
+
             // Add event handlers for buttons in related products
             setTimeout(() => {
                 // Wishlist buttons
@@ -844,7 +844,7 @@ const ProductDetailsManager = {
                         }
                     });
                 });
-                
+
                 // Quick view buttons - handled by main.js magnific popup
                 // Compare buttons
                 section.querySelectorAll('.btn-compare').forEach(btn => {
@@ -855,7 +855,7 @@ const ProductDetailsManager = {
                     });
                 });
             }, 100);
-            
+
             // Initialize owl carousel
             if (typeof $ !== 'undefined' && $.fn.owlCarousel) {
                 setTimeout(() => {
@@ -866,7 +866,7 @@ const ProductDetailsManager = {
                             $carousel.trigger('destroy.owl.carousel').removeClass('owl-carousel owl-loaded');
                             $carousel.find('.owl-stage-outer').children().unwrap();
                         }
-                        
+
                         // Initialize new carousel
                         $carousel.owlCarousel({
                             nav: false,
@@ -889,13 +889,13 @@ const ProductDetailsManager = {
             section.innerHTML = '<div class="alert alert-warning">Error loading related products. Please try again later.</div>';
         }
     },
-    
+
     // Get random products from array
     getRandomProducts(products, count) {
         if (products.length <= count) {
             return products;
         }
-        
+
         const shuffled = [...products].sort(() => 0.5 - Math.random());
         return shuffled.slice(0, count);
     },
@@ -906,7 +906,7 @@ const ProductDetailsManager = {
         if (!colorContainer) return;
 
         let productColors = [];
-        
+
         if (product.colors && Array.isArray(product.colors)) {
             productColors = product.colors;
         } else if (product.colorIds && Array.isArray(product.colorIds)) {
@@ -929,14 +929,14 @@ const ProductDetailsManager = {
             const colorName = color.name || color.colorName || 'Color';
             const hexColor = color.hexCode || color.hex || color.colorCode || '#cccccc';
             const isActive = index === 0;
-            
+
             if (isActive) {
                 this.selectedColor = colorId;
             }
 
             // Try to get color image, otherwise use color swatch
             const colorImage = color.imageUrl || color.image || null;
-            
+
             if (colorImage) {
                 colorHtml += `
                     <a href="#" class="product-color-item ${isActive ? 'active' : ''}" 
@@ -981,31 +981,31 @@ const ProductDetailsManager = {
                     item.style.border = '2px solid #333';
                 }
                 this.selectedColor = parseInt(item.getAttribute('data-color-id'));
-                
+
                 // Update main image if color has specific image
                 const colorImage = item.querySelector('img');
                 const mainImage = document.querySelector('#product-zoom');
                 const gallery = document.querySelector('#product-zoom-gallery');
-                
+
                 if (colorImage && colorImage.src && !colorImage.src.includes('error.png') && mainImage) {
                     const newImageSrc = colorImage.src;
                     mainImage.src = newImageSrc;
                     mainImage.setAttribute('data-zoom-image', newImageSrc);
-                    
+
                     // Add error handler for the new image
-                    mainImage.onerror = function() {
+                    mainImage.onerror = function () {
                         this.onerror = null;
                         const errorImage = 'assets/images/products/error/error.png';
                         this.src = errorImage;
                         this.setAttribute('data-zoom-image', errorImage);
                     };
-                    
+
                     // Update zoom plugin if it exists
                     if (typeof $ !== 'undefined' && $(mainImage).data('elevateZoom')) {
                         const ez = $(mainImage).data('elevateZoom');
                         ez.swaptheimage(newImageSrc, newImageSrc);
                     }
-                    
+
                     // Update active gallery item
                     if (gallery) {
                         const firstGalleryItem = gallery.querySelector('.product-gallery-item');
@@ -1013,7 +1013,7 @@ const ProductDetailsManager = {
                             const firstImg = firstGalleryItem.querySelector('img');
                             if (firstImg) {
                                 firstImg.src = newImageSrc;
-                                firstImg.onerror = function() {
+                                firstImg.onerror = function () {
                                     this.onerror = null;
                                     this.src = 'assets/images/products/error/error.png';
                                 };
@@ -1033,7 +1033,7 @@ const ProductDetailsManager = {
         if (!sizeSelect) return;
 
         let productSizes = [];
-        
+
         if (product.sizes && Array.isArray(product.sizes)) {
             productSizes = product.sizes;
         } else if (product.sizeIds && Array.isArray(product.sizeIds)) {
@@ -1055,10 +1055,10 @@ const ProductDetailsManager = {
         productSizes.forEach((size) => {
             const sizeId = size.id || size.sizeId;
             const sizeName = size.name || size.sizeName || size.value || 'Size';
-            
+
             // Only auto-select if there's only one size
             const isSelected = productSizes.length === 1;
-            
+
             if (isSelected) {
                 this.selectedSize = sizeId;
             }
@@ -1083,13 +1083,13 @@ const ProductDetailsManager = {
 
         // Validate color and size if available
         // Only require selection if product has multiple colors/sizes
-        const hasMultipleColors = (product.colors && product.colors.length > 1) || 
-                                 (product.colorIds && product.colorIds.length > 1) ||
-                                 (this.allColors.length > 0 && (!product.colors && !product.colorIds && !product.colorId));
-        
-        const hasMultipleSizes = (product.sizes && product.sizes.length > 1) || 
-                                (product.sizeIds && product.sizeIds.length > 1) ||
-                                (this.allSizes.length > 0 && (!product.sizes && !product.sizeIds && !product.sizeId));
+        const hasMultipleColors = (product.colors && product.colors.length > 1) ||
+            (product.colorIds && product.colorIds.length > 1) ||
+            (this.allColors.length > 0 && (!product.colors && !product.colorIds && !product.colorId));
+
+        const hasMultipleSizes = (product.sizes && product.sizes.length > 1) ||
+            (product.sizeIds && product.sizeIds.length > 1) ||
+            (this.allSizes.length > 0 && (!product.sizes && !product.sizeIds && !product.sizeId));
 
         if (hasMultipleColors && !this.selectedColor) {
             notyf.error('Please select a color');
@@ -1112,11 +1112,11 @@ const ProductDetailsManager = {
         // Add to cart using CartManager
         try {
             const result = await CartManager.addToCartWithVariants(cartItem);
-            
+
             if (result.success) {
                 // Show success notification immediately
                 notyf.success(result.message || 'Product added to cart!');
-                
+
                 // Update cart count optimistically for immediate feedback
                 const cartCountElement = document.querySelector('.cart-count');
                 if (cartCountElement) {
@@ -1125,7 +1125,7 @@ const ProductDetailsManager = {
                     cartCountElement.textContent = optimisticCount;
                     cartCountElement.style.display = optimisticCount > 0 ? '' : 'none';
                 }
-                
+
                 // Update full navbar cart from actual data - delay to ensure cart is saved
                 if (CartManager.updateNavbarCart) {
                     setTimeout(async () => {
@@ -1140,7 +1140,7 @@ const ProductDetailsManager = {
             notyf.error('An error occurred. Please try again.');
         }
     },
-    
+
     // Update all product information sections with API data
     updateProductInformation(product, categoryName) {
         // Update product SKU if available
@@ -1148,7 +1148,7 @@ const ProductDetailsManager = {
         if (skuElement && product.sku) {
             skuElement.textContent = `SKU: ${product.sku}`;
         }
-        
+
         // Update product stock status if available
         const stockElement = document.querySelector('.product-stock, .stock-status');
         if (stockElement) {
@@ -1165,25 +1165,25 @@ const ProductDetailsManager = {
                 stockElement.className = product.inStock ? 'product-stock in-stock' : 'product-stock out-of-stock';
             }
         }
-        
+
         // Update product brand if available
         const brandElement = document.querySelector('.product-brand, .brand');
         if (brandElement && product.brand) {
             brandElement.textContent = `Brand: ${product.brand}`;
         }
-        
+
         // Update product tags if available
         const tagsElement = document.querySelector('.product-tags, .tags');
         if (tagsElement && product.tags) {
             const tags = Array.isArray(product.tags) ? product.tags : [product.tags];
             tagsElement.innerHTML = tags.map(tag => `<a href="#">${tag}</a>`).join(', ');
         }
-        
+
         // Update additional information tab with product data
         const infoTab = document.querySelector('#product-info-tab .product-desc-content');
         if (infoTab) {
             let infoHtml = '<h3>Information</h3>';
-            
+
             if (product.specifications || product.details) {
                 const specs = product.specifications || product.details;
                 if (typeof specs === 'string') {
@@ -1200,7 +1200,7 @@ const ProductDetailsManager = {
             } else {
                 infoHtml += '<p>No additional information available.</p>';
             }
-            
+
             // Add weight/dimensions if available
             if (product.weight || product.dimensions) {
                 infoHtml += '<h3>Product Details</h3>';
@@ -1211,7 +1211,7 @@ const ProductDetailsManager = {
                     infoHtml += `<p><strong>Dimensions:</strong> ${product.dimensions}</p>`;
                 }
             }
-            
+
             // Add size information if available
             if (product.sizes && product.sizes.length > 0) {
                 infoHtml += '<h3>Available Sizes</h3>';
@@ -1223,15 +1223,15 @@ const ProductDetailsManager = {
                     infoHtml += `<p>${productSizes.map(s => s.name || s.sizeName || s.value).join(', ')}</p>`;
                 }
             }
-            
+
             infoTab.innerHTML = infoHtml;
         }
     },
-    
+
     // Handle add to wishlist
     handleAddToWishlist(productId) {
         const isInWishlist = this.isProductInWishlist(productId);
-        
+
         if (isInWishlist) {
             // Remove from wishlist
             if (typeof WishlistManager !== 'undefined' && WishlistManager.removeItem) {
@@ -1275,7 +1275,7 @@ const ProductDetailsManager = {
             }
         }
     },
-    
+
     // Update wishlist button state (icon and class)
     updateWishlistButtonState(productId, isInWishlist) {
         const wishlistButtons = document.querySelectorAll(`.btn-wishlist[data-product-id="${productId}"]`);
@@ -1288,7 +1288,7 @@ const ProductDetailsManager = {
                     existingIcons[i].remove();
                 }
             }
-            
+
             // Get the existing icon (should always exist from HTML template)
             const icon = btn.querySelector('i');
             if (!icon) {
@@ -1296,7 +1296,7 @@ const ProductDetailsManager = {
                 console.warn(`Wishlist button for product ${productId} is missing icon element`);
                 return;
             }
-            
+
             // Update the existing icon only
             if (isInWishlist) {
                 btn.classList.add('added');
@@ -1317,7 +1317,7 @@ const ProductDetailsManager = {
             }
         });
     },
-    
+
     // Handle social share
     handleSocialShare(button, product) {
         const platform = button.getAttribute('title') || (button.querySelector('i') ? button.querySelector('i').className : '');
@@ -1325,9 +1325,9 @@ const ProductDetailsManager = {
         const productName = product.name || 'Product';
         const productDescription = product.description || '';
         const shareText = `${productName} - ${productDescription.substring(0, 100)}...`;
-        
+
         let shareUrl = '';
-        
+
         if (platform.includes('Facebook') || platform.includes('facebook')) {
             shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
             window.open(shareUrl, 'facebook-share', 'width=600,height=400');
