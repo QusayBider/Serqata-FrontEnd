@@ -6,12 +6,51 @@ const CartManager = {
 
     // Check if user is authenticated
     isAuthenticated: function () {
-        return localStorage.getItem('isAuthenticated') === 'true';
+        // Use the common authentication utility
+        if (typeof window.isAuthenticated === 'function') {
+            const isAuth = window.isAuthenticated();
+            // If authenticated, also check role to prevent 403 errors (only Customer should have a cart)
+            if (isAuth && typeof window.getUserRole === 'function') {
+                const role = window.getUserRole();
+                if (role && role.toLowerCase() === 'admin') {
+                    return false; // Admins don't use the customer cart
+                }
+            }
+            return isAuth;
+        }
+
+        // Fallback to cookie check if utility not loaded
+        const isAuthCookie = this.getCookieValue('isAuthenticated') === 'true';
+        const hasToken = this.getCookieValue('authToken') !== null;
+
+        if (isAuthCookie && hasToken) {
+            const role = this.getCookieValue('userRole');
+            if (role && role.toLowerCase() === 'admin') {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    },
+
+    // Helper to get cookie value by name (internal fallback)
+    getCookieValue: function (name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
     },
 
     // Get authentication token
     getToken: function () {
-        return localStorage.getItem('authToken');
+        if (typeof window.getToken === 'function') {
+            return window.getToken();
+        }
+        return this.getCookieValue('authToken');
     },
 
     // Cookie management
@@ -57,6 +96,42 @@ const CartManager = {
     // Save cart to cookie
     saveCartToCookie: function (cart) {
         this.setCookie(this.cookieName, cart, this.cookieExpireDays);
+    },
+
+    // Sync guest cart with API after login
+    async syncCartWithAPI() {
+        if (!this.isAuthenticated()) {
+            console.log('Skipping cart sync: User not authenticated or is Admin.');
+            return;
+        }
+
+        const cookieCart = this.loadCartFromCookie();
+        if (cookieCart.length === 0) return;
+
+        console.log(`Syncing ${cookieCart.length} guest cart items with API...`, cookieCart);
+
+        try {
+            // Add each item from guest cart to API
+            for (const item of cookieCart) {
+                await this.addToCartAPI(
+                    item.productId,
+                    item.quantity,
+                    item.colorId,
+                    item.sizeId
+                );
+            }
+
+            // Clear guest cart cookie after successful sync
+            this.saveCartToCookie([]);
+            console.log('Guest cart synced and cleared.');
+
+            // Refresh cart UI
+            if (this.updateNavbarCart) {
+                await this.updateNavbarCart();
+            }
+        } catch (error) {
+            console.error('Error syncing guest cart:', error);
+        }
     },
 
     async addToCartAPI(productId, quantity = 1, colorId = null, sizeId = null) {

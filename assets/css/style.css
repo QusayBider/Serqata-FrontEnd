@@ -20071,4 +20071,19 @@ button:focus {
     padding-left: 1rem!important;
     color: #dc3545!important;
     align-items:center!important;
+
+}
+.icon-eye-slash {
+    position: relative;
+}
+
+.icon-eye-slash::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1.5px;
+    background: #999;
+    left: 0;
+    top: 50%;
+    transform: rotate(45deg);
 }

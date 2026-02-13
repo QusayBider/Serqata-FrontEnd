@@ -31,6 +31,8 @@
     <link rel="stylesheet" href="assets/css/custom-categories.css">
     <!-- Notyf CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- Custom CSS to remove duplicate heart icon from btn-wishlist -->
     <style>
         .btn-wishlist::before {
@@ -45,16 +47,18 @@
         <header class="header header-11">
             <div class="container-fluid">
                 <div class="header-right p-2 ">
-                    <ul class="top-menu">
+                    <ul class="top-menu ">
                         <li>
                             <a href="#">Links</a>
-                            <ul>
-                                <li><a href="tel:#"><i class="icon-phone"></i>Call: +0123 456 789</a></li>
-                                <li><a href="wishlist.html"><i class="icon-heart-o"></i>Wishlist <span>(3)</span></a>
+                            <ul id="top-menu-ul">
+                                <li>
+                                <a href="https://wa.me/970568291008?text=Hello%20there!%20I%20would%20like%20to%20chat%20with%20you" target="_blank">
+                                    <i class="icon-phone"></i> Chat on WhatsApp
+                                </a>
                                 </li>
-                                <li><a href="about.html">About Us</a></li>
                                 <li><a href="contact.html">Contact Us</a></li>
-                                <li><a href="#signin-modal" data-toggle="modal"><i class="icon-user"></i>Login</a></li>
+                                <li><a href="login.html" id="loginLink"><i class="icon-user"></i>Login / Register</a>
+                                </li>
                             </ul>
                         </li>
                     </ul><!-- End .top-menu -->
@@ -159,15 +163,15 @@
 
             <div class="container-fluid banners">
                 <div class="row" id="categories-banner-container">
-                  
-                        <div class="loader">Loading categories...</div>
-                    
+
+                    <div class="loader">Loading categories...</div>
+
                 </div><!-- End .row -->
                 <div class="more-container text-center mt-3 mb-3" id="categories-view-more-container"
                     style="display: none;">
-                    <button class="btn btn-outline-primary-2 btn-more"  id="btn-view-more-categories">
-                       <span>View More Categories</span>
-                        <i class="icon-long-arrow-right"></i>    
+                    <button class="btn btn-outline-primary-2 btn-more" id="btn-view-more-categories">
+                        <span>View More Categories</span>
+                        <i class="icon-long-arrow-right"></i>
                     </button>
                 </div>
             </div><!-- End .container -->
@@ -688,39 +692,6 @@
         </div><!-- End .modal-dialog -->
     </div><!-- End .modal -->
 
-    <div class="container-fluid newsletter-popup-container mfp-hide hidden" id="newsletter-popup-form">
-        <div class="row justify-content-center">
-            <div class="col-10">
-                <div class="row no-gutters bg-white newsletter-popup-content">
-                    <div class="col-xl-3-5col col-lg-7 banner-content-wrap">
-                        <div class="banner-content text-center">
-                            <img src="./assets/images/logo.png" class="logo" alt="logo" width="60" height="15">
-                            <h2 class="banner-title">get <span>25<light>%</light></span> off</h2>
-                            <p>Subscribe to the Molla eCommerce newsletter to receive timely updates from your favorite
-                                products.</p>
-                            <form action="#">
-                                <div class="input-group input-group-round">
-                                    <input type="email" class="form-control form-control-white"
-                                        placeholder="Your Email Address" aria-label="Email Adress" required>
-                                    <div class="input-group-append">
-                                        <button class="btn" type="submit"><span>go</span></button>
-                                    </div><!-- .End .input-group-append -->
-                                </div><!-- .End .input-group -->
-                            </form>
-                            <div class="custom-control custom-checkbox">
-                                <input type="checkbox" class="custom-control-input" id="register-policy-2" required>
-                                <label class="custom-control-label" for="register-policy-2">Do not show this popup
-                                    again</label>
-                            </div><!-- End .custom-checkbox -->
-                        </div>
-                    </div>
-                    <div class="col-xl-2-5col col-lg-5 ">
-                        <img src="" class="newsletter-img" alt="newsletter">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- Plugins JS File -->
     <script src="./assets/js/jquery.min.js"></script>
     <script src="./assets/js/bootstrap.bundle.min.js"></script>
@@ -738,6 +709,8 @@
     <script src="./assets/js/Wishlist.js"></script>
     <script src="./assets/js/categories.js"></script>
     <script src="./assets/js/advertisements.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Notyf JS -->
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script>
@@ -748,7 +721,11 @@
             }
         });
     </script>
-   
+    <!-- Authentication & Navigation -->
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/navigation.js"></script>
+
+
 </body>
 
 

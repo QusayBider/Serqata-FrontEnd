@@ -12,12 +12,43 @@ const CheckoutManager = {
 
     // Check if user is authenticated
     isAuthenticated: function () {
-        return localStorage.getItem('isAuthenticated') === 'true';
+        if (typeof window.isAuthenticated === 'function') {
+            const isAuth = window.isAuthenticated();
+            if (isAuth && typeof window.getUserRole === 'function') {
+                const role = window.getUserRole();
+                if (role && role.toLowerCase() === 'admin') return false;
+            }
+            return isAuth;
+        }
+
+        const isAuthCookie = this.getCookieValue('isAuthenticated') === 'true';
+        const hasToken = this.getCookieValue('authToken') !== null;
+        if (isAuthCookie && hasToken) {
+            const role = this.getCookieValue('userRole');
+            if (role && role.toLowerCase() === 'admin') return false;
+            return true;
+        }
+        return false;
     },
 
     // Get authentication token
     getToken: function () {
-        return localStorage.getItem('authToken');
+        if (typeof window.getToken === 'function') {
+            return window.getToken();
+        }
+        return this.getCookieValue('authToken');
+    },
+
+    // Helper to get cookie value by name
+    getCookieValue: function (name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
     },
 
     // Load cart items for checkout

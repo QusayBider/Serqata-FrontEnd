@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Molla - Analysis & Charts</title>
+    <!-- Plugins CSS File -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <!-- Main CSS File -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="page-wrapper">
+        <header class="header">
+            <div class="header-middle sticky-header">
+                <div class="container">
+                    <div class="header-left">
+                        <a href="index.html" class="logo">
+                            <img src="assets/images/logo.png" alt="Molla Logo" width="105" height="25">
+                        </a>
+                        <nav class="main-nav">
+                            <ul class="menu sf-arrows">
+                                <li><a href="index.html">Home</a></li>
+                                <li><a href="dashboard.html">Dashboard</a></li>
+                                <li><a href="admin-dashboard.html">Admin</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="page-header text-center" style="background-image: url('assets/images/page-header-bg.jpg')">
+                <div class="container">
+                    <h1 class="page-title">Business Analysis<span>Insights</span></h1>
+                </div>
+            </div>
+
+            <div class="page-content">
+                <div class="container">
+                    <div class="row mt-5">
+                        <div class="col-lg-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">Sales Overview</h3>
+                                    <canvas id="salesChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">Orders Status</h3>
+                                    <canvas id="ordersChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">User Growth</h3>
+                                    <canvas id="userGrowthChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-bottom">
+                <div class="container">
+                    <p class="footer-copyright">Copyright © 2019 Molla Store. All Rights Reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Plugins JS File -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/config.js"></script>
+
+    <script>
+        // Simple Chart Initialization
+        document.addEventListener('DOMContentLoaded', function () {
+            // Sales Chart
+            const ctxSales = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctxSales, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Sales (ILS)',
+                        data: [1200, 1900, 3000, 5000, 2000, 3000],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                }
+            });
+
+            // Orders Chart
+            const ctxOrders = document.getElementById('ordersChart').getContext('2d');
+            new Chart(ctxOrders, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Processing', 'Delivered', 'Cancelled'],
+                    datasets: [{
+                        label: 'Orders',
+                        data: [12, 19, 3, 5],
+                        backgroundColor: [
+                            'rgb(255, 205, 86)',
+                            'rgb(54, 162, 235)',
+                            'rgb(75, 192, 192)',
+                            'rgb(255, 99, 132)'
+                        ]
+                    }]
+                }
+            });
+
+            // User Growth Chart
+            const ctxUsers = document.getElementById('userGrowthChart').getContext('2d');
+            new Chart(ctxUsers, {
+                type: 'bar',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'New Users',
+                        data: [50, 75, 60, 90],
+                        backgroundColor: 'rgb(153, 102, 255)'
+                    }]
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

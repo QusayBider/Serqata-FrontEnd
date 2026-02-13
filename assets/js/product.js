@@ -42,32 +42,7 @@ const getAllCategories = async () => {
 };
 
 
-/* async function loadProducts() {
-   try {
-       const sidebarContainer = document.getElementById('best-selling-container');
-      sidebarContainer.innerHTML = data.bestSellers.map(product => `
-           <div class="product product-sm">
-               <figure class="product-media">
-                   <a href="product.html?id=${product.id}">
-                       <img src="${product.smallImage}" alt="${product.name}" class="product-image">
-                   </a>
-               </figure>
-               <div class="product-body">
-                   <div class="product-cat">
-                       <a href="#">${product.category}</a>
-                   </div>
-                   <h5 class="product-title"><a href="product.html?id=${product.id}">${product.name}</a></h5>
-                   <div class="product-price">$${product.price}</div>
-               </div>
-           </div>
-       `).join('');
 
-   } catch (error) {
-       console.error("Error fetching products:", error);
-       loader.classList.remove('hidden');
-       ViewMoreProductsBtn.classList.add('hidden');
-   }
-}*/
 
 const displayALLProducts = async () => {
   const mainContainer = document.getElementById('recent-arrivals-container');
