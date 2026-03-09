@@ -1,0 +1,272 @@
+/* ═══════════════════════════════════════════
+   DELIVERY COSTS — Modal & Table Styles
+═══════════════════════════════════════════ */
+
+/* ── Spinner animation ── */
+@keyframes dc-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ────────────────────────────────────────
+   MODAL OVERLAY
+──────────────────────────────────────── */
+.dc-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(10, 10, 15, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.dc-overlay.dc-visible {
+    opacity: 1;
+}
+
+/* ────────────────────────────────────────
+   MODAL CARD
+──────────────────────────────────────── */
+.dc-modal {
+    position: relative;
+    z-index: 9999;
+    width: 100%;
+    max-width: 460px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow:
+        0 32px 80px rgba(0, 0, 0, 0.18),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transform: translateY(24px) scale(0.97);
+    transition:
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 0.25s ease;
+    opacity: 0;
+}
+.dc-overlay.dc-visible .dc-modal {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+/* ── Modal Header ── */
+.dc-modal-head {
+    padding: 28px 28px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+.dc-modal-head .dc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff8f0;
+    color: #c96;
+    border: 1px solid #f5dfc0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+.dc-modal-head h3 {
+    margin: 0;
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 750;
+    color: #111;
+    letter-spacing: -0.4px;
+}
+.dc-modal-head h3 span {
+    color: #c96;
+}
+.dc-modal-head p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* ── Close Button ── */
+.dc-close-btn {
+    background: #f5f5f5;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.18s;
+}
+.dc-close-btn:hover {
+    background: #eee;
+}
+
+/* ── Modal Body ── */
+.dc-modal-body {
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ── Form Fields ── */
+.dc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.dc-field label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.dc-field label span {
+    color: #c96;
+}
+.dc-field input {
+    padding: 11px 14px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #111;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+}
+.dc-field input:focus {
+    border-color: #c96;
+    box-shadow: 0 0 0 3px rgba(204, 153, 102, 0.12);
+    background: #fff;
+}
+.dc-field input::placeholder {
+    color: #bbb;
+}
+
+/* ── Error Message ── */
+.dc-error-msg {
+    font-size: 12px;
+    color: #e55;
+    background: #fff0f0;
+    border: 1px solid #ffd0d0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: none;
+}
+.dc-error-msg.visible {
+    display: block;
+}
+
+/* ── Modal Footer ── */
+.dc-modal-foot {
+    padding: 16px 28px 24px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.dc-btn-cancel {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1.5px solid #e0e0e0;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.18s;
+}
+.dc-btn-cancel:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+.dc-btn-confirm {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: none;
+    background: #111;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.18s;
+}
+.dc-btn-confirm:hover {
+    background: #c96;
+    transform: translateY(-1px);
+}
+.dc-btn-confirm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+.dc-btn-confirm svg.dc-spinning {
+    animation: dc-spin 0.7s linear infinite;
+}
+
+/* ────────────────────────────────────────
+   TABLE
+──────────────────────────────────────── */
+#dc-table thead tr th {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #999;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 10px 14px;
+}
+#dc-table tbody tr.dc-row td {
+    padding: 13px 14px;
+    vertical-align: middle;
+    font-size: 13px;
+    color: #333;
+    border-bottom: 1px solid #f7f7f7;
+}
+#dc-table tbody tr.dc-row:last-child td {
+    border-bottom: none;
+}
+#dc-table tbody tr.dc-row:hover td {
+    background: #fdf8f3;
+}
+
+/* ── Table Badges ── */
+.dc-id-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    color: #888;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+.dc-cost-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #f0faf4;
+    color: #2d7a4f;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+.dc-status-text{
+ padding: 0px 5px 0px 0px ;
+
+}

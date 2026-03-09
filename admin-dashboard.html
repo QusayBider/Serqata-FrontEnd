@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="assets/css/admin-advertisements.css">
     <link rel="stylesheet" href="assets/css/admin-brands.css">
     <link rel="stylesheet" href="assets/css/admin-company.css">
+    <link rel="stylesheet" href="assets/css/admin-Deliverycosts.css">
     <link rel="stylesheet" href="assets/css/util.css">
     <link rel="stylesheet" href="assets/css/demos/demo-18.css">
 
@@ -41,22 +42,24 @@
             <div class="header-top">
                 <div class="container-fluid">
                     <div class="header-right p-2 ">
-                    <ul class="top-menu ">
-                        <li>
-                            <a href="#">Links</a>
-                            <ul id="top-menu-ul">
-                                <li>
-                                <a href="https://wa.me/970568291008?text=Hello%20there!%20I%20would%20like%20to%20chat%20with%20you" target="_blank">
-                                    <i class="icon-phone"></i> Chat on WhatsApp
-                                </a>
-                                </li>
-                                <li><a href="contact.html">Contact Us</a></li>
-                                <li><a href="login.html" id="loginLink"><i class="icon-user"></i>Login / Register</a>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul><!-- End .top-menu -->
-                </div><!-- End .header-right -->
+                        <ul class="top-menu ">
+                            <li>
+                                <a href="#">Links</a>
+                                <ul id="top-menu-ul">
+                                    <li>
+                                        <a href="https://wa.me/970568291008?text=Hello%20there!%20I%20would%20like%20to%20chat%20with%20you"
+                                            target="_blank">
+                                            <i class="icon-phone"></i> Chat on WhatsApp
+                                        </a>
+                                    </li>
+                                    <li><a href="contact.html">Contact Us</a></li>
+                                    <li><a href="login.html" id="loginLink"><i class="icon-user"></i>Login /
+                                            Register</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul><!-- End .top-menu -->
+                    </div><!-- End .header-right -->
                 </div><!-- End .container -->
             </div><!-- End .header-top -->
             <div class="header-middle sticky-header">
@@ -71,11 +74,11 @@
                         </a>
 
                         <nav class="main-nav">
-                           <ul class="menu sf-arrows">
+                            <ul class="menu sf-arrows">
                                 <li class="megamenu-container ">
                                     <a href="index.html" class="sf-with">Home</a>
                                 </li>
-                                <li >
+                                <li>
                                     <a href="./about-2.html" class="sf-with">About Us</a>
                                 </li>
                                 <li>
@@ -129,11 +132,14 @@
 
                                 <div class="dropdown-cart-total">
                                     <span>Total</span>
-                                    <span class="cart-total-price"><header class="header"></span>
+                                    <span class="cart-total-price">
+                                        <header class="header">
+                                    </span>
                                 </div><!-- End .dropdown-cart-total -->
                                 <div class="dropdown-cart-action">
                                     <a href="cart.html" class="btn btn-primary">View Cart</a>
-                                    <a href="checkout.html" class="btn btn-outline-primary-2"><span>Checkout</span><i class="icon-long-arrow-right"></i></a>
+                                    <a href="checkout.html" class="btn btn-outline-primary-2"><span>Checkout</span><i
+                                            class="icon-long-arrow-right"></i></a>
                                 </div><!-- End .dropdown-cart-total -->
                             </div><!-- End .dropdown-menu -->
                         </div><!-- End .cart-dropdown -->
@@ -181,20 +187,27 @@
                                         role="tab" aria-controls="tab-products" aria-selected="false">Products</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="tab-advertisements-link" data-toggle="tab" href="#tab-advertisements"
-                                        role="tab" aria-controls="tab-advertisements" aria-selected="false">Advertisements</a>
+                                    <a class="nav-link" id="tab-advertisements-link" data-toggle="tab"
+                                        href="#tab-advertisements" role="tab" aria-controls="tab-advertisements"
+                                        aria-selected="false">Advertisements</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" id="tab-brands-link" data-toggle="tab" href="#tab-brands"
                                         role="tab" aria-controls="tab-brands" aria-selected="false">Brands</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="tab-categories-link" data-toggle="tab" href="#tab-categories"
-                                        role="tab" aria-controls="tab-categories" aria-selected="false">Categories</a>
+                                    <a class="nav-link" id="tab-categories-link" data-toggle="tab"
+                                        href="#tab-categories" role="tab" aria-controls="tab-categories"
+                                        aria-selected="false">Categories</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" id="tab-company-link" data-toggle="tab" href="#tab-company"
                                         role="tab" aria-controls="tab-company" aria-selected="false">Company</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="tab-deliverycosts-link" data-toggle="tab"
+                                        href="#tab-deliverycosts" role="tab" aria-controls="tab-deliverycosts"
+                                        aria-selected="false">Delivery Costs</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#"
@@ -208,18 +221,25 @@
                                     <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel"
                                         aria-labelledby="tab-dashboard-link">
                                         <h2>Analytics Dashboard</h2>
-                                        <div class="stats-container" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0;">
-                                            <div class="stat-card" style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                        <div class="stats-container"
+                                            style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0;">
+                                            <div class="stat-card"
+                                                style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
                                                 <h4>Total Sales</h4>
-                                                <p id="stat-total-sales" style="font-size: 24px; font-weight: bold;">ILS 0.00</p>
+                                                <p id="stat-total-sales" style="font-size: 24px; font-weight: bold;">ILS
+                                                    0.00</p>
                                             </div>
-                                            <div class="stat-card" style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                            <div class="stat-card"
+                                                style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
                                                 <h4>Total Orders</h4>
-                                                <p id="stat-total-orders" style="font-size: 24px; font-weight: bold;">0</p>
+                                                <p id="stat-total-orders" style="font-size: 24px; font-weight: bold;">0
+                                                </p>
                                             </div>
-                                            <div class="stat-card" style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                                            <div class="stat-card"
+                                                style="padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
                                                 <h4>Total Users</h4>
-                                                <p id="stat-total-users" style="font-size: 24px; font-weight: bold;">0</p>
+                                                <p id="stat-total-users" style="font-size: 24px; font-weight: bold;">0
+                                                </p>
                                             </div>
                                         </div>
                                     </div><!-- .End .tab-pane -->
@@ -257,6 +277,11 @@
                                     <div class="tab-pane fade" id="tab-company" role="tabpanel"
                                         aria-labelledby="tab-company-link">
                                         <div id="admin-company-container"></div>
+                                    </div><!-- .End .tab-pane -->
+
+                                    <div class="tab-pane fade" id="tab-deliverycosts" role="tabpanel"
+                                        aria-labelledby="tab-deliverycosts-link">
+                                        <div id="admin-deliverycosts-container"></div>
                                     </div><!-- .End .tab-pane -->
                                 </div>
                             </div><!-- End .col-lg-9 -->
@@ -535,7 +560,7 @@
     <script src="assets/js/superfish.min.js"></script>
     <script src="assets/js/owl.carousel.min.js"></script>
     <!-- Main JS File -->
-        <!-- Main JS File -->
+    <!-- Main JS File -->
     <script src="./assets/js/main.js"></script>
     <script src="./assets/js/config.js"></script>
     <script src="./assets/js/cart.js"></script>

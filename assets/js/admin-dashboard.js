@@ -28,6 +28,12 @@ const AdminDashboardManager = {
         updateCompany: 'Admin/Company/UpdateCompany',
         toggleCompany: 'Admin/Company/ToggleStatus',
         getCompanyById: 'Admin/Company/GetCompanyById',
+        deliveryCosts: 'DeliveryCosts/GetBySection',
+        addDeliveryCost: 'Admin/DeliveryCosts/AddDeliveryCost',
+        updateDeliveryCost: 'Admin/DeliveryCosts/UpdateDeliveryCost',
+        toggleDeliveryCost: 'Admin/DeliveryCosts/ToggleStatus',
+        getDeliveryCostById: 'Admin/DeliveryCosts/GetDeliveryCostById',
+        deleteDeliveryCost: 'Admin/DeliveryCosts/DeleteDeliveryCost',
     },
 
     init: async function () {
@@ -72,25 +78,25 @@ const AdminDashboardManager = {
     bindEvents: function () {
         // Bind tab switching events - handle both Bootstrap and manual tab switching
         const self = this;
-        
+
         // Handle clicks on tab links
         $(document).off('click.admintabs').on('click.admintabs', 'a[data-toggle="tab"]', function (e) {
             e.preventDefault(); // Prevent default link behavior
-            
+
             const tabTarget = $(this).attr("href");
             if (!tabTarget) return;
-            
+
             // Manually switch tab content visibility
             // Hide all tab panes
             $('.tab-pane').removeClass('show active');
-            
+
             // Show the target tab pane
             $(tabTarget).addClass('show active');
-            
+
             // Update nav link active state
             $('a[data-toggle="tab"]').removeClass('active');
             $(this).addClass('active');
-            
+
             // Load data for the tab
             self.loadTabContent(tabTarget);
         });
@@ -113,6 +119,8 @@ const AdminDashboardManager = {
             this.loadCategories();
         } else if (tabTarget === '#tab-company') {
             this.loadCompany();
+        } else if (tabTarget === '#tab-deliverycosts') {
+            this.loadDeliveryCosts();
         }
     },
 
@@ -815,7 +823,7 @@ const AdminDashboardManager = {
             const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.brands), {
                 headers: this.getHeaders()
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 const brandsList = data.data || data;
@@ -832,17 +840,17 @@ const AdminDashboardManager = {
         if (!dateStr || dateStr === '0001-01-01T00:00:00') return '—';
         try {
             const date = new Date(dateStr);
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + 
-                   ' ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+                ' ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         } catch {
             return '—';
         }
     },
 
     renderBrands: function (brands) {
-    const $container = $('#admin-brands-container');
-    if (!brands || brands.length === 0) {
-        $container.html(`
+        const $container = $('#admin-brands-container');
+        if (!brands || brands.length === 0) {
+            $container.html(`
             <div class="ads-header">
             <h2 class="ads-header-title">Bra<span>nds</span></h2>
             <button class="btn-ad-new" onclick="AdminDashboardManager.openBrandModal()">
@@ -851,10 +859,10 @@ const AdminDashboardManager = {
             </button>
             </div>  
         `);
-        return;
-    }
+            return;
+        }
 
-    let html = `
+        let html = `
         <div class="ads-header">
         <h2 class="ads-header-title">Bra<span>nds</span></h2>
         <button class="btn-ad-new" onclick="AdminDashboardManager.openBrandModal()">
@@ -866,13 +874,13 @@ const AdminDashboardManager = {
         <div class="brands-grid">
     `;
 
-    brands.forEach(brand => {
-        const isActive = brand.status === 'Active';
-        const imageUrl = brand.image || '';
-        const createdDate = this.formatDate(brand.create_at);
-        const updatedDate = this.formatDate(brand.update_at);
+        brands.forEach(brand => {
+            const isActive = brand.status === 'Active';
+            const imageUrl = brand.image || '';
+            const createdDate = this.formatDate(brand.create_at);
+            const updatedDate = this.formatDate(brand.update_at);
 
-        html += `
+            html += `
             <div class="brand-card" 
                 data-name="${(brand.name || '').toLowerCase()}"
                 data-active="${isActive}">
@@ -928,14 +936,15 @@ const AdminDashboardManager = {
                 </div>
             </div>
             `;
-    });
+        });
 
-    html += `</div>`;
-    $container.html(html);},
+        html += `</div>`;
+        $container.html(html);
+    },
 
     openBrandModal: async function (id = null) {
         let brand = null;
-        
+
         if (id) {
             try {
                 const response = await fetch(
@@ -1066,7 +1075,7 @@ const AdminDashboardManager = {
         const placeholder = document.getElementById('brand-img-placeholder');
         const uploadBox = document.getElementById('brand-img-upload-box');
         const removeBtn = document.getElementById('brand-img-remove-btn');
-        
+
         if (fileInput) fileInput.value = '';
         if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
         if (placeholder) placeholder.style.display = '';
@@ -1107,7 +1116,7 @@ const AdminDashboardManager = {
             // Always use FormData for consistency with backend expectations
             const formData = new FormData();
             formData.append('Name', formValues.name);
-            
+
             if (formValues.imageFile) {
                 formData.append('MainImage', formValues.imageFile, formValues.imageFile.name);
             } else if (formValues.imageUrl) {
@@ -1204,7 +1213,7 @@ const AdminDashboardManager = {
             const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.categories), {
                 headers: this.getHeaders()
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 const categoriesList = data.data || data;
@@ -1221,7 +1230,7 @@ const AdminDashboardManager = {
         const $container = $('#admin-categories-container');
         const total = categories ? categories.length : 0;
         const active = categories ? categories.filter(c => c.status === 'Active').length : 0;
-        
+
         if (!categories || categories.length === 0) {
             $container.html(`
                 <div class="ads-panel">
@@ -1365,7 +1374,7 @@ const AdminDashboardManager = {
 
     openCategoryModal: async function (id = null) {
         let category = null;
-        
+
         if (id) {
             try {
                 const response = await fetch(
@@ -1496,7 +1505,7 @@ const AdminDashboardManager = {
         const placeholder = document.getElementById('category-img-placeholder');
         const uploadBox = document.getElementById('category-img-upload-box');
         const removeBtn = document.getElementById('category-img-remove-btn');
-        
+
         if (fileInput) fileInput.value = '';
         if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
         if (placeholder) placeholder.style.display = '';
@@ -1647,14 +1656,14 @@ const AdminDashboardManager = {
             const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.company), {
                 headers: this.getHeaders()
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
-                
+
                 // Get company array from data
                 const companies = data.data || data;
                 const company = Array.isArray(companies) && companies.length > 0 ? companies[0] : null;
-                
+
                 this.renderCompany(company);
             } else {
                 $container.html('<p>Could not load company. (API endpoint might be missing)</p>');
@@ -1666,7 +1675,7 @@ const AdminDashboardManager = {
 
     renderCompany: function (company) {
         const $container = $('#admin-company-container');
-        
+
         if (!company || typeof company !== 'object') {
             $container.html(`
                 <div class="ads-header">
@@ -1766,7 +1775,7 @@ const AdminDashboardManager = {
 
     openCompanyModal: async function (id = null) {
         let company = null;
-        
+
         if (id) {
             try {
                 const response = await fetch(
@@ -2048,13 +2057,13 @@ const AdminDashboardManager = {
             formData.append('Phone', formValues.phone);
             formData.append('WhatsApp', formValues.whatsApp);
             formData.append('FreeDeliveryAboveAmount', formValues.freeDeliveryAboveAmount);
-            
+
             if (formValues.logoFile) {
                 formData.append('Logo', formValues.logoFile, formValues.logoFile.name);
             } else if (formValues.logoUrl) {
                 formData.append('Logo', formValues.logoUrl);
             }
-            
+
             if (formValues.imageFile) {
                 formData.append('Image', formValues.imageFile, formValues.imageFile.name);
             } else if (formValues.imageUrl) {
@@ -2091,13 +2100,13 @@ const AdminDashboardManager = {
             formData.append('Phone', formValues.phone);
             formData.append('WhatsApp', formValues.whatsApp);
             formData.append('FreeDeliveryAboveAmount', formValues.freeDeliveryAboveAmount);
-            
+
             if (formValues.logoFile) {
                 formData.append('Logo', formValues.logoFile, formValues.logoFile.name);
             } else if (formValues.logoUrl) {
                 formData.append('Logo', formValues.logoUrl);
             }
-            
+
             if (formValues.imageFile) {
                 formData.append('Image', formValues.imageFile, formValues.imageFile.name);
             } else if (formValues.imageUrl) {
@@ -2150,6 +2159,420 @@ const AdminDashboardManager = {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
         }
     },
+
+    // =====================
+    // --- Delivery Costs ---
+    // =====================
+
+    loadDeliveryCosts: async function () {
+        const $container = $('#admin-deliverycosts-container');
+
+        $container.html(`
+            <div class="ads-panel">
+                <div class="ads-header">
+                    <div>
+                        <h2 class="ads-header-title">Delivery <span>Costs</span></h2>
+                    </div>
+                </div>
+                <div style="padding:20px;">Loading delivery costs…</div>
+            </div>
+        `);
+
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl('Admin/DeliveryCosts/GetAllDeliveryCosts'), {
+                headers: this.getHeaders()
+            });
+            if (response.ok) {
+                const data = await response.json();
+                let costs = [];
+                if (Array.isArray(data)) {
+                    costs = data;
+                } else if (Array.isArray(data.data)) {
+                    costs = data.data;
+                } else if (data.data && Array.isArray(data.data.items)) {
+                    costs = data.data.items;
+                }
+                console.log('Fetched delivery costs:', costs);
+                this.renderDeliveryCosts(costs);
+            } else {
+                this.renderDeliveryCosts([]);
+            }
+        } catch (e) {
+            $container.html(`<div class="dc-load-error">Error loading delivery costs.</div>`);
+        }
+    },
+
+    renderDeliveryCosts: function (costs) {
+        const $container = $('#admin-deliverycosts-container');
+        const total = costs ? costs.length : 0;
+
+        let html = `
+            <div class="ads-panel">
+                <div class="ads-header">
+                    <div>
+                        <h2 class="ads-header-title">Delivery <span>Costs</span></h2>
+                        <div class="ads-header-meta">${total} record${total !== 1 ? 's' : ''} total</div>
+                    </div>
+                    <button class="btn-ad-new" onclick="AdminDashboardManager.openDeliveryCostModal()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        New Cost
+                    </button>
+                </div>
+
+                <div class="ads-toolbar">
+                    <div class="ads-search-wrap">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input
+                            class="ads-search"
+                            id="dc-search-input"
+                            type="text"
+                            placeholder="Search by city or section…"
+                            oninput="AdminDashboardManager.filterDeliveryCosts()"
+                        >
+                    </div>
+                </div>
+
+                <div class="table-responsive dc-table-wrap">
+                    <table class="table" id="dc-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Country</th>
+                                <th>City</th>
+                                <th>Cost</th>
+                                <th>Status</th>
+                                <th class="dc-col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        if (!costs || costs.length === 0) {
+            html += `
+                <tr>
+                    <td colspan="6" class="dc-empty-row">No delivery costs found.</td>
+                </tr>
+            `;
+        } else {
+            costs.forEach(dc => {
+                // ✅ FIX: status field is "Active" or "In_Active" string — normalize before checking
+                const statusStr = (dc.status || '').toString().toLowerCase().replace('_', '');
+                const isActive  = statusStr === 'active' || dc.isActive === true || dc.status === true;
+
+                // ✅ FIX: Safely read all fields with PascalCase fallbacks
+                const dcId      = dc.id          ?? dc.Id          ?? '';
+                const dcCity    = dc.cityName     || dc.CityName    || '—';
+                const dcSection = dc.sectionName  || dc.SectionName || '—';
+                const dcCost    = typeof dc.cost === 'number' ? dc.cost
+                                : typeof dc.Cost === 'number' ? dc.Cost : 0;
+
+                html += `
+                    <tr class="dc-row"
+                        data-city="${(dc.cityName || '').toLowerCase()}"
+                        data-section="${(dc.sectionName || '').toLowerCase()}">
+
+                        <td><span class="dc-id-badge">#${dcId}</span></td>
+                        <td>${dcSection}</td>
+                        <td>${dcCity}</td>
+                        <td><span class="dc-cost-pill">ILS ${dcCost.toFixed(2)}</span></td>
+
+                        <td>
+                            <label class="ad-card-toggle status-toggle dc-toggle-label"
+                                title="Toggle Status"
+                                onclick="event.preventDefault(); AdminDashboardManager.toggleDeliveryCostStatus(${dcId})">
+                                <span class="dc-status-text ${isActive ? 'dc-status-active' : 'dc-status-inactive'}">
+                                    ${isActive ? 'Active' : 'Inactive'}
+                                </span>
+                                <input type="checkbox" ${isActive ? 'checked' : ''}>
+                                <span class="ad-card-toggle-slider"></span>
+                            </label>
+                        </td>
+
+                        <td class="dc-col-actions">
+                            <button class="btn-ad-edit dc-btn-table"
+                                onclick="AdminDashboardManager.openDeliveryCostModal(${dcId})">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Edit
+                            </button>
+                            <button class="btn-ad-edit dc-btn-table dc-btn-delete"
+                                onclick="AdminDashboardManager.deleteDeliveryCost(${dcId})">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6"/>
+                                </svg>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        html += `</tbody></table></div></div>`;
+        $container.html(html);
+    },
+
+    filterDeliveryCosts: function () {
+        const query = (document.getElementById('dc-search-input')?.value || '').toLowerCase();
+        document.querySelectorAll('#dc-table .dc-row').forEach(row => {
+            const city    = row.dataset.city    || '';
+            const section = row.dataset.section || '';
+            row.style.display = (!query || city.includes(query) || section.includes(query)) ? '' : 'none';
+        });
+    },
+
+    openDeliveryCostModal: async function (id = null) {
+        let dc = null;
+
+        if (id) {
+            try {
+                const response = await fetch(
+                    API_CONFIG.getApiUrl(`Admin/DeliveryCosts/GetDeliveryCostById/${id}`),
+                    { headers: this.getHeaders() }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    dc = data.data || data;
+                }
+            } catch (e) {}
+        }
+
+        // Remove any stale modal
+        document.getElementById('dc-modal-overlay')?.remove();
+
+        const isEdit     = !!id;
+        const badgeLabel = isEdit ? 'Edit Record' : 'New Entry';
+        const titleLabel = isEdit ? 'Edit' : 'New';
+        const subLabel   = isEdit ? `Updating record #${id}` : 'Add a new delivery cost region';
+        const btnIcon    = isEdit
+            ? '<path d="M20 6L9 17l-5-5"/>'
+            : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>';
+        const btnLabel   = isEdit ? 'Update Cost' : 'Add Cost';
+
+        const sectionVal = dc?.sectionName || dc?.SectionName || '';
+        const cityVal    = dc?.cityName    || dc?.CityName    || '';
+        const costVal    = dc?.cost        ?? dc?.Cost        ?? '';
+
+        const overlay = document.createElement('div');
+        overlay.id        = 'dc-modal-overlay';
+        overlay.className = 'dc-overlay';
+        overlay.innerHTML = `
+            <div class="dc-modal" id="dc-modal-card">
+
+                <div class="dc-modal-head">
+                    <div>
+                        <div class="dc-badge">
+                            <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path d="M1 3h22l-2 13H3L1 3z"/>
+                                <circle cx="9" cy="20" r="1"/>
+                                <circle cx="17" cy="20" r="1"/>
+                            </svg>
+                            ${badgeLabel}
+                        </div>
+                        <h3>${titleLabel} <span>Delivery Cost</span></h3>
+                        <p>${subLabel}</p>
+                    </div>
+                    <button class="dc-close-btn" id="dc-close-btn" title="Close">
+                        <svg width="14" height="14" fill="none" stroke="#666" stroke-width="2.5" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="dc-modal-body">
+                    <div class="dc-error-msg" id="dc-error-msg"></div>
+
+                    <div class="dc-field">
+                        <label>Country</label>
+                        <input id="dc-section" type="text"
+                            placeholder="e.g. Palestine, West Bank, etc."
+                            value="${sectionVal}">
+                    </div>
+
+                    <div class="dc-field">
+                        <label>City Name <span>*</span></label>
+                        <input id="dc-city" type="text"
+                            placeholder="e.g. Jerusalem"
+                            value="${cityVal}">
+                    </div>
+
+                    <div class="dc-field">
+                        <label>Cost (ILS) <span>*</span></label>
+                        <input id="dc-cost" type="number" step="1"
+                            placeholder="0.00"
+                            value="${costVal}">
+                    </div>
+                </div>
+
+                <div class="dc-modal-foot">
+                    <button class="dc-btn-cancel" id="dc-cancel-btn">Cancel</button>
+                    <button class="dc-btn-confirm" id="dc-confirm-btn">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            ${btnIcon}
+                        </svg>
+                        ${btnLabel}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('dc-visible')));
+
+        const closeModal = () => {
+            overlay.classList.remove('dc-visible');
+            setTimeout(() => overlay.remove(), 300);
+        };
+
+        document.getElementById('dc-close-btn').addEventListener('click', closeModal);
+        document.getElementById('dc-cancel-btn').addEventListener('click', closeModal);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+        document.getElementById('dc-confirm-btn').addEventListener('click', async () => {
+            const sectionName = document.getElementById('dc-section').value.trim();
+            const cityName    = document.getElementById('dc-city').value.trim();
+            const costVal     = document.getElementById('dc-cost').value;
+            const errorEl     = document.getElementById('dc-error-msg');
+            const confirmBtn  = document.getElementById('dc-confirm-btn');
+
+            errorEl.classList.remove('visible');
+
+            if (!cityName || costVal === '') {
+                errorEl.textContent = 'City Name and Cost are required.';
+                errorEl.classList.add('visible');
+                return;
+            }
+
+            const formValues = { sectionName, cityName, cost: parseFloat(costVal) };
+
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = `
+                <svg class="dc-spinning" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+                </svg>
+                Saving…
+            `;
+
+            closeModal();
+
+            if (id) {
+                await this.updateDeliveryCost(id, formValues);
+            } else {
+                await this.addDeliveryCost(formValues);
+            }
+        });
+    },
+
+    addDeliveryCost: async function (formValues) {
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl('Admin/DeliveryCosts/AddDeliveryCost'), {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    sectionName: formValues.sectionName,
+                    cityName:    formValues.cityName,
+                    cost:        formValues.cost
+                })
+            });
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Delivery Cost added!', timer: 1500, showConfirmButton: false });
+                this.loadDeliveryCosts();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not add.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    updateDeliveryCost: async function (id, formValues) {
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl(`Admin/DeliveryCosts/UpdateDeliveryCost/${id}`), {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    sectionName: formValues.sectionName,
+                    cityName:    formValues.cityName,
+                    cost:        formValues.cost
+                })
+            });
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Delivery Cost updated!', timer: 1500, showConfirmButton: false });
+                this.loadDeliveryCosts();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not update.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    toggleDeliveryCostStatus: async function (id) {
+        const result = await Swal.fire({
+            title: 'Toggle Status?',
+            text: 'This will activate or deactivate the delivery cost.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, toggle it',
+            confirmButtonColor: '#c96',
+        });
+        if (!result.isConfirmed) return;
+
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(`Admin/DeliveryCosts/ToggleStatus/${id}`),
+                { method: 'PATCH', headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Status updated!', timer: 1500, showConfirmButton: false });
+                this.loadDeliveryCosts();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Could not toggle status.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    deleteDeliveryCost: async function (id) {
+        const result = await Swal.fire({
+            title: 'Delete Delivery Cost?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            confirmButtonColor: '#d33',
+        });
+        if (!result.isConfirmed) return;
+
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(`Admin/DeliveryCosts/DeleteDeliveryCost/${id}`),
+                { method: 'DELETE', headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Deleted!', timer: 1500, showConfirmButton: false });
+                this.loadDeliveryCosts();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Could not delete.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    }
+
 };
 
 $(document).ready(function () {
