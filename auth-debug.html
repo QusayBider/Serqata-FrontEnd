@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Debugging Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .test-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .console {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .warning {
+            color: #ffc107;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Authentication Debugging Tool</h1>
+    <p>This tool helps debug the login and register process.</p>
+
+    <div class="container">
+        <!-- Test Login Section -->
+        <div class="section">
+            <h2>Test Login</h2>
+            <form class="test-form" id="test-login-form">
+                <input type="email" id="test-email" placeholder="Email" value="test@example.com">
+                <input type="password" id="test-password" placeholder="Password" value="Password123">
+                <button type="submit">Test Login</button>
+            </form>
+            <div id="login-response" class="info" style="display:none;"></div>
+        </div>
+
+        <!-- Test Register Section -->
+        <div class="section">
+            <h2>Test Register</h2>
+            <form class="test-form" id="test-register-form">
+                <input type="text" id="test-fullname" placeholder="Full Name" value="Test User">
+                <input type="text" id="test-username" placeholder="Username" value="testuser">
+                <input type="email" id="test-reg-email" placeholder="Email" value="newuser@example.com">
+                <input type="tel" id="test-phone" placeholder="Phone" value="1234567890">
+                <input type="password" id="test-reg-password" placeholder="Password" value="Password123">
+                <button type="submit">Test Register</button>
+            </form>
+            <div id="register-response" class="info" style="display:none;"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>API Configuration</h2>
+        <table>
+            <tr>
+                <th>Setting</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>Base URL</td>
+                <td id="base-url">-</td>
+            </tr>
+            <tr>
+                <td>Login Endpoint</td>
+                <td id="login-endpoint">-</td>
+            </tr>
+            <tr>
+                <td>Register Endpoint</td>
+                <td id="register-endpoint">-</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Authentication Status</h2>
+        <table>
+            <tr>
+                <th>Cookie Name</th>
+                <th>Value</th>
+            </tr>
+            <tr>
+                <td>authToken</td>
+                <td id="cookie-token">Not set</td>
+            </tr>
+            <tr>
+                <td>isAuthenticated</td>
+                <td id="cookie-authenticated">Not set</td>
+            </tr>
+            <tr>
+                <td>userName</td>
+                <td id="cookie-username">Not set</td>
+            </tr>
+            <tr>
+                <td>userEmail</td>
+                <td id="cookie-email">Not set</td>
+            </tr>
+            <tr>
+                <td>userRole</td>
+                <td id="cookie-role">Not set</td>
+            </tr>
+        </table>
+        <button onclick="clearAllCookies()">Clear All Cookies</button>
+        <button onclick="refreshAuthStatus()">Refresh Status</button>
+    </div>
+
+    <div class="section">
+        <h2>Console Output</h2>
+        <div id="console" class="console">Ready...</div>
+        <button onclick="clearConsole()">Clear Console</button>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script>
+        // Console logging
+        const consoleEl = document.getElementById('console');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function logToConsole(msg, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = `[${timestamp}] `;
+            const className = type === 'error' ? 'error' : type === 'warn' ? 'warning' : 'success';
+            consoleEl.innerHTML += `<span class="${className}">${prefix}${msg}</span>\n`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        console.log = function(...args) {
+            originalLog(...args);
+            logToConsole(args.join(' '), 'log');
+        };
+
+        console.error = function(...args) {
+            originalError(...args);
+            logToConsole('ERROR: ' + args.join(' '), 'error');
+        };
+
+        console.warn = function(...args) {
+            originalWarn(...args);
+            logToConsole('WARN: ' + args.join(' '), 'warn');
+        };
+
+        // Initialize
+        function init() {
+            console.log('=== Auth Debug Tool Initialized ===');
+            
+            // Show API Configuration
+            document.getElementById('base-url').textContent = API_CONFIG.BASE_URL;
+            document.getElementById('login-endpoint').textContent = API_CONFIG.getApiUrl('Identity/Account/Login');
+            document.getElementById('register-endpoint').textContent = API_CONFIG.getApiUrl('Identity/Account/Register');
+
+            // Check auth status
+            refreshAuthStatus();
+
+            // Setup form handlers
+            document.getElementById('test-login-form').addEventListener('submit', handleTestLogin);
+            document.getElementById('test-register-form').addEventListener('submit', handleTestRegister);
+        }
+
+        function handleTestLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('test-email').value;
+            const password = document.getElementById('test-password').value;
+            
+            console.log(`Testing login with email: ${email}`);
+            
+            const responseEl = document.getElementById('login-response');
+            responseEl.innerHTML = '<span class="warning">Testing login...</span>';
+            responseEl.style.display = 'block';
+            
+            login(email, password)
+                .then(() => {
+                    console.log('Login test completed');
+                    refreshAuthStatus();
+                })
+                .catch(err => {
+                    console.error('Login test error:', err);
+                });
+        }
+
+        function handleTestRegister(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('test-fullname').value;
+            const userName = document.getElementById('test-username').value;
+            const email = document.getElementById('test-reg-email').value;
+            const phone = document.getElementById('test-phone').value;
+            const password = document.getElementById('test-reg-password').value;
+            
+            console.log(`Testing register with email: ${email}`);
+            
+            const responseEl = document.getElementById('register-response');
+            responseEl.innerHTML = '<span class="warning">Testing register...</span>';
+            responseEl.style.display = 'block';
+            
+            register(email, password, userName, fullName, phone)
+                .then(() => {
+                    console.log('Register test completed');
+                    refreshAuthStatus();
+                })
+                .catch(err => {
+                    console.error('Register test error:', err);
+                });
+        }
+
+        function refreshAuthStatus() {
+            const cookies = {
+                'authToken': getCookie('authToken'),
+                'isAuthenticated': getCookie('isAuthenticated'),
+                'userName': getCookie('userName'),
+                'userEmail': getCookie('userEmail'),
+                'userRole': getCookie('userRole')
+            };
+
+            document.getElementById('cookie-token').textContent = cookies.authToken ? cookies.authToken.substring(0, 20) + '...' : 'Not set';
+            document.getElementById('cookie-authenticated').textContent = cookies.isAuthenticated || 'Not set';
+            document.getElementById('cookie-username').textContent = cookies.userName || 'Not set';
+            document.getElementById('cookie-email').textContent = cookies.userEmail || 'Not set';
+            document.getElementById('cookie-role').textContent = cookies.userRole || 'Not set';
+
+            console.log('Auth status refreshed:', cookies);
+        }
+
+        function clearAllCookies() {
+            deleteCookie('authToken');
+            deleteCookie('isAuthenticated');
+            deleteCookie('userName');
+            deleteCookie('userEmail');
+            deleteCookie('userRole');
+            deleteCookie('rememberedEmail');
+            refreshAuthStatus();
+            console.log('All cookies cleared');
+        }
+
+        function clearConsole() {
+            consoleEl.innerHTML = '';
+            console.log('Console cleared');
+        }
+
+        // Start when DOM is ready
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

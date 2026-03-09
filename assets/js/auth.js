@@ -74,10 +74,6 @@ function isTokenExpired(decodedToken) {
 function storeToken(token) {
     const decoded = decodeJWT(token);
 
-    // Debug: Log the decoded token structure
-    console.log('=== JWT Token Debug ===');
-    console.log('Decoded Token:', decoded);
-
     if (decoded && !isTokenExpired(decoded)) {
         // Store token
         setCookie('authToken', token, TOKEN_EXPIRY_MINUTES);
@@ -91,13 +87,11 @@ function storeToken(token) {
             decoded.sub ||
             'User';
         setCookie('userName', userName, TOKEN_EXPIRY_MINUTES);
-        console.log('Stored userName:', userName);
 
         // Email can be in: email, sub, upn
         const userEmail = decoded.email || decoded.sub || decoded.upn || '';
         if (userEmail) {
             setCookie('userEmail', userEmail, TOKEN_EXPIRY_MINUTES);
-            console.log('Stored userEmail:', userEmail);
         }
 
         // Role can be in: role, roles (array), 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
@@ -119,22 +113,16 @@ function storeToken(token) {
 
         if (userRole) {
             setCookie('userRole', userRole, TOKEN_EXPIRY_MINUTES);
-            console.log('Stored userRole:', userRole);
         } else {
             console.warn('No role found in JWT token. Available claims:', Object.keys(decoded));
             // Set default role as Customer if no role found
             setCookie('userRole', 'Customer', TOKEN_EXPIRY_MINUTES);
-            console.log('Using default role: Customer');
         }
-
-        console.log('=== Token Storage Complete ===');
 
         // Set up automatic logout timer
         setupAutoLogout();
     } else {
         console.error('Invalid or expired token');
-        console.log('Decoded:', decoded);
-        console.log('Is Expired:', decoded ? isTokenExpired(decoded) : 'N/A');
     }
 }
 
@@ -214,6 +202,11 @@ function clearAuth() {
     if (window.autoLogoutTimer) {
         clearTimeout(window.autoLogoutTimer);
     }
+    
+    // Clear token validation interval
+    if (window.tokenValidationInterval) {
+        clearInterval(window.tokenValidationInterval);
+    }
 }
 
 /**
@@ -227,10 +220,70 @@ function setupAutoLogout() {
 
     // Set new timer for TOKEN_EXPIRY_MINUTES
     window.autoLogoutTimer = setTimeout(() => {
-        console.log('Token expired, logging out...');
         clearAuth();
         window.location.href = 'index.html';
     }, TOKEN_EXPIRY_MINUTES * 60 * 1000);
+}
+
+/**
+ * Initialize authentication on page load
+ * Validates token, reinitializes timeout timer, and redirects if expired
+ */
+function initializeAuth() {
+    const token = getToken();
+    
+    // If no token, user is not authenticated
+    if (!token) {
+        return;
+    }
+
+    const decoded = decodeJWT(token);
+    
+    // If token is expired, clear auth and redirect to login
+    if (isTokenExpired(decoded)) {
+        clearAuth();
+        // Only redirect if not already on login page
+        if (!window.location.pathname.includes('login.html')) {
+            window.location.href = 'login.html';
+        }
+        return;
+    }
+
+    // Token is valid - reinitialize auto-logout timer
+    setupAutoLogout();
+}
+
+/**
+ * Setup auth initialization on page load (for all pages)
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAuth();
+    
+    // Start periodic token validation check every 1 minute
+    startTokenValidationCheck();
+});
+
+/**
+ * Periodic token validation - checks every minute if token is still valid
+ * This ensures users are logged out if token expires while they're browsing
+ */
+function startTokenValidationCheck() {
+    // Check every 60 seconds
+    window.tokenValidationInterval = setInterval(() => {
+        const token = getToken();
+        
+        if (!token) return;
+        
+        const decoded = decodeJWT(token);
+        
+        // If token has expired, log out the user
+        if (isTokenExpired(decoded)) {
+            clearAuth();
+            // Show warning and redirect
+            alert('Your session has expired. Please log in again.');
+            window.location.href = 'login.html';
+        }
+    }, 60000); // Check every 60 seconds
 }
 
 
@@ -279,8 +332,11 @@ async function register(email, password, userName, fullName, phoneNumber) {
 
         const data = await response.json();
 
-        if (response.ok && data.token) {
-            storeToken(data.token);
+        // Check different possible token field names (handle nested structures)
+        const token = data.token || data.Token || data.accessToken || data.access_token || data.result?.token || data.data?.token;
+
+        if (response.ok && token) {
+            storeToken(token);
             showMessage('register-message', 'Registration successfully', false);
 
             // Sync cart if CartManager exists
@@ -288,13 +344,14 @@ async function register(email, password, userName, fullName, phoneNumber) {
                 CartManager.syncCartWithAPI();
             }
 
-            
             setTimeout(() => {
              window.location.href = 'dashboard.html';
             }, 1500);
         } else {
             // Handle error response
-            const errorMessage = data.message || data.title || 'Registration failed. Please try again.';
+            const errorMessage = data.message || data.title || data.error || 'Registration failed. Please try again.';
+            console.error('Registration error:', errorMessage);
+            console.error('Full response:', data);
             showMessage('register-error', errorMessage, true);
         }
     } catch (error) {
@@ -307,7 +364,6 @@ async function register(email, password, userName, fullName, phoneNumber) {
 async function login(email, password) {
     try {
         hideMessage('login-message');
-        hideMessage('login-error');
 
         const response = await fetch(API_CONFIG.getApiUrl('Identity/Account/Login'), {
             method: 'POST',
@@ -322,8 +378,11 @@ async function login(email, password) {
 
         const data = await response.json();
 
-        if (response.ok && data.token) {
-            storeToken(data.token);
+        // Check different possible token field names (handle nested structures)
+        const token = data.token || data.Token || data.accessToken || data.access_token || data.result?.token || data.data?.token;
+        
+        if (response.ok && token) {
+            storeToken(token);
             showMessage('login-message', 'Login successfully', false);
 
             // Sync cart if CartManager exists
@@ -337,121 +396,20 @@ async function login(email, password) {
             }, 1500);
         } else {
             // Handle error response
-            const errorMessage = data.message || data.title || 'Login failed. Please check your credentials.';
-            showMessage('login-error', errorMessage, true);
+            const errorMessage = data.message || data.title || data.error || 'Login failed. Please check your credentials.';
+            console.error('Login error:', errorMessage);
+            console.error('Full response:', data);
+            showMessage('login-message', errorMessage, true);
         }
     } catch (error) {
         console.error('Login error:', error);
-        showMessage('login-error', 'An error occurred. Please check your connection and try again.', true);
+        showMessage('login-message', 'An error occurred. Please check your connection and try again.', true);
     }
 }
 
-// Handle login form submission (page form)
-$(document).ready(function () {
-    // Handle login form on the login page
-    $('#signin-2 form').on('submit', function (e) {
-        e.preventDefault();
-        const email = $('#singin-email-2').val().trim();
-        const password = $('#singin-password-2').val();
-
-        if (!email || !password) {
-            showMessage('login-error', 'Please fill in all required fields.', true);
-            return;
-        }
-
-        login(email, password);
-    });
-
-    // Handle register form on the login page
-    $('#register-2 form').on('submit', function (e) {
-        e.preventDefault();
-        const email = $('#register-email-2').val().trim();
-        const password = $('#register-password-2').val();
-        const userName = $('#register-username-2').val().trim();
-        const fullName = $('#register-fullname-2').val().trim();
-        const phoneNumber = $('#register-phone-2').val().trim();
-
-        if (!email || !password || !userName || !fullName || !phoneNumber) {
-            showMessage('register-error', 'Please fill in all required fields.', true);
-            return;
-        }
-
-        register(email, password, userName, fullName, phoneNumber);
-    });
-
-    // Handle login form in modal
-    $('#signin form').on('submit', function (e) {
-        e.preventDefault();
-        hideMessage('login-modal-message');
-        const email = $('#singin-email').val().trim();
-        const password = $('#singin-password').val();
-
-        if (!email || !password) {
-            showMessage('login-modal-message', 'Please fill in all required fields.', true);
-            return;
-        }
-
-        // Use modal-specific login function
-        loginModal(email, password);
-    });
-
-    // Handle register form in modal
-    $('#register form').on('submit', function (e) {
-        e.preventDefault();
-        hideMessage('register-modal-message');
-        const email = $('#register-email').val().trim();
-        const password = $('#register-password').val();
-        const userName = $('#register-username').val().trim();
-        const fullName = $('#register-fullname').val().trim();
-        const phoneNumber = $('#register-phone').val().trim();
-
-        if (!email || !password || !userName || !fullName || !phoneNumber) {
-            showMessage('register-modal-message', 'Please fill in all required fields.', true);
-            return;
-        }
-
-        // Use modal-specific register function
-        registerModal(email, password, userName, fullName, phoneNumber);
-    });
-
-    // Handle forget password form (using event delegation in case modal is loaded dynamically)
-    $(document).on('submit', '#forget-password-form', function (e) {
-        e.preventDefault();
-        hideMessage('forget-password-message');
-        hideMessage('forget-password-error');
-
-        const email = $('#forget-password-email').val().trim();
-
-        if (!email) {
-            showMessage('forget-password-error', 'Please enter your email address.', true);
-            return;
-        }
-
-        forgetPassword(email);
-    });
-
-    // Handle reset password form
-    $('#reset-password-form').on('submit', function (e) {
-        e.preventDefault();
-        const email = $('#reset-password-email').val().trim();
-        const code = $('#reset-password-code').val().trim();
-        const password = $('#reset-password-new-password').val();
-        const confirmPassword = $('#reset-password-confirm-password').val();
-
-        if (!email || !code || !password || !confirmPassword) {
-            showMessage('reset-password-error', 'Please fill in all required fields.', true);
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            showMessage('reset-password-error', 'Passwords do not match.', true);
-            return;
-        }
-
-        resetPassword(email, code, password);
-    });
-
-});
+// NOTE: Form submission handlers have been moved to login_auth.js for the glassmorphism UI
+// The functions below (loginModal, registerModal) are kept for backward compatibility
+// with other pages that may need modal-based authentication
 
 // Login function for modal
 async function loginModal(email, password) {
@@ -471,8 +429,11 @@ async function loginModal(email, password) {
 
         const data = await response.json();
 
-        if (response.ok && data.token) {
-            storeToken(data.token);
+        // Check different possible token field names (handle nested structures)
+        const token = data.token || data.Token || data.accessToken || data.access_token || data.result?.token || data.data?.token;
+
+        if (response.ok && token) {
+            storeToken(token);
             showMessage('login-modal-message', 'Login successfully', false);
 
             // Sync cart if CartManager exists
@@ -481,11 +442,14 @@ async function loginModal(email, password) {
             }
 
             setTimeout(() => {
-                $('#signin-modal').modal('hide');
+                if (typeof $ !== 'undefined' && $('#signin-modal').length) {
+                    $('#signin-modal').modal('hide');
+                }
                 window.location.href = './index.html'; 
             }, 1500);
         } else {
-            const errorMessage = data.message || data.title || 'Login failed. Please check your credentials.';
+            const errorMessage = data.message || data.title || data.error || 'Login failed. Please check your credentials.';
+            console.error('Login Modal error:', errorMessage, data);
             showMessage('login-modal-message', errorMessage, true);
         }
     } catch (error) {
@@ -515,8 +479,11 @@ async function registerModal(email, password, userName, fullName, phoneNumber) {
 
         const data = await response.json();
 
-        if (response.ok && data.token) {
-            storeToken(data.token);
+        // Check different possible token field names (handle nested structures)
+        const token = data.token || data.Token || data.accessToken || data.access_token || data.result?.token || data.data?.token;
+
+        if (response.ok && token) {
+            storeToken(token);
             showMessage('register-modal-message', 'Registration successfully', false);
 
             // Sync cart if CartManager exists
@@ -526,11 +493,14 @@ async function registerModal(email, password, userName, fullName, phoneNumber) {
 
             // Close modal and role-based redirect after 1.5 seconds
             setTimeout(() => {
-                $('#signin-modal').modal('hide');
+                if (typeof $ !== 'undefined' && $('#signin-modal').length) {
+                    $('#signin-modal').modal('hide');
+                }
                 window.location.href = './index.html';
             }, 1500);
         } else {
-            const errorMessage = data.message || data.title || 'Registration failed. Please try again.';
+            const errorMessage = data.message || data.title || data.error || 'Registration failed. Please try again.';
+            console.error('Register Modal error:', errorMessage, data);
             showMessage('register-modal-message', errorMessage, true);
         }
     } catch (error) {

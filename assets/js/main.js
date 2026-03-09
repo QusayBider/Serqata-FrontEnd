@@ -28,14 +28,14 @@ $(document).ready(function () {
 		e.stopPropagation();
 	});
 
-	// Header search: redirect to category page with search param
+	// Header search: redirect to products page with search param
 	$(document).on('submit', '.header-search form', function (e) {
 		var $q = $(this).find('input[name="q"], input#q');
 		if ($q.length) {
 			var q = ($q.val() || '').trim();
 			if (q) {
 				e.preventDefault();
-				window.location.href = 'category-fullwidth.html?search=' + encodeURIComponent(q);
+				window.location.href = 'All_products.html?search=' + encodeURIComponent(q);
 				return false;
 			}
 		}
@@ -192,13 +192,13 @@ $(document).ready(function () {
 			tooltips: true,
 			format: wNumb({
 		        decimals: 0,
-		        prefix: '$'
+		        prefix: 'ILS '
 		    })
 		});
 
-		// Update Price Range display (e.g. "$0 - $200")
+		// Update Price Range display (e.g. "ILS 0 - ILS 1000")
 		priceSlider.noUiSlider.on('update', function( values, handle ){
-			$('#filter-price-range').text('$' + values[0] + ' - $' + values[1]);
+			$('#filter-price-range').text(' ' + values[0] + ' -  ' + values[1]);
 		});
 		// Wire price filter to FilterManager (category page)
 		priceSlider.noUiSlider.on('set', function( values ){

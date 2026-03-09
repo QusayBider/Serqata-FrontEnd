@@ -4,7 +4,7 @@ console.log('Categories.js: Script loaded');
 const CategoryManager = {
     categoriesCache: null,
     currentDisplayedCount: 0,
-    INITIAL_DISPLAY_COUNT: 4,
+    INITIAL_DISPLAY_COUNT: 5,
 
     // Get all categories from API
     async getAllCategories() {
@@ -71,7 +71,7 @@ const CategoryManager = {
                     if (viewMoreBtn) {
                         viewMoreBtn.onclick = (e) => {
                             e.preventDefault();
-                            window.location.href = './product-category-fullwidth.html';
+                            window.location.href = './Category.html';
                         };
                     }
                 } else {
@@ -90,59 +90,69 @@ const CategoryManager = {
     },
 
     renderCategoriesBatch(categories, container, count) {
-        try {
-            const startIndex = this.currentDisplayedCount;
-            const endIndex = Math.min(startIndex + count, categories.length);
-            const batch = categories.slice(startIndex, endIndex);
+    try {
+        const startIndex = this.currentDisplayedCount;
+        const endIndex = Math.min(startIndex + count, categories.length);
+        const batch = categories.slice(startIndex, endIndex);
 
-            if (batch.length === 0) return;
+        if (batch.length === 0) return;
 
-            let html = '';
+        let html = '';
 
-            for (let i = 0; i < batch.length; i++) {
-                const cat = batch[i];
-                html += `
-                <div class="col-md-3 col-sm-6">
-                    <div class="wsk-cp-product">
-                        <div class="wsk-cp-img">
-                            <a href="category-fullwidth.html?categoryId=${cat.id}">
-                                <img src="${cat.image}" alt="${cat.name}" class="img-responsive" onerror="this.src='assets/images/products/error/error.png'" />
-                            </a>
-                        </div>
-                        <div class="wsk-cp-text">
-                        <div class="title-product">
-                                <a href="category-fullwidth.html?categoryId=${cat.id}">
-                                    <h3>${cat.name}</h3>
-                                </a>
+        for (let i = 0; i < batch.length; i++) {
+            const cat = batch[i];
+
+            // global index in original categories array
+            const index = startIndex + i;
+
+            html += `
+                <div class="${index < 2 ? 'col-md-6 banner-lg' : 'col-md-6 col-lg-4 banner-sm'} banner-item mb-4">
+                    <div class="block1 wrap-pic-w category-banner-card">
+                        <img 
+                            src="${cat.image}" 
+                            alt="${cat.name}"
+                            class="category-banner-img"
+                            onerror="this.src='assets/images/products/error/error.png'"
+                        >
+
+                        <a href="All_products.html?categoryId=${cat.id}" 
+                        class="block1-txt ab-t-l s-full flex-col-l-sb p-lr-38 p-tb-34 trans-03 respon3">
+
+                            <div class="block1-txt-child1 flex-col-l">
+                                <span class="block1-name ltext-102 trans-04 p-b-8">
+                                    ${cat.name}
+                                </span>
                             </div>
-                            <div class="category">
-                                <span>View Category</span>
+
+                            <div class="block1-txt-child2 p-b-4 trans-05">
+                                <div class="block1-name stext-101 cl0 trans-09">
+                                     View Category
+                                </div>
                             </div>
-                            
-                        </div>
+                        </a>
                     </div>
                 </div>
-                `;
-            }
-
-            container.insertAdjacentHTML('beforeend', html);
-            this.currentDisplayedCount = endIndex;
-        } catch (e) {
-            console.error('Categories.js: Error rendering batch', e);
+            `;
         }
-    },
+
+        container.insertAdjacentHTML('beforeend', html);
+        this.currentDisplayedCount = endIndex;
+    } catch (e) {
+        console.error('Categories.js: Error rendering batch', e);
+    }
+},
 
     renderFallback(container) {
         if (container) {
             container.innerHTML = `
                 <div class="col-lg-6">
                     <div class="banner banner-hover">
-                        <a href="category-fullwidth.html">
+                        <a href="All_products.html">
                             <img src="assets/images/products/error/error.png" alt="error" onerror="this.src='assets/images/products/error/error.png'">
                         </a>
                         <div class="banner-content">
-                            <h3 class="banner-title text-white"><a href="category-fullwidth.html">Shop Now</a></h3>
-                            <a href="category-fullwidth.html" class="banner-link">Shop Now <i class="icon-long-arrow-right"></i></a>
+                            <h3 class="banner-title text-white"><a href="All_products.html">Shop Now</a></h3>
+                            <a href="All_products.html" class="banner-link">Shop Now <i class="icon-long-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>

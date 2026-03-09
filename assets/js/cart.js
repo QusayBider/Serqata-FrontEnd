@@ -650,7 +650,7 @@ const CartManager = {
                 <div class="product" data-product-id="${item.productId}" data-color-id="${item.colorId || ''}" data-size-id="${item.sizeId || ''}">
                     <div class="product-cart-details">
                         <h4 class="product-title">
-                            <a href="product.html?id=${item.productId}">${item.productName}</a>
+                            <a href="Product_Details.html?id=${item.productId}">${item.productName}</a>
                         </h4>
                         ${variantText}
                         <span class="cart-product-info">
@@ -659,7 +659,7 @@ const CartManager = {
                         </span>
                     </div>
                     <figure class="product-image-container">
-                        <a href="product.html?id=${item.productId}" class="product-image">
+                        <a href="Product_Details.html?id=${item.productId}" class="product-image">
                             <img src="${item.mainImageUrl || item.productImageUrl || 'assets/images/products/error/error.png'}" alt="${item.productName}" onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">
                         </a>
                     </figure>
@@ -732,7 +732,7 @@ $(document).ready(async function () {
 
         if ($button.closest('.product-details-action').length > 0 ||
             $button.closest('.product-details').length > 0 ||
-            window.location.pathname.includes('product.html')) {
+            window.location.pathname.includes('Product_Details.html')) {
             // Let product-details.js handle it
             return;
         }
@@ -753,7 +753,7 @@ $(document).ready(async function () {
 
         if (!productId) {
             const href = $button.attr('href');
-            if (href && href.includes('product.html?id=')) {
+            if (href && href.includes('Product_Details.html?id=')) {
                 const match = href.match(/id=(\d+)/);
                 if (match) {
                     productId = match[1];

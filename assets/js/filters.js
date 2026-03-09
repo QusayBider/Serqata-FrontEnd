@@ -413,18 +413,18 @@ const FilterManager = {
                     return;
                 }
             }
-            document.title = 'All Products - serqata';
+            document.title = 'All product - serqata';
             const pageTitle = document.querySelector('#category-page-title, .page-title');
             if (pageTitle) {
                 const span = pageTitle.querySelector('span');
                 if (span) {
-                    pageTitle.innerHTML = 'All Products<span>Shop</span>';
+                    pageTitle.innerHTML = 'All product<span>Shop</span>';
                 } else {
-                    pageTitle.textContent = 'All Products';
+                    pageTitle.textContent = 'All product';
                 }
             }
             const breadcrumbActive = document.querySelector('#breadcrumb-category, .breadcrumb-item.active');
-            if (breadcrumbActive) breadcrumbActive.textContent = 'All Products';
+            if (breadcrumbActive) breadcrumbActive.textContent = 'All product';
         } catch (error) {
             console.error('Error updating page title:', error);
         }
@@ -553,7 +553,7 @@ const FilterManager = {
                                 <a href="#">${categoryName}</a>
                             </div><!-- End .product-cat -->
                             <h3 class="product-title">
-                                <a href="product.html?id=${product.id}">${product.name}</a>
+                                <a href="Product_Details.html?id=${product.id}">${product.name}</a>
                             </h3><!-- End .product-title -->
                             <div class="product-price">
                                 ${discount > 0
@@ -606,7 +606,7 @@ const FilterManager = {
             priceSlider.noUiSlider.set([0, 1000]);
         }
         const rangeEl = document.getElementById('filter-price-range');
-        if (rangeEl) rangeEl.textContent = '$0 - $1000';
+        if (rangeEl) rangeEl.textContent = '0 - ILS 1000';
         // Keep priceRange default so price filter is not applied after clear
         this.priceRange = { min: 0, max: 10000 };
 

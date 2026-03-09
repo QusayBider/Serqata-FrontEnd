@@ -140,18 +140,7 @@ $(document).ready(function () {
             if (ad.showInMainPage === true) {
                 var slideHtml = `
                     <div class="intro-slide" style="background-image: url('${ad.imageUrl || ''}');">
-                        <div class="container">
-                            <div class="intro-content text-center">
-                                <h3 class="intro-subtitle cross-txt text-primary">${ad.upText || ''}</h3>
-                                <h1 class="intro-title text-white">${ad.name || ''}</h1>
-                                <div class="intro-text text-white">${ad.description || ''}</div>
-                                <div class="intro-action cross-txt">
-                                    <a href="Advertisements.html?id=${ad.id}" class="btn btn-outline-white">
-                                        <span>${ad.downText || 'Discover More'}</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                        
                     </div>
                 `;
                 $slider.append(slideHtml);

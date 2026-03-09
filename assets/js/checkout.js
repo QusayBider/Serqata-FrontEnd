@@ -567,7 +567,7 @@ $(document).ready(async function () {
                 const itemPrice = discountSource === 'coupon' ? item.originalTotalPrice : item.totalPrice;
                 const html = `
                     <tr>
-                        <td><a href="product.html?id=${item.productId}">${item.productName}</a> x${item.quantity}</td>
+                        <td><a href="Product_Details.html?id=${item.productId}">${item.productName}</a> x${item.quantity}</td>
                         <td>ILS ${itemPrice.toFixed(2)}${discountSource === 'coupon' && item.discount > 0 ? `` : ''}</td>
                     </tr>
                 `;

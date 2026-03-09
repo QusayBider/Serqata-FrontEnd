@@ -1,0 +1,264 @@
+/* ============================= */
+/* ===== BRANDS GRID LAYOUT ==== */
+/* ============================= */
+
+.brands-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+.brands-header{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+/* ============================= */
+/* ========= BRAND CARD ======== */
+/* ============================= */
+
+.brand-card {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.brand-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================= */
+/* ========= IMAGE AREA ======== */
+/* ============================= */
+
+.brand-card-img {
+    position: relative;
+    height: 180px;
+    background: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-card-img img {
+    max-width: 85%;
+    max-height: 140px;
+    object-fit: contain;
+}
+
+.brand-card-img-placeholder {
+    text-align: center;
+    color: #b0b0b0;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ============================= */
+/* ========= STATUS PILL ======= */
+/* ============================= */
+
+.brand-status-pill {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+}
+
+.brand-status-pill.active {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+}
+.brand-status-pill.inactive{
+    background: rgba(66, 78, 94, 0.12);
+    color: #96a4ba;
+    border: 1px solid rgba(100, 116, 139, 0.25);
+}
+/* ============================= */
+/* ========= CARD BODY ========= */
+/* ============================= */
+
+.brand-card-body {
+    padding: 20px;
+}
+
+.brand-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-card-name {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #111;
+}
+
+.brand-card-id {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* ============================= */
+/* ========= CARD FOOTER ======= */
+/* ============================= */
+
+.brand-card-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #f1f1f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+/* ============================= */
+/* ========= EDIT BUTTON ======= */
+/* ============================= */
+
+.btn-ad-edit {
+    flex: 1;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    background: #f3f4f6;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+.btn-ad-edit:hover {
+    background: #e5e7eb;
+}
+
+/* ============================= */
+/* ========= TOGGLE SWITCH ===== */
+/* ============================= */
+
+.brand-card-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.brand-card-toggle input {
+    display: none;
+}
+
+.brand-card-toggle .toggle-text {
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 0px;
+    color: #555;
+    min-width: 50px !important ; 
+}
+
+.brand-card-toggle-slider {
+    width: 46px;
+    height: 24px;
+    background: #d1d5db;
+    border-radius: 30px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.brand-card-toggle-slider:before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #ffffff;
+    border-radius: 50%;
+    top: 3px;
+    left: 4px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.brand-card-toggle input:checked + .brand-card-toggle-slider {
+    background: #22c55e;
+}
+
+.brand-card-toggle input:checked + .brand-card-toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* ============================= */
+/* ========= EMPTY STATE ======= */
+/* ============================= */
+
+.brands-empty {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.brands-empty h4 {
+    margin-bottom: 15px;
+}
+
+/* ============================= */
+/* ========= RESPONSIVE ======== */
+/* ============================= */
+
+@media (max-width: 992px) {
+    .brands-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+
+    .brands-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .brand-card-img {
+        height: 150px;
+    }
+
+    .brand-card-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-ad-edit {
+        width: 100%;
+    }
+
+    .brand-card-toggle {
+        justify-content: space-between;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .brand-card {
+        border-radius: 16px;
+    }
+
+    .brand-card-body {
+        padding: 16px;
+    }
+
+    .brand-card-footer {
+        padding: 14px 16px;
+    }
+
+    .brand-card-name {
+        font-size: 15px;
+    }
+}

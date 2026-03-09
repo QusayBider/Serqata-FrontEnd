@@ -502,7 +502,7 @@ const ProductDetailsManager = {
 
         if (stickyTitle) {
             stickyTitle.textContent = product.name;
-            stickyTitle.href = `product.html?id=${product.id}`;
+            stickyTitle.href = `Product_Details.html?id=${product.id}`;
         }
 
         if (stickyPrice) {
@@ -761,7 +761,7 @@ const ProductDetailsManager = {
                     <div class="product product-7 text-center">
                         <figure class="product-media">
                             ${discount > 0 ? `<span class="product-label label-primary">Sale</span>` : ''}
-                            <a href="product.html?id=${productId}">
+                            <a href="Product_Details.html?id=${productId}">
                                 <img src="${mainImageUrl}" alt="${product.name}" class="product-image" onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">
                             </a>
                             <div class="product-action-vertical">
@@ -780,7 +780,7 @@ const ProductDetailsManager = {
                             <div class="product-cat">
                                 <a href="category-fullwidth.html?categoryId=${product.categoryId}">${categoryName}</a>
                             </div>
-                            <h3 class="product-title"><a href="product.html?id=${productId}">${product.name}</a></h3>
+                            <h3 class="product-title"><a href="Product_Details.html?id=${productId}">${product.name}</a></h3>
                             <div class="product-price">
                                 ${discount > 0
                         ? `<span class="new-price">Now ILs ${finalPrice.toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`

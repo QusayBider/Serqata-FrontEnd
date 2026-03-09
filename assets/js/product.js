@@ -94,45 +94,82 @@ const displayALLProducts = async () => {
         const wishlistClass = inWishlist ? 'added' : '';
         const wishlistIcon = inWishlist ? 'icon-heart' : 'icon-heart-o';
 
-        return `
-        <div class="col-6 col-md-4">
-                <div class="product product-4" data-product-id="${productId}">
-                    <figure class="product-media">
-                        ${product.discount ? `<span class="product-label label-primary">Sale</span>` : ''}
-                        <a href="product.html?id=${productId}">
-                            <img src="${mainImageUrl}" alt="${product.name}" class="product-image" onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">
-                            ${product.subImagesUrl && Array.isArray(product.subImagesUrl) ? product.subImagesUrl.map(img => `<img src="${img}" alt="${product.name}" class="product-image-hover" onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">`).join('') : ''}
-                        </a>
-                        <div class="product-action-vertical">
-                            <a href="#" class="btn-product-icon btn-wishlist ${wishlistClass}" data-product-id="${productId}" onclick="addToWishlistHandler(event, ${productId})" title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
-                                <i class="${wishlistIcon}"></i>
-                                <span>${inWishlist ? 'remove from wishlist' : 'add to wishlist'}</span>
-                            </a>
-                            <a href="popup/quickView.html" class="btn-product-icon btn-quickview"><span>Quick view</span></a>
-                        </div>
-                        <div class="product-action">
-                            <a href="#" class="btn-product btn-cart" data-product-id="${productId}"><span>add to cart</span></a>
-                        </div>
-                    </figure>
-                    <div class="product-body">
-                        <div class="product-cat">
-                            <a href="#">${categoryName}</a>
-                        </div>
-                        <h3 class="product-title"><a href="product.html?id=${productId}">${product.name}</a></h3>
-                        <div class="product-price">
-                            ${product.discount
-            ? `<span class="new-price">Now ILs ${(product.price * (1 - product.discount / 100)).toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
-            : `ILs ${product.price.toFixed(2)}`}
-                        </div>
-                        <div class="product-nav product-nav-dots ml-1">
-                            ${product.colors && Array.isArray(product.colors) ? product.colors.map((color, index) => `
-                                <a href="product.html?id=${productId}" class="${index === 0 ? 'active' : ''}" style="background: ${color.hexCode || color.hex || color.code || '#cccccc'};" title="${color.name || 'Color'}"><span class="sr-only">${color.name || 'Color'}</span></a>
-                            `).join('') : ``}
-                        </div>
-                    </div>
+          return `
+    <div class="col-6 col-md-4 col-lg-3 d-flex">
+        <div class="product product-4 product-card w-100" data-product-id="${productId}">
+            <figure class="product-media product-media-fixed">
+                ${product.discount ? `<span class="product-label label-primary">Sale</span>` : ''}
+
+                <a href="Product_Details.html?id=${productId}" class="product-image-wrapper">
+                    <img src="${mainImageUrl}" 
+                         alt="${product.name}" 
+                         class="product-image product-image-main"
+                         onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">
+
+                    ${
+                        product.subImagesUrl && Array.isArray(product.subImagesUrl) && product.subImagesUrl.length
+                            ? `<img src="${product.subImagesUrl[0]}" 
+                                    alt="${product.name}" 
+                                    class="product-image product-image-hover"
+                                    onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">`
+                            : ''
+                    }
+                </a>
+
+                <div class="product-action-vertical">
+                    <a href="#"
+                       class="btn-product-icon btn-wishlist ${wishlistClass}"
+                       data-product-id="${productId}"
+                       onclick="addToWishlistHandler(event, ${productId})"
+                       title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
+                        <i class="${wishlistIcon}"></i>
+                        <span>${inWishlist ? 'remove from wishlist' : 'add to wishlist'}</span>
+                    </a>
+                </div>
+
+                <div class="product-action">
+                    <a href="#" class="btn-product btn-cart" data-product-id="${productId}">
+                        <span>add to cart</span>
+                    </a>
+                </div>
+            </figure>
+
+            <div class="product-body product-body-fixed">
+                <div class="product-cat">
+                    <a href="./Category.html?id=${product.categoryId}">${categoryName}</a>
+                </div>
+
+                <h3 class="product-title product-title-fixed">
+                    <a href="Product_Details.html?id=${productId}">${product.name}</a>
+                </h3>
+
+                <div class="product-price">
+                    ${
+                        product.discount
+                            ? `<span class="new-price">Now ILs ${(product.price * (1 - product.discount / 100)).toFixed(2)}</span>
+                               <span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
+                            : `ILs ${product.price.toFixed(2)}`
+                    }
+                </div>
+
+                <div class="product-nav product-nav-dots ml-1">
+                    ${
+                        product.colors && Array.isArray(product.colors)
+                            ? product.colors.map((color, index) => `
+                                <a href="Product_Details.html?id=${productId}"
+                                   class="${index === 0 ? 'active' : ''}"
+                                   style="background: ${color.hexCode || color.hex || color.code || '#cccccc'};"
+                                   title="${color.name || 'Color'}">
+                                    <span class="sr-only">${color.name || 'Color'}</span>
+                                </a>
+                            `).join('')
+                            : ``
+                    }
                 </div>
             </div>
-      `;
+        </div>
+    </div>
+          `;
       })
       .filter(html => html !== '') // Remove empty entries
       .join(" ");

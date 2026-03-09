@@ -1,0 +1,532 @@
+/* Company Admin Styling */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap');
+
+.company-empty {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(145deg, #ffffff 0%, #f9f9fa 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.company-empty h4 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 20px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+}
+
+.company-empty .btn-modern {
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.company-empty .btn-modern:hover {
+    background: #c96;
+    transform: translateY(-1px);
+}
+
+.company-panel {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.company-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 28px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.company-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+    letter-spacing: -0.3px;
+}
+
+.company-header h2 span {
+    color: #c96;
+}
+
+.btn-ad-new {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #111;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.btn-ad-new:hover {
+    background: #c96;
+    transform: translateY(-1px);
+}
+
+.btn-ad-new svg {
+    flex-shrink: 0;
+}
+
+.company-card {
+    padding: 28px;
+}
+
+.company-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    gap: 24px;
+}
+
+.company-logos {
+    display: flex;
+    gap: 16px;
+}
+
+.company-logo,
+.company-image {
+    max-width: 140px;
+    max-height: 140px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid #f0f0f0;
+}
+
+.company-logo-placeholder,
+.company-image-placeholder {
+    width: 140px;
+    height: 140px;
+    background: linear-gradient(145deg, #f9f9fa 0%, #f0f0f0 100%);
+    border-radius: 12px;
+    border: 2px dashed #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.company-status {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.company-status-pill {
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.company-status-pill.active {
+    background: linear-gradient(145deg, #e8f5e9 0%, #f1f5f0 100%);
+    color: #2e7d32;
+}
+
+.company-status-pill.inactive {
+    background: linear-gradient(145deg, #f5f5f5 0%, #eeeeee 100%);
+    color: #999;
+}
+
+.company-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 6px 12px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.toggle-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    min-width: 60px;
+}
+
+.company-toggle input[type='checkbox'] {
+    display: none;
+}
+
+.toggle-slider {
+    width: 44px;
+    height: 24px;
+    background: #ccc;
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.company-toggle input[type='checkbox']:checked + .toggle-slider {
+    background: #22c55e;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: left 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.company-toggle input[type='checkbox']:checked + .toggle-slider::after {
+    left: 22px;
+}
+
+.company-card-body {
+    background: linear-gradient(145deg, #fafafa 0%, #f9f9f9 100%);
+    padding: 28px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.company-info-section {
+    margin-bottom: 28px;
+}
+
+.company-info-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #111;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.2px;
+}
+.company-info-header{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    justify-content: space-between;
+}
+.company-founded {
+    font-size: 12px;
+    color: #999;
+    margin: 0;
+    font-weight: 500;
+}
+
+.company-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.company-info-item {
+    background: #fff;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.company-info-item:hover {
+    border-color: #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.company-info-item label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.company-info-item p {
+    font-size: 14px;
+    color: #333;
+    margin: 0;
+    word-break: break-word;
+    font-weight: 500;
+}
+
+.company-info-item a {
+    color: #c96;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.company-info-item a:hover {
+    color: #b8860b;
+}
+
+/* ═══════════════════════════════════════════
+   MODAL FORM STYLING
+   ═══════════════════════════════════════════ */
+
+.af-swal-form {
+    font-family: 'DM Sans', sans-serif;
+}
+
+.af-section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 16px;
+    margin-top: 24px;
+    letter-spacing: -0.2px;
+    text-transform: capitalize;
+}
+
+.af-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.af-row.full {
+    grid-template-columns: 1fr;
+}
+
+.af-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.af-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.af-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.af-input,
+.af-textarea {
+    padding: 11px 14px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #fafafa;
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.af-input:focus,
+.af-textarea:focus {
+    outline: none;
+    border-color: #c96;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(201, 150, 0, 0.1);
+}
+
+.af-input::placeholder,
+.af-textarea::placeholder {
+    color: #bbb;
+}
+
+.af-textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Image upload box */
+.af-img-upload {
+    position: relative;
+    border: 2px dashed #e0e0e0;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    background: linear-gradient(145deg, #fafafa 0%, #f5f5f5 100%);
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.af-img-upload:hover {
+    border-color: #c96;
+    background: #fff9f0;
+}
+
+.af-img-upload.has-image {
+    border-color: #22c55e;
+    background: #f0fdf4;
+}
+
+.af-img-upload input[type='file'] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.af-img-preview {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    margin: 0 auto;
+}
+
+.af-img-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.af-img-placeholder svg {
+    color: #ddd;
+}
+
+.af-upload-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.af-upload-sub {
+    font-size: 11px;
+    color: #999;
+}
+
+.af-img-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.af-img-upload:hover .af-img-overlay {
+    display: flex;
+}
+
+.af-img-overlay svg {
+    color: #fff;
+}
+
+.af-img-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 0, 0, 0.8);
+    color: #fff;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+    z-index: 10;
+}
+
+.af-img-upload:hover .af-img-remove {
+    opacity: 1;
+}
+
+.af-img-remove:hover {
+    background: rgba(220, 0, 0, 1);
+}
+
+/* SweetAlert2 overrides */
+.swal2-popup {
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12) !important;
+}
+
+.swal2-title {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+    letter-spacing: -0.3px !important;
+}
+
+.swal2-confirm,
+.swal2-cancel {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    padding: 10px 24px !important;
+    transition: all 0.2s !important;
+}
+
+.swal2-confirm {
+    background: #111 !important;
+    color: #fff !important;
+}
+
+.swal2-confirm:hover {
+    background: #c96 !important;
+    transform: translateY(-2px) !important;
+}
+
+.swal2-cancel {
+    background: #f0f0f0 !important;
+    color: #333 !important;
+    border: 1px solid #e0e0e0 !important;
+}
+
+.swal2-cancel:hover {
+    background: #e0e0e0 !important;
+}
