@@ -104,11 +104,10 @@
     bottom:20px
 }
 .intro-slide{
-    display: flex;
-    align-items: center;
-    background-size: contain;
-    background-position: center center;
-    background-repeat: no-repeat;
+    display:flex;
+    align-items:center;
+    background-size:cover;
+    background-position:center center
 }
 .intro-slide .intro-content{
     width:740px;
