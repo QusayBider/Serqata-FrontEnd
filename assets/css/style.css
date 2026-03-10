@@ -16477,7 +16477,6 @@ button:focus {
     .dashboard .col-lg-3 {
         -ms-flex: 0 0 30%;
         flex: 0 0 30%;
-        max-width: 30%
     }
 
     .dashboard .col-lg-9 {

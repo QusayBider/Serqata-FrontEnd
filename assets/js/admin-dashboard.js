@@ -34,6 +34,12 @@ const AdminDashboardManager = {
         toggleDeliveryCost: 'Admin/DeliveryCosts/ToggleStatus',
         getDeliveryCostById: 'Admin/DeliveryCosts/GetDeliveryCostById',
         deleteDeliveryCost: 'Admin/DeliveryCosts/DeleteDeliveryCost',
+        discountCodes: 'Admin/DiscountCodes/GetAllDiscountCodes',
+        addDiscountCode: 'Admin/DiscountCodes/AddDiscountCode',
+        updateDiscountCode: 'Admin/DiscountCodes/UpdateDiscountCode',
+        getDiscountCodeById: 'Admin/DiscountCodes/GetDiscountCodeById',
+        deleteDiscountCode: 'Admin/DiscountCodes/DeleteDiscountCode',
+        resetDiscountCodeAmount: 'Admin/DiscountCodes/ResetDiscountAmounts',
     },
 
     init: async function () {
@@ -121,6 +127,8 @@ const AdminDashboardManager = {
             this.loadCompany();
         } else if (tabTarget === '#tab-deliverycosts') {
             this.loadDeliveryCosts();
+        } else if (tabTarget === '#tab-discountcodes') {
+            this.loadDiscountCodes();
         }
     },
 
@@ -1819,13 +1827,8 @@ const AdminDashboardManager = {
                             </div>
                             ${id ? `<div style="font-size:11px;color:#aaa;margin-top:4px">Editing company #${id}</div>` : ''}
                         </div>
-                        <div style="width:42px;height:42px;background:#fdf4e7;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <svg width="20" height="20" fill="none" stroke="#c96" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                        </div>
                     </div>
 
-                    <!-- Basic Info -->
-                    <div class="af-section-title" style="margin-top:0">Basic Information</div>
                     <div class="af-row">
                         <div class="af-col">
                             <div class="af-group">
@@ -2261,16 +2264,14 @@ const AdminDashboardManager = {
             `;
         } else {
             costs.forEach(dc => {
-                // ✅ FIX: status field is "Active" or "In_Active" string — normalize before checking
                 const statusStr = (dc.status || '').toString().toLowerCase().replace('_', '');
-                const isActive  = statusStr === 'active' || dc.isActive === true || dc.status === true;
+                const isActive = statusStr === 'active' || dc.isActive === true || dc.status === true;
 
-                // ✅ FIX: Safely read all fields with PascalCase fallbacks
-                const dcId      = dc.id          ?? dc.Id          ?? '';
-                const dcCity    = dc.cityName     || dc.CityName    || '—';
-                const dcSection = dc.sectionName  || dc.SectionName || '—';
-                const dcCost    = typeof dc.cost === 'number' ? dc.cost
-                                : typeof dc.Cost === 'number' ? dc.Cost : 0;
+                const dcId = dc.id ?? dc.Id ?? '';
+                const dcCity = dc.cityName || dc.CityName || '—';
+                const dcSection = dc.sectionName || dc.SectionName || '—';
+                const dcCost = typeof dc.cost === 'number' ? dc.cost
+                    : typeof dc.Cost === 'number' ? dc.Cost : 0;
 
                 html += `
                     <tr class="dc-row"
@@ -2323,13 +2324,14 @@ const AdminDashboardManager = {
     filterDeliveryCosts: function () {
         const query = (document.getElementById('dc-search-input')?.value || '').toLowerCase();
         document.querySelectorAll('#dc-table .dc-row').forEach(row => {
-            const city    = row.dataset.city    || '';
+            const city = row.dataset.city || '';
             const section = row.dataset.section || '';
             row.style.display = (!query || city.includes(query) || section.includes(query)) ? '' : 'none';
         });
     },
 
     openDeliveryCostModal: async function (id = null) {
+
         let dc = null;
 
         if (id) {
@@ -2342,27 +2344,27 @@ const AdminDashboardManager = {
                     const data = await response.json();
                     dc = data.data || data;
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         // Remove any stale modal
         document.getElementById('dc-modal-overlay')?.remove();
 
-        const isEdit     = !!id;
+        const isEdit = !!id;
         const badgeLabel = isEdit ? 'Edit Record' : 'New Entry';
         const titleLabel = isEdit ? 'Edit' : 'New';
-        const subLabel   = isEdit ? `Updating record #${id}` : 'Add a new delivery cost region';
-        const btnIcon    = isEdit
+        const subLabel = isEdit ? `Updating record #${id}` : 'Add a new delivery cost region';
+        const btnIcon = isEdit
             ? '<path d="M20 6L9 17l-5-5"/>'
             : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>';
-        const btnLabel   = isEdit ? 'Update Cost' : 'Add Cost';
+        const btnLabel = isEdit ? 'Update Cost' : 'Add Cost';
 
         const sectionVal = dc?.sectionName || dc?.SectionName || '';
-        const cityVal    = dc?.cityName    || dc?.CityName    || '';
-        const costVal    = dc?.cost        ?? dc?.Cost        ?? '';
+        const cityVal = dc?.cityName || dc?.CityName || '';
+        const costVal = dc?.cost ?? dc?.Cost ?? '';
 
         const overlay = document.createElement('div');
-        overlay.id        = 'dc-modal-overlay';
+        overlay.id = 'dc-modal-overlay';
         overlay.className = 'dc-overlay';
         overlay.innerHTML = `
             <div class="dc-modal" id="dc-modal-card">
@@ -2440,10 +2442,10 @@ const AdminDashboardManager = {
 
         document.getElementById('dc-confirm-btn').addEventListener('click', async () => {
             const sectionName = document.getElementById('dc-section').value.trim();
-            const cityName    = document.getElementById('dc-city').value.trim();
-            const costVal     = document.getElementById('dc-cost').value;
-            const errorEl     = document.getElementById('dc-error-msg');
-            const confirmBtn  = document.getElementById('dc-confirm-btn');
+            const cityName = document.getElementById('dc-city').value.trim();
+            const costVal = document.getElementById('dc-cost').value;
+            const errorEl = document.getElementById('dc-error-msg');
+            const confirmBtn = document.getElementById('dc-confirm-btn');
 
             errorEl.classList.remove('visible');
 
@@ -2480,8 +2482,8 @@ const AdminDashboardManager = {
                 headers: this.getHeaders(),
                 body: JSON.stringify({
                     sectionName: formValues.sectionName,
-                    cityName:    formValues.cityName,
-                    cost:        formValues.cost
+                    cityName: formValues.cityName,
+                    cost: formValues.cost
                 })
             });
             if (response.ok) {
@@ -2503,8 +2505,8 @@ const AdminDashboardManager = {
                 headers: this.getHeaders(),
                 body: JSON.stringify({
                     sectionName: formValues.sectionName,
-                    cityName:    formValues.cityName,
-                    cost:        formValues.cost
+                    cityName: formValues.cityName,
+                    cost: formValues.cost
                 })
             });
             if (response.ok) {
@@ -2570,6 +2572,630 @@ const AdminDashboardManager = {
             }
         } catch (e) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+        // =====================
+    // --- Discount Codes ---
+    // =====================
+
+    loadDiscountCodes: async function () {
+        const $container = $('#admin-discountcodes-container');
+
+        $container.html(`
+            <div class="ads-panel">
+                <div class="ads-header">
+                    <div>
+                        <h2 class="ads-header-title">Discount <span>Codes</span></h2>
+                    </div>
+                </div>
+                <div style="padding:20px;">Loading discount codes…</div>
+            </div>
+        `);
+
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.discountCodes), {
+                headers: this.getHeaders()
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                let codes = [];
+
+                if (Array.isArray(data)) {
+                    codes = data;
+                } else if (Array.isArray(data.data)) {
+                    codes = data.data;
+                } else if (data.data && Array.isArray(data.data.items)) {
+                    codes = data.data.items;
+                }
+
+                this.renderDiscountCodes(codes);
+            } else {
+                this.renderDiscountCodes([]);
+            }
+        } catch (e) {
+            $container.html(`<div class="dc-load-error">Error loading discount codes.</div>`);
+        }
+    },
+
+    renderDiscountCodes: function (codes) {
+        const $container = $('#admin-discountcodes-container');
+        const total = codes ? codes.length : 0;
+
+        const escapeHtml = (value) => {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+
+        const formatNumber = (value) => {
+            const num = Number(value ?? 0);
+            return Number.isFinite(num) ? num.toLocaleString() : '0';
+        };
+
+        let html = `
+            <div class="ads-panel">
+                <div class="ads-header">
+                    <div>
+                        <h2 class="ads-header-title">Discount <span>Codes</span></h2>
+                        <div class="ads-header-meta">${total} record${total !== 1 ? 's' : ''} total</div>
+                    </div>
+                    <button class="btn-ad-new" onclick="AdminDashboardManager.openDiscountCodeModal()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        New Code
+                    </button>
+                </div>
+
+                <div class="ads-toolbar">
+                    <div class="ads-search-wrap">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input
+                            class="ads-search"
+                            id="dsc-search-input"
+                            type="text"
+                            placeholder="Search code…"
+                            oninput="AdminDashboardManager.filterDiscountCodes()"
+                        >
+                    </div>
+                </div>
+
+                <div class="table-responsive dc-table-wrap">
+                    <table class="table" id="dsc-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Code</th>
+                                <th>Discount</th>
+                                <th>Usage Count</th>
+                                <th>Total Amount Saved</th>
+                                <th>Total Order Amount</th>
+                                <th class="dc-col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        if (!codes || codes.length === 0) {
+            html += `
+                <tr>
+                    <td colspan="7" class="dc-empty-row">No discount codes found.</td>
+                </tr>
+            `;
+        } else {
+            codes.forEach(dc => {
+                const dcId = dc.id ?? dc.Id ?? '';
+                const codeName = dc.code || dc.Code || '—';
+                const discount =
+                    dc.discountPercentage ?? dc.DiscountPercentage ?? 0;
+                const usageCount =
+                    dc.usageCount ?? dc.UsageCount ?? 0;
+                const totalAmountSaved =
+                    dc.totalAmountSaved ?? dc.TotalAmountSaved ?? 0;
+                const totalOrderAmount =
+                    dc.totalOrderAmount ?? dc.TotalOrderAmount ?? 0;
+
+                html += `
+                    <tr class="dc-row" data-code="${escapeHtml(String(codeName).toLowerCase())}">
+                        <td><span class="dc-id-badge">#${escapeHtml(dcId)}</span></td>
+                        <td style="font-weight:600;">${escapeHtml(codeName)}</td>
+                        <td><span class="dc-cost-pill">${escapeHtml(discount)}%</span></td>
+                        <td>${formatNumber(usageCount)}</td>
+                        <td>${formatNumber(totalAmountSaved)}</td>
+                        <td>${formatNumber(totalOrderAmount)}</td>
+                        <td class="dc-col-actions">
+                            <button class="btn-ad-edit dc-btn-table"
+                                onclick="AdminDashboardManager.openDiscountCodeModal(${Number(dcId) || 0})">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Edit
+                            </button>
+
+                            <button class="btn-ad-edit dc-btn-table dc-btn-delete"
+                                onclick="AdminDashboardManager.deleteDiscountCode(${Number(dcId) || 0})">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6"/>
+                                </svg>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        html += `</tbody></table></div></div>`;
+        $container.html(html);
+    },
+
+    filterDiscountCodes: function () {
+        const query = (document.getElementById('dsc-search-input')?.value || '').toLowerCase();
+
+        document.querySelectorAll('#dsc-table .dc-row').forEach(row => {
+            const code = row.dataset.code || '';
+            row.style.display = (!query || code.includes(query)) ? '' : 'none';
+        });
+    },
+
+    openDiscountCodeModal: async function (id = null) {
+    let dc = null;
+
+    if (id) {
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.getDiscountCodeById}/${id}`),
+                { headers: this.getHeaders() }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                dc = data.data || data;
+            }
+        } catch (e) {}
+    }
+
+    document.getElementById('dc-modal-overlay')?.remove();
+
+    const isEdit = !!id;
+    const badgeLabel = isEdit ? 'Edit Record' : 'New Entry';
+    const titleLabel = isEdit ? 'Edit' : 'New';
+    const subLabel = isEdit ? `Updating record #${id}` : 'Add a new discount code';
+    const btnIcon = isEdit
+        ? '<path d="M20 6L9 17l-5-5"/>'
+        : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>';
+    const btnLabel = isEdit ? 'Update Code' : 'Add Code';
+
+    const codeVal = dc?.code || dc?.Code || '';
+    const discountVal = dc?.discountPercentage ?? dc?.DiscountPercentage ?? '';
+    const usageCount = dc?.usageCount ?? dc?.UsageCount ?? 0;
+    const totalAmountSaved = dc?.totalAmountSaved ?? dc?.TotalAmountSaved ?? 0;
+    const totalOrderAmount = dc?.totalOrderAmount ?? dc?.TotalOrderAmount ?? 0;
+
+    const escapeAttr = (value) => {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    };
+
+    const formatNumber = (value) => {
+        const num = Number(value ?? 0);
+        return Number.isFinite(num) ? num.toLocaleString() : '0';
+    };
+
+    const overlay = document.createElement('div');
+    overlay.id = 'dc-modal-overlay';
+    overlay.className = 'dc-overlay';
+    overlay.innerHTML = `
+        <div class="dc-modal" id="dc-modal-card" style="max-height:90vh;display:flex;flex-direction:column;">
+            <div class="dc-modal-head" style="flex:0 0 auto;">
+                <div>
+                    <div class="dc-badge">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path d="M1 3h22l-2 13H3L1 3z"/>
+                            <circle cx="9" cy="20" r="1"/>
+                            <circle cx="17" cy="20" r="1"/>
+                        </svg>
+                        ${badgeLabel}
+                    </div>
+                    <h3>${titleLabel} <span>Discount Code</span></h3>
+                    <p>${subLabel}</p>
+                </div>
+                <button class="dc-close-btn" id="dc-close-btn" title="Close">
+                    <svg width="14" height="14" fill="none" stroke="#666" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="dc-modal-body" style="flex:1 1 auto;overflow-y:auto;max-height:calc(90vh - 150px);padding-right:6px;">
+                <div class="dc-error-msg" id="dc-error-msg"></div>
+
+                ${isEdit ? `
+                    <div class="dc-stats-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;">
+                        <div class="dc-stat-card" style="padding:12px;border:1px solid #eee;border-radius:12px;background:#fafafa;">
+                            <div style="font-size:12px;color:#777;">Usage Count</div>
+                            <div id="dc-usage-count" style="font-size:18px;font-weight:700;margin-top:4px;">${formatNumber(usageCount)}</div>
+                        </div>
+                        <div class="dc-stat-card" style="padding:12px;border:1px solid #eee;border-radius:12px;background:#fafafa;">
+                            <div style="font-size:12px;color:#777;">Total Amount Saved</div>
+                            <div id="dc-total-saved" style="font-size:18px;font-weight:700;margin-top:4px;">${formatNumber(totalAmountSaved)}</div>
+                        </div>
+                        <div class="dc-stat-card" style="padding:12px;border:1px solid #eee;border-radius:12px;background:#fafafa;">
+                            <div style="font-size:12px;color:#777;">Total Order Amount</div>
+                            <div id="dc-total-order" style="font-size:18px;font-weight:700;margin-top:4px;">${formatNumber(totalOrderAmount)}</div>
+                        </div>
+                    </div>
+
+                    <div id="dc-reset-box" style="margin-bottom:16px;">
+                        <div id="dc-reset-message" style="display:none;padding:12px 14px;border-radius:10px;font-size:14px;font-weight:600;"></div>
+
+                        <div id="dc-reset-confirm" style="display:none;margin-top:10px;padding:12px 14px;border:1px solid #fecdca;background:#fff7ed;border-radius:10px;">
+                            <div style="font-size:14px;font-weight:600;color:#9a3412;margin-bottom:10px;">
+                                Are you sure you want to reset discount amounts?
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button type="button" id="dc-reset-yes"
+                                    style="padding:8px 12px;border:none;border-radius:8px;background:#ea580c;color:white;font-weight:600;cursor:pointer;">
+                                    Yes, Reset
+                                </button>
+                                <button type="button" id="dc-reset-no"
+                                    style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;background:white;color:#444;font-weight:600;cursor:pointer;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div class="dc-field">
+                    <label>Discount Code <span>*</span></label>
+                    <input id="dsc-code" type="text"
+                        placeholder="e.g. SUMMER2024"
+                        value="${escapeAttr(codeVal)}">
+                </div>
+
+                <div class="dc-field">
+                    <label>Discount Percentage (%) <span>*</span></label>
+                    <input id="dsc-percentage" type="number" step="0.01" min="0" max="100"
+                        placeholder="e.g. 15"
+                        value="${escapeAttr(discountVal)}">
+                </div>
+            </div>
+
+            <div class="dc-modal-foot" style="flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div>
+                    ${isEdit ? `
+                        <button class="dc-btn-reset" id="dc-reset-btn" type="button"
+                            style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:none;border-radius:10px;background:#fff3cd;color:#8a6100;font-weight:600;cursor:pointer;">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 .49-9.36L1 10"></path>
+                            </svg>
+                            Reset Amounts
+                        </button>
+                    ` : ''}
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <button class="dc-btn-cancel" id="dc-cancel-btn">Cancel</button>
+                    <button class="dc-btn-confirm" id="dc-confirm-btn">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            ${btnIcon}
+                        </svg>
+                        ${btnLabel}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('dc-visible')));
+
+    const closeModal = () => {
+        overlay.classList.remove('dc-visible');
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    const showResetMessage = (message, type = 'success') => {
+        const el = document.getElementById('dc-reset-message');
+        if (!el) return;
+
+        el.textContent = message;
+        el.style.display = 'block';
+
+        if (type === 'success') {
+            el.style.background = '#ecfdf3';
+            el.style.color = '#067647';
+            el.style.border = '1px solid #abefc6';
+        } else {
+            el.style.background = '#fef2f2';
+            el.style.color = '#b91c1c';
+            el.style.border = '1px solid #fecaca';
+        }
+    };
+
+    document.getElementById('dc-close-btn').addEventListener('click', closeModal);
+    document.getElementById('dc-cancel-btn').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeModal();
+    });
+
+    if (isEdit) {
+        const resetBtn = document.getElementById('dc-reset-btn');
+        const confirmBox = document.getElementById('dc-reset-confirm');
+        const yesBtn = document.getElementById('dc-reset-yes');
+        const noBtn = document.getElementById('dc-reset-no');
+
+        resetBtn?.addEventListener('click', () => {
+            confirmBox.style.display = 'block';
+        });
+
+        noBtn?.addEventListener('click', () => {
+            confirmBox.style.display = 'none';
+        });
+
+        yesBtn?.addEventListener('click', async () => {
+            const oldHtml = yesBtn.innerHTML;
+            yesBtn.disabled = true;
+            yesBtn.innerHTML = 'Resetting...';
+
+            try {
+                const response = await fetch(
+                    API_CONFIG.getApiUrl(`${this.endpoints.resetDiscountCodeAmount}/${id}`),
+                    {
+                        method: 'POST',
+                        headers: this.getHeaders()
+                    }
+                );
+
+                if (response.ok) {
+                    showResetMessage('Discount amounts reset successfully.', 'success');
+                    confirmBox.style.display = 'none';
+
+                    this.loadDiscountCodes();
+
+                    setTimeout(() => {
+                        closeModal();
+                    }, 800);
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    showResetMessage(err.message || 'Could not reset discount amounts.', 'error');
+                }
+            } catch (e) {
+                showResetMessage('Network error while resetting amounts.', 'error');
+            } finally {
+                yesBtn.disabled = false;
+                yesBtn.innerHTML = oldHtml;
+            }
+        });
+    }
+
+    document.getElementById('dc-confirm-btn').addEventListener('click', async () => {
+        const codeName = document.getElementById('dsc-code').value.trim();
+        const discountInput = document.getElementById('dsc-percentage').value;
+        const errorEl = document.getElementById('dc-error-msg');
+        const confirmBtn = document.getElementById('dc-confirm-btn');
+
+        errorEl.textContent = '';
+        errorEl.classList.remove('visible');
+
+        if (!codeName || discountInput === '') {
+            errorEl.textContent = 'Code and Discount Percentage are required.';
+            errorEl.classList.add('visible');
+            return;
+        }
+
+        const parsedDiscount = parseFloat(discountInput);
+
+        if (Number.isNaN(parsedDiscount) || parsedDiscount < 0 || parsedDiscount > 100) {
+            errorEl.textContent = 'Discount Percentage must be a number between 0 and 100.';
+            errorEl.classList.add('visible');
+            return;
+        }
+
+        const formValues = {
+            code: codeName,
+            discountPercentage: parsedDiscount
+        };
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `
+            <svg class="dc-spinning" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+            </svg>
+            Saving…
+        `;
+
+        closeModal();
+
+        if (id) {
+            await this.updateDiscountCode(id, formValues);
+        } else {
+            await this.addDiscountCode(formValues);
+        }
+    });
+},
+
+    addDiscountCode: async function (formValues) {
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.addDiscountCode), {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    code: formValues.code,
+                    discountPercentage: formValues.discountPercentage
+                })
+            });
+
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Code added!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadDiscountCodes();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not add.'
+                });
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error.'
+            });
+        }
+    },
+
+    updateDiscountCode: async function (id, formValues) {
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.updateDiscountCode}/${id}`),
+                {
+                    method: 'PATCH',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify({
+                        code: formValues.code,
+                        discountPercentage: formValues.discountPercentage
+                    })
+                }
+            );
+
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Code updated!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadDiscountCodes();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not update.'
+                });
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error.'
+            });
+        }
+    },
+
+    resetDiscountCodeAmount: async function (id) {
+    const result = await Swal.fire({
+        title: 'Reset discount amounts?',
+        text: 'This will reset the saved amounts for this discount code.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, reset',
+        confirmButtonColor: '#f59e0b'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(`${this.endpoints.resetDiscountCodeAmount}/${id}`),
+            {
+                method: 'POST',
+                headers: this.getHeaders()
+            }
+        );
+
+        if (response.ok) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Amounts reset!',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            this.loadDiscountCodes();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: err.message || 'Could not reset amounts.'
+            });
+        }
+    } catch (e) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Network error.'
+        });
+    }
+    },
+
+    deleteDiscountCode: async function (id) {
+        const result = await Swal.fire({
+            title: 'Delete Discount Code?',
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            confirmButtonColor: '#d33'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.deleteDiscountCode}/${id}`),
+                {
+                    method: 'DELETE',
+                    headers: this.getHeaders()
+                }
+            );
+
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadDiscountCodes();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not delete.'
+                });
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error.'
+            });
         }
     }
 
