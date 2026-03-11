@@ -2,7 +2,12 @@ const AdminDashboardManager = {
     // API Endpoints
     endpoints: {
         analytics: 'Admin/Analytics',
-        orders: 'Admin/Orders',
+        orders: 'Admin/Orders/Get-All-Orders',
+        ordersByStatus: 'Admin/Orders/Get-orders-by-status',
+        changeOrderStatus: 'Admin/Orders/Change-order-status',
+        getOrderById: 'Admin/Orders/GetOrderById',
+        updatePaidAmount: 'Admin/Orders/Update-paid-amount',
+        generateDeliveryPaymentLink: 'Admin/Orders/Generate-delivery-payment-link',
         users: 'Admin/Users',
         products: 'Products/GetAllProducts',
         advertisements: 'Admin/Advertisements',
@@ -106,6 +111,18 @@ const AdminDashboardManager = {
             // Load data for the tab
             self.loadTabContent(tabTarget);
         });
+
+        // Initialize Order Management System with Model-View-Controller pattern
+        if (typeof OrderController !== 'undefined') {
+            const authManager = {
+                getHeaders: () => self.getHeaders()
+            };
+            
+            const orderModel = new OrderModel(self.endpoints, authManager);
+            const orderView = new OrderView('admin-orders-container');
+            
+            OrderController.init(orderModel, orderView);
+        }
     },
 
     loadTabContent: function (tabTarget) {
@@ -168,55 +185,59 @@ const AdminDashboardManager = {
     },
 
     // --- Orders ---
-    loadOrders: async function () {
-        const $container = $('#admin-orders-container');
-        try {
-            $container.html('<p>Loading...</p>');
-            const response = await fetch(API_CONFIG.getApiUrl('Admin/Orders'), { headers: this.getHeaders() });
+// Delegate to OrderController with modern MVC pattern
+loadOrders: async function (status = 'All') {
+    // normalize status so filter/count logic stays correct
+    status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
 
-            if (response.ok) {
-                const data = await response.json();
-                this.renderOrders(data.data || data);
-            } else {
-                $container.html('<p>Could not load orders. (API endpoint might be missing)</p>');
-            }
-        } catch (e) {
-            $container.html('<p>Error loading orders.</p>');
+    if (typeof OrderController !== 'undefined' && OrderController.model && OrderController.view) {
+        return await OrderController.loadOrders(status);
+    } else {
+        // Fallback for legacy code
+        $('#admin-orders-container').html('<div style="color:#e55;padding:20px;">Order management system not initialized.</div>');
+    }
+},
+
+filterOrdersLocal: function (status = 'All') {
+    if (typeof OrderController !== 'undefined') {
+        status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
+        return OrderController.filter(status);
+    }
+},
+
+openOrderModal: async function (orderId) {
+    if (typeof OrderController !== 'undefined') {
+        return await OrderController.openModal(orderId);
+    }
+},
+
+updateOrderStatus: async function (orderId) {
+    if (typeof OrderController !== 'undefined') {
+        const result = await OrderController.updateStatus(orderId);
+
+        // refresh using current active filter so status numbers/view stay correct
+        let activeStatus = 'All';
+        const $active = $('.order-status-filter.active, .active[data-status]').first();
+        if ($active.length) {
+            activeStatus = $active.data('status') || 'All';
         }
-    },
 
-    renderOrders: function (orders) {
-        const $container = $('#admin-orders-container');
-        if (!orders || orders.length === 0) {
-            $container.html('<p>No orders found.</p>');
-            return;
-        }
+        await OrderController.loadOrders(activeStatus);
+        return result;
+    }
+},
 
-        let html = `
-            <table class="table table-cart">
-                <thead>
-                    <tr>
-                        <th>ID</th><th>User</th><th>Date</th><th>Status</th><th>Total</th><th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+updateOrderPaidAmount: async function (orderId) {
+    if (typeof OrderController !== 'undefined') {
+        return await OrderController.updatePaidAmount(orderId);
+    }
+},
 
-        orders.forEach(order => {
-            html += `
-                <tr>
-                    <td>#${order.id}</td>
-                    <td>${order.userName || 'Guest'}</td>
-                    <td>${new Date(order.orderDate).toLocaleDateString()}</td>
-                    <td>${order.status}</td>
-                    <td>ILS ${(order.totalAmount || 0).toFixed(2)}</td>
-                    <td><button class="btn btn-sm btn-outline-primary-2">View</button></td>
-                </tr>
-            `;
-        });
-        html += '</tbody></table>';
-        $container.html(html);
-    },
+generateDeliveryPaymentLink: async function (orderId) {
+    if (typeof OrderController !== 'undefined') {
+        return await OrderController.generatePaymentLink(orderId);
+    }
+},
 
     // --- Users ---
     loadUsers: async function () {
@@ -252,8 +273,6 @@ const AdminDashboardManager = {
     // --- Advertisements ---
     // =====================
 
-    /* Styles live in assets/css/admin-advertisements.css */
-
     loadAdvertisements: async function () {
         const $container = $('#admin-advertisements-container');
 
@@ -267,7 +286,7 @@ const AdminDashboardManager = {
                     <div class="ad-skel-line w65"></div>
                 </div>
             </div>
-        `).join('');
+    `).join('');
 
         $container.html(`
             <div class="ads-panel">
@@ -279,7 +298,7 @@ const AdminDashboardManager = {
                 </div>
                 <div class="ads-grid">${skeletonHtml}</div>
             </div>
-        `);
+    `);
 
         try {
             const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.advertisements), {
@@ -300,7 +319,7 @@ const AdminDashboardManager = {
                         </div>
                         <div style="color:#e55;font-size:13px;padding:20px 0;">Could not load advertisements.</div>
                     </div>
-                `);
+    `);
             }
         } catch (e) {
             $container.html(`<div style="color:#e55;padding:20px;font-size:13px;">Error loading advertisements.</div>`);
@@ -314,7 +333,7 @@ const AdminDashboardManager = {
         const mainPage = ads ? ads.filter(a => a.showInMainPage).length : 0;
 
         let html = `
-            <div class="ads-panel">
+        <div class="ads-panel">
                 <div class="ads-header">
                     <div>
                         <h2 class="ads-header-title">Advertise<span>ments</span></h2>
@@ -2575,7 +2594,7 @@ const AdminDashboardManager = {
         }
     },
 
-        // =====================
+    // =====================
     // --- Discount Codes ---
     // =====================
 
@@ -2749,56 +2768,56 @@ const AdminDashboardManager = {
     },
 
     openDiscountCodeModal: async function (id = null) {
-    let dc = null;
+        let dc = null;
 
-    if (id) {
-        try {
-            const response = await fetch(
-                API_CONFIG.getApiUrl(`${this.endpoints.getDiscountCodeById}/${id}`),
-                { headers: this.getHeaders() }
-            );
+        if (id) {
+            try {
+                const response = await fetch(
+                    API_CONFIG.getApiUrl(`${this.endpoints.getDiscountCodeById}/${id}`),
+                    { headers: this.getHeaders() }
+                );
 
-            if (response.ok) {
-                const data = await response.json();
-                dc = data.data || data;
-            }
-        } catch (e) {}
-    }
+                if (response.ok) {
+                    const data = await response.json();
+                    dc = data.data || data;
+                }
+            } catch (e) { }
+        }
 
-    document.getElementById('dc-modal-overlay')?.remove();
+        document.getElementById('dc-modal-overlay')?.remove();
 
-    const isEdit = !!id;
-    const badgeLabel = isEdit ? 'Edit Record' : 'New Entry';
-    const titleLabel = isEdit ? 'Edit' : 'New';
-    const subLabel = isEdit ? `Updating record #${id}` : 'Add a new discount code';
-    const btnIcon = isEdit
-        ? '<path d="M20 6L9 17l-5-5"/>'
-        : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>';
-    const btnLabel = isEdit ? 'Update Code' : 'Add Code';
+        const isEdit = !!id;
+        const badgeLabel = isEdit ? 'Edit Record' : 'New Entry';
+        const titleLabel = isEdit ? 'Edit' : 'New';
+        const subLabel = isEdit ? `Updating record #${id}` : 'Add a new discount code';
+        const btnIcon = isEdit
+            ? '<path d="M20 6L9 17l-5-5"/>'
+            : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>';
+        const btnLabel = isEdit ? 'Update Code' : 'Add Code';
 
-    const codeVal = dc?.code || dc?.Code || '';
-    const discountVal = dc?.discountPercentage ?? dc?.DiscountPercentage ?? '';
-    const usageCount = dc?.usageCount ?? dc?.UsageCount ?? 0;
-    const totalAmountSaved = dc?.totalAmountSaved ?? dc?.TotalAmountSaved ?? 0;
-    const totalOrderAmount = dc?.totalOrderAmount ?? dc?.TotalOrderAmount ?? 0;
+        const codeVal = dc?.code || dc?.Code || '';
+        const discountVal = dc?.discountPercentage ?? dc?.DiscountPercentage ?? '';
+        const usageCount = dc?.usageCount ?? dc?.UsageCount ?? 0;
+        const totalAmountSaved = dc?.totalAmountSaved ?? dc?.TotalAmountSaved ?? 0;
+        const totalOrderAmount = dc?.totalOrderAmount ?? dc?.TotalOrderAmount ?? 0;
 
-    const escapeAttr = (value) => {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
-    };
+        const escapeAttr = (value) => {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        };
 
-    const formatNumber = (value) => {
-        const num = Number(value ?? 0);
-        return Number.isFinite(num) ? num.toLocaleString() : '0';
-    };
+        const formatNumber = (value) => {
+            const num = Number(value ?? 0);
+            return Number.isFinite(num) ? num.toLocaleString() : '0';
+        };
 
-    const overlay = document.createElement('div');
-    overlay.id = 'dc-modal-overlay';
-    overlay.className = 'dc-overlay';
-    overlay.innerHTML = `
+        const overlay = document.createElement('div');
+        overlay.id = 'dc-modal-overlay';
+        overlay.className = 'dc-overlay';
+        overlay.innerHTML = `
         <div class="dc-modal" id="dc-modal-card" style="max-height:90vh;display:flex;flex-direction:column;">
             <div class="dc-modal-head" style="flex:0 0 auto;">
                 <div>
@@ -2903,134 +2922,134 @@ const AdminDashboardManager = {
         </div>
     `;
 
-    document.body.appendChild(overlay);
+        document.body.appendChild(overlay);
 
-    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('dc-visible')));
+        requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('dc-visible')));
 
-    const closeModal = () => {
-        overlay.classList.remove('dc-visible');
-        setTimeout(() => overlay.remove(), 300);
-    };
-
-    const showResetMessage = (message, type = 'success') => {
-        const el = document.getElementById('dc-reset-message');
-        if (!el) return;
-
-        el.textContent = message;
-        el.style.display = 'block';
-
-        if (type === 'success') {
-            el.style.background = '#ecfdf3';
-            el.style.color = '#067647';
-            el.style.border = '1px solid #abefc6';
-        } else {
-            el.style.background = '#fef2f2';
-            el.style.color = '#b91c1c';
-            el.style.border = '1px solid #fecaca';
-        }
-    };
-
-    document.getElementById('dc-close-btn').addEventListener('click', closeModal);
-    document.getElementById('dc-cancel-btn').addEventListener('click', closeModal);
-    overlay.addEventListener('click', e => {
-        if (e.target === overlay) closeModal();
-    });
-
-    if (isEdit) {
-        const resetBtn = document.getElementById('dc-reset-btn');
-        const confirmBox = document.getElementById('dc-reset-confirm');
-        const yesBtn = document.getElementById('dc-reset-yes');
-        const noBtn = document.getElementById('dc-reset-no');
-
-        resetBtn?.addEventListener('click', () => {
-            confirmBox.style.display = 'block';
-        });
-
-        noBtn?.addEventListener('click', () => {
-            confirmBox.style.display = 'none';
-        });
-
-        yesBtn?.addEventListener('click', async () => {
-            const oldHtml = yesBtn.innerHTML;
-            yesBtn.disabled = true;
-            yesBtn.innerHTML = 'Resetting...';
-
-            try {
-                const response = await fetch(
-                    API_CONFIG.getApiUrl(`${this.endpoints.resetDiscountCodeAmount}/${id}`),
-                    {
-                        method: 'POST',
-                        headers: this.getHeaders()
-                    }
-                );
-
-                if (response.ok) {
-                    showResetMessage('Discount amounts reset successfully.', 'success');
-                    confirmBox.style.display = 'none';
-
-                    this.loadDiscountCodes();
-
-                    setTimeout(() => {
-                        closeModal();
-                    }, 800);
-                } else {
-                    const err = await response.json().catch(() => ({}));
-                    showResetMessage(err.message || 'Could not reset discount amounts.', 'error');
-                }
-            } catch (e) {
-                showResetMessage('Network error while resetting amounts.', 'error');
-            } finally {
-                yesBtn.disabled = false;
-                yesBtn.innerHTML = oldHtml;
-            }
-        });
-    }
-
-    document.getElementById('dc-confirm-btn').addEventListener('click', async () => {
-        const codeName = document.getElementById('dsc-code').value.trim();
-        const discountInput = document.getElementById('dsc-percentage').value;
-        const errorEl = document.getElementById('dc-error-msg');
-        const confirmBtn = document.getElementById('dc-confirm-btn');
-
-        errorEl.textContent = '';
-        errorEl.classList.remove('visible');
-
-        if (!codeName || discountInput === '') {
-            errorEl.textContent = 'Code and Discount Percentage are required.';
-            errorEl.classList.add('visible');
-            return;
-        }
-
-        const parsedDiscount = parseFloat(discountInput);
-
-        if (Number.isNaN(parsedDiscount) || parsedDiscount < 0 || parsedDiscount > 100) {
-            errorEl.textContent = 'Discount Percentage must be a number between 0 and 100.';
-            errorEl.classList.add('visible');
-            return;
-        }
-
-        const formValues = {
-            code: codeName,
-            discountPercentage: parsedDiscount
+        const closeModal = () => {
+            overlay.classList.remove('dc-visible');
+            setTimeout(() => overlay.remove(), 300);
         };
 
-        confirmBtn.disabled = true;
-        confirmBtn.innerHTML = `
+        const showResetMessage = (message, type = 'success') => {
+            const el = document.getElementById('dc-reset-message');
+            if (!el) return;
+
+            el.textContent = message;
+            el.style.display = 'block';
+
+            if (type === 'success') {
+                el.style.background = '#ecfdf3';
+                el.style.color = '#067647';
+                el.style.border = '1px solid #abefc6';
+            } else {
+                el.style.background = '#fef2f2';
+                el.style.color = '#b91c1c';
+                el.style.border = '1px solid #fecaca';
+            }
+        };
+
+        document.getElementById('dc-close-btn').addEventListener('click', closeModal);
+        document.getElementById('dc-cancel-btn').addEventListener('click', closeModal);
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) closeModal();
+        });
+
+        if (isEdit) {
+            const resetBtn = document.getElementById('dc-reset-btn');
+            const confirmBox = document.getElementById('dc-reset-confirm');
+            const yesBtn = document.getElementById('dc-reset-yes');
+            const noBtn = document.getElementById('dc-reset-no');
+
+            resetBtn?.addEventListener('click', () => {
+                confirmBox.style.display = 'block';
+            });
+
+            noBtn?.addEventListener('click', () => {
+                confirmBox.style.display = 'none';
+            });
+
+            yesBtn?.addEventListener('click', async () => {
+                const oldHtml = yesBtn.innerHTML;
+                yesBtn.disabled = true;
+                yesBtn.innerHTML = 'Resetting...';
+
+                try {
+                    const response = await fetch(
+                        API_CONFIG.getApiUrl(`${this.endpoints.resetDiscountCodeAmount}/${id}`),
+                        {
+                            method: 'POST',
+                            headers: this.getHeaders()
+                        }
+                    );
+
+                    if (response.ok) {
+                        showResetMessage('Discount amounts reset successfully.', 'success');
+                        confirmBox.style.display = 'none';
+
+                        this.loadDiscountCodes();
+
+                        setTimeout(() => {
+                            closeModal();
+                        }, 800);
+                    } else {
+                        const err = await response.json().catch(() => ({}));
+                        showResetMessage(err.message || 'Could not reset discount amounts.', 'error');
+                    }
+                } catch (e) {
+                    showResetMessage('Network error while resetting amounts.', 'error');
+                } finally {
+                    yesBtn.disabled = false;
+                    yesBtn.innerHTML = oldHtml;
+                }
+            });
+        }
+
+        document.getElementById('dc-confirm-btn').addEventListener('click', async () => {
+            const codeName = document.getElementById('dsc-code').value.trim();
+            const discountInput = document.getElementById('dsc-percentage').value;
+            const errorEl = document.getElementById('dc-error-msg');
+            const confirmBtn = document.getElementById('dc-confirm-btn');
+
+            errorEl.textContent = '';
+            errorEl.classList.remove('visible');
+
+            if (!codeName || discountInput === '') {
+                errorEl.textContent = 'Code and Discount Percentage are required.';
+                errorEl.classList.add('visible');
+                return;
+            }
+
+            const parsedDiscount = parseFloat(discountInput);
+
+            if (Number.isNaN(parsedDiscount) || parsedDiscount < 0 || parsedDiscount > 100) {
+                errorEl.textContent = 'Discount Percentage must be a number between 0 and 100.';
+                errorEl.classList.add('visible');
+                return;
+            }
+
+            const formValues = {
+                code: codeName,
+                discountPercentage: parsedDiscount
+            };
+
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = `
             <svg class="dc-spinning" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
             </svg>
             Saving…
         `;
 
-        closeModal();
+            closeModal();
 
-        if (id) {
-            await this.updateDiscountCode(id, formValues);
-        } else {
-            await this.addDiscountCode(formValues);
-        }
-    });
-},
+            if (id) {
+                await this.updateDiscountCode(id, formValues);
+            } else {
+                await this.addDiscountCode(formValues);
+            }
+        });
+    },
 
     addDiscountCode: async function (formValues) {
         try {
@@ -3108,49 +3127,49 @@ const AdminDashboardManager = {
     },
 
     resetDiscountCodeAmount: async function (id) {
-    const result = await Swal.fire({
-        title: 'Reset discount amounts?',
-        text: 'This will reset the saved amounts for this discount code.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, reset',
-        confirmButtonColor: '#f59e0b'
-    });
+        const result = await Swal.fire({
+            title: 'Reset discount amounts?',
+            text: 'This will reset the saved amounts for this discount code.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, reset',
+            confirmButtonColor: '#f59e0b'
+        });
 
-    if (!result.isConfirmed) return;
+        if (!result.isConfirmed) return;
 
-    try {
-        const response = await fetch(
-            API_CONFIG.getApiUrl(`${this.endpoints.resetDiscountCodeAmount}/${id}`),
-            {
-                method: 'POST',
-                headers: this.getHeaders()
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.resetDiscountCodeAmount}/${id}`),
+                {
+                    method: 'POST',
+                    headers: this.getHeaders()
+                }
+            );
+
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Amounts reset!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadDiscountCodes();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not reset amounts.'
+                });
             }
-        );
-
-        if (response.ok) {
-            await Swal.fire({
-                icon: 'success',
-                title: 'Amounts reset!',
-                timer: 1500,
-                showConfirmButton: false
-            });
-            this.loadDiscountCodes();
-        } else {
-            const err = await response.json().catch(() => ({}));
+        } catch (e) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: err.message || 'Could not reset amounts.'
+                text: 'Network error.'
             });
         }
-    } catch (e) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Network error.'
-        });
-    }
     },
 
     deleteDiscountCode: async function (id) {
