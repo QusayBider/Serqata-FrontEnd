@@ -45,6 +45,14 @@ const AdminDashboardManager = {
         getDiscountCodeById: 'Admin/DiscountCodes/GetDiscountCodeById',
         deleteDiscountCode: 'Admin/DiscountCodes/DeleteDiscountCode',
         resetDiscountCodeAmount: 'Admin/DiscountCodes/ResetDiscountAmounts',
+        blockUser: 'Admin/Users/Block',
+        unBlockUser: 'Admin/Users/UnBlock',
+        isBlockedUser: 'Admin/Users/IsBlocked',
+        changeUserRole: 'Admin/Users/ChangeRole',
+        deleteUser: 'Admin/Users',
+        updateUserProfile: 'Admin/Users',
+        changeUserPassword: 'Admin/Users/ChangePassword',
+        getUserFullDetails: 'Admin/Users/FullDetails',
     },
 
     init: async function () {
@@ -239,11 +247,600 @@ generateDeliveryPaymentLink: async function (orderId) {
     }
 },
 
-    // --- Users ---
-    loadUsers: async function () {
-        $('#admin-users-container').html('<p>Loading users...</p>');
-        $('#admin-users-container').html('<p>User management API not connected.</p>');
-    },
+  // =====================
+// --- Users Management ---
+// =====================
+
+loadUsers: async function () {
+    const $container = $('#admin-users-container');
+
+    const skeletonHtml = Array(5).fill(0).map(() => `
+        <div class="user-skeleton">
+            <div style="display:flex;align-items:center;gap:10px;flex:1;">
+                <div class="skel" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;"></div>
+                <div>
+                    <div class="skel" style="width:110px;height:12px;margin-bottom:6px;"></div>
+                    <div class="skel" style="width:160px;height:10px;"></div>
+                </div>
+            </div>
+            <div style="display:flex;gap:4px;">
+                ${Array(6).fill('<div class="skel" style="width:30px;height:30px;border-radius:6px;"></div>').join('')}
+            </div>
+        </div>
+    `).join('');
+
+    $container.html(`
+        <div class="um-header">
+            <h2 class="um-title">Users Management</h2>
+        </div>
+        <div class="um-toolbar">
+            <div class="um-search-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="user-search-input" placeholder="Search by username or email…" class="form-control">
+            </div>
+        </div>
+        <div class="um-table-card">${skeletonHtml}</div>
+    `);
+
+    try {
+        const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.users), {
+            headers: this.getHeaders()
+        });
+        if (response.ok) {
+            const data = await response.json();
+            this.renderUsers(data.data || data);
+        } else {
+            $container.html(`<div class="um-error">Could not load users.</div>`);
+        }
+    } catch (e) {
+        $container.html(`<div class="um-error">Error loading users: ${e.message}</div>`);
+    }
+},
+
+renderUsers: function (users) {
+    const $container = $('#admin-users-container');
+
+    if (!users || users.length === 0) {
+        $container.html(`
+            <div class="um-header"><h2 class="um-title">Users Management</h2></div>
+            <div class="um-table-card" style="padding:60px 20px;text-align:center;color:var(--text-muted);">
+                <p>No users found.</p>
+            </div>
+        `);
+        return;
+    }
+
+    let html = `
+        <div class="um-header">
+            <h2 class="um-title">
+                Users Management
+                <span class="um-title-count">${users.length} total</span>
+            </h2>
+        </div>
+        <div class="um-toolbar">
+            <div class="um-search-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="user-search-input" placeholder="Search by username or email…" class="form-control">
+            </div>
+        </div>
+        <div class="um-table-wrap">
+        <table class="table um-table" id="users-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th class="um-hide-sm">Username</th>
+                    <th class="um-hide-md">Phone</th>
+                    <th class="um-hide-sm">Role</th>
+                    <th>Status</th>
+                    <th class="um-hide-md">Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    users.forEach(user => {
+        const userName    = user.userName    || '—';
+        const email       = user.email       || '—';
+        const fullName    = user.fullName    || '—';
+        const phone       = user.phoneNumber || '—';
+        const role        = (Array.isArray(user.roles) && user.roles[0]) || user.userRole || 'Customer';
+        const createdDate = this.formatDate(user.create_at);
+        const isBlocked   = !!user.isBlocked;
+        const statusLabel = isBlocked ? 'Blocked' : 'Active';
+        const blockedClass = isBlocked ? 'badge-danger' : 'badge-success';
+        const isAdmin     = ['admin','superadmin'].includes(role.toLowerCase());
+        const initials    = fullName !== '—'
+            ? fullName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+            : userName.slice(0, 2).toUpperCase();
+
+        html += `
+            <tr>
+                <td>
+                    <div class="um-user-cell">
+                        <div class="um-avatar">${initials}</div>
+                        <div class="um-user-info">
+                            <div class="um-fullname">${fullName}</div>
+                            <div class="um-username-sub">${email}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="um-hide-sm">${userName}</td>
+                <td class="um-hide-md">${phone}</td>
+                <td class="um-hide-sm">
+                    <span class="um-role ${isAdmin ? 'um-role-admin' : ''}">${role}</span>
+                </td>
+                <td><span class="badge ${blockedClass}">${statusLabel}</span></td>
+                <td class="um-hide-md" style="color:var(--text-muted);font-size:12.5px;">${createdDate}</td>
+                <td>
+                    <div class="um-actions">
+                        <button class="um-btn um-btn-info"     onclick="AdminDashboardManager.viewUserDetails('${user.id}')"            title="View Details"><i class="icon-eye"></i><span class="um-btn-label"> View</span></button>
+                        ${!isBlocked
+                            ? `<button class="um-btn um-btn-warning"  onclick="AdminDashboardManager.blockUserModal('${user.id}')"           title="Block User"><i class="icon-lock"></i><span class="um-btn-label"> Block</span></button>`
+                            : `<button class="um-btn um-btn-success"  onclick="AdminDashboardManager.unblockUser('${user.id}')"              title="Unblock User"><i class="icon-unlock"></i><span class="um-btn-label"> Unblock</span></button>`
+                        }
+                        <button class="um-btn um-btn-primary"  onclick="AdminDashboardManager.changeRoleModal('${user.id}', '${role}')"   title="Change Role"><i class="icon-cog"></i><span class="um-btn-label"> Role</span></button>
+                        <button class="um-btn um-btn-edit"     onclick="AdminDashboardManager.editProfileModal('${user.id}')"             title="Edit Profile"><i class="icon-edit"></i><span class="um-btn-label"> Edit</span></button>
+                        <button class="um-btn um-btn-password" onclick="AdminDashboardManager.changePasswordModal('${user.id}')"          title="Change Password"><i class="icon-key"></i><span class="um-btn-label"> Password</span></button>
+                        <button class="um-btn um-btn-danger"   onclick="AdminDashboardManager.deleteUser('${user.id}')"                  title="Delete User"><i class="icon-trash"></i><span class="um-btn-label"> Delete</span></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table></div>`;
+    $container.html(html);
+
+    $('#user-search-input').on('keyup', function () {
+        const q = $(this).val().toLowerCase();
+        $('#users-table tbody tr').each(function () {
+            const u = $(this).find('td:eq(1)').text().toLowerCase();
+            const e = $(this).find('.um-username-sub').text().toLowerCase();
+            $(this).toggle(u.includes(q) || e.includes(q));
+        });
+    });
+},
+
+// ─── VIEW FULL DETAILS ───────────────────────────────────────────────────────
+// GET /api/Admin/Users/FullDetails/{userId}
+// Response: { success, message, data: { id, userName, email, fullName,
+//             phoneNumber, city, street, roles[], orders[], token } }
+viewUserDetails: async function(userId) {
+    // Build the URL — supports both endpoint key styles
+    const base = (this.endpoints.userFullDetails || this.endpoints.users + '/FullDetails');
+    const url  = API_CONFIG.getApiUrl(base + '/' + userId);
+
+    try {
+        const response = await fetch(url, { headers: this.getHeaders() });
+
+        if (!response.ok) {
+            throw new Error('Server returned ' + response.status);
+        }
+
+        const json = await response.json();
+
+        // Unwrap envelope: { success, data } or plain object
+        const user = (json.success !== undefined) ? (json.data || {}) : (json || {});
+
+        if (!user || !user.id) {
+            throw new Error('No user data in response');
+        }
+
+        this._showUserDetailsModal(user);
+
+    } catch (e) {
+        await Swal.fire({
+            icon: 'error',
+            title: 'Could not load details',
+            text: e.message
+        });
+    }
+},
+
+_showUserDetailsModal: function(user) {
+    const role        = Array.isArray(user.roles) ? user.roles.join(', ') : (user.userRole || '—');
+    const ordersCount = Array.isArray(user.orders) ? user.orders.length : 0;
+    const city        = user.city   || '—';
+    const street      = user.street || '—';
+
+    const initials = (user.fullName || user.userName || 'U')
+        .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+    // Build a modern custom modal — no SweetAlert2 limitations
+    const modalHtml = `
+        <div id="um-details-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeDetailsModal()">
+            <div class="um-modal">
+                <button class="um-modal-close" onclick="AdminDashboardManager._closeDetailsModal()" title="Close">&times;</button>
+
+                <div class="um-modal-hero">
+                    <div class="um-modal-avatar">${initials}</div>
+                    <div class="um-modal-name">${user.fullName || '—'}</div>
+                    <div class="um-modal-email">${user.email || '—'}</div>
+                    <span class="um-modal-role-badge">${role}</span>
+                </div>
+
+                <div class="um-modal-body">
+                    <div class="um-detail-grid">
+                        <div class="um-detail-card">
+                            <div class="um-detail-icon">👤</div>
+                            <div>
+                                <div class="um-detail-label">Username</div>
+                                <div class="um-detail-value">${user.userName || '—'}</div>
+                            </div>
+                        </div>
+                        <div class="um-detail-card">
+                            <div class="um-detail-icon">📱</div>
+                            <div>
+                                <div class="um-detail-label">Phone</div>
+                                <div class="um-detail-value">${user.phoneNumber || '—'}</div>
+                            </div>
+                        </div>
+                        <div class="um-detail-card">
+                            <div class="um-detail-icon">🏙️</div>
+                            <div>
+                                <div class="um-detail-label">City</div>
+                                <div class="um-detail-value">${city}</div>
+                            </div>
+                        </div>
+                        <div class="um-detail-card">
+                            <div class="um-detail-icon">🛣️</div>
+                            <div>
+                                <div class="um-detail-label">Street</div>
+                                <div class="um-detail-value">${street}</div>
+                            </div>
+                        </div>
+                        <div class="um-detail-card">
+                            <div class="um-detail-icon">🛒</div>
+                            <div>
+                                <div class="um-detail-label">Total Orders</div>
+                                <div class="um-detail-value">${ordersCount}</div>
+                            </div>
+                        </div>
+                        <div class="um-detail-card">
+                            <div class="um-detail-icon">🆔</div>
+                            <div>
+                                <div class="um-detail-label">User ID</div>
+                                <div class="um-detail-value um-detail-id">${user.id || '—'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="um-modal-footer">
+                    <button class="um-modal-btn um-modal-btn-close" onclick="AdminDashboardManager._closeDetailsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove any stale overlay first
+    $('#um-details-overlay').remove();
+    $('body').append(modalHtml);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        $('#um-details-overlay').addClass('um-overlay-visible');
+    });
+
+    // ESC key closes
+    $(document).one('keydown.umdetails', (e) => {
+        if (e.key === 'Escape') AdminDashboardManager._closeDetailsModal();
+    });
+},
+
+_closeDetailsModal: function() {
+    const $overlay = $('#um-details-overlay');
+    $overlay.removeClass('um-overlay-visible');
+    setTimeout(() => $overlay.remove(), 280);
+    $(document).off('keydown.umdetails');
+},
+
+// ─── IS BLOCKED ──────────────────────────────────────────────────────────────
+checkIsBlocked: async function(userId) {
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(this.endpoints.isBlocked + '/' + userId),
+            { headers: this.getHeaders() }
+        );
+        if (response.ok) {
+            const json = await response.json();
+            return !!(json.data?.isBlocked ?? json.isBlocked ?? false);
+        }
+    } catch (e) { console.error('checkIsBlocked:', e); }
+    return false;
+},
+
+// ─── BLOCK USER ──────────────────────────────────────────────────────────────
+blockUserModal: async function(userId) {
+    const { value: days } = await Swal.fire({
+        title: 'Block User',
+        input: 'number',
+        inputLabel: 'Block Duration (days)',
+        inputValue: '1',
+        inputAttributes: { min: 1, max: 365, step: 1 },
+        showCancelButton: true,
+        confirmButtonText: 'Block User',
+        confirmButtonColor: '#f59e0b',
+        inputValidator: (v) => {
+            if (!v || parseInt(v) < 1) return 'Enter at least 1 day.';
+            if (parseInt(v) > 365)    return 'Maximum is 365 days.';
+        }
+    });
+    if (days !== undefined && days !== null) {
+        await this.blockUser(userId, parseInt(days));
+    }
+},
+
+blockUser: async function(userId, days) {
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(this.endpoints.blockUser + '/' + userId + '?days=' + (days || 1)),
+            { method: 'PATCH', headers: this.getHeaders() }
+        );
+        if (response.ok) {
+            await Swal.fire({ icon: 'success', title: 'User Blocked!', text: 'Blocked for ' + days + ' day(s).', timer: 1500, showConfirmButton: false });
+            this.loadUsers();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not block user.' });
+        }
+    } catch (e) {
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+    }
+},
+
+// ─── UNBLOCK USER — modern custom modal ──────────────────────────────────────
+unblockUser: function(userId) {
+    // Remove any stale overlay
+    $('#um-confirm-overlay').remove();
+
+    const modalHtml = `
+        <div id="um-confirm-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeConfirmModal()">
+            <div class="um-modal um-modal-confirm">
+                <button class="um-modal-close" onclick="AdminDashboardManager._closeConfirmModal()">&times;</button>
+
+                <div class="um-confirm-icon-wrap">
+                    <div class="um-confirm-icon um-confirm-icon-success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <polyline points="9 12 11 14 15 10"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="um-confirm-title">Unblock User?</div>
+                <div class="um-confirm-text">This will restore full account access for this user. They will be able to log in and use all features immediately.</div>
+
+                <div class="um-modal-footer um-confirm-footer">
+                    <button class="um-modal-btn um-modal-btn-cancel" onclick="AdminDashboardManager._closeConfirmModal()">Cancel</button>
+                    <button class="um-modal-btn um-modal-btn-confirm-success" onclick="AdminDashboardManager._doUnblock('${userId}')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><polyline points="20 6 9 17 4 12"/></svg>
+                        Yes, Unblock
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('body').append(modalHtml);
+    requestAnimationFrame(() => $('#um-confirm-overlay').addClass('um-overlay-visible'));
+    $(document).one('keydown.umconfirm', (e) => {
+        if (e.key === 'Escape') AdminDashboardManager._closeConfirmModal();
+    });
+},
+
+_closeConfirmModal: function() {
+    const $o = $('#um-confirm-overlay');
+    $o.removeClass('um-overlay-visible');
+    setTimeout(() => $o.remove(), 280);
+    $(document).off('keydown.umconfirm');
+},
+
+_doUnblock: async function(userId) {
+    this._closeConfirmModal();
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(this.endpoints.unBlockUser + '/' + userId),
+            { method: 'PATCH', headers: this.getHeaders() }
+        );
+        if (response.ok) {
+            await Swal.fire({ icon: 'success', title: 'User Unblocked!', text: 'Account access has been restored.', timer: 1600, showConfirmButton: false });
+            this.loadUsers();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not unblock user.' });
+        }
+    } catch (e) {
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+    }
+},
+
+// ─── CHANGE ROLE ─────────────────────────────────────────────────────────────
+changeRoleModal: async function(userId, currentRole) {
+    const { value: newRole } = await Swal.fire({
+        title: 'Change User Role',
+        input: 'select',
+        inputOptions: { 'Customer': 'Customer', 'Admin': 'Admin', 'SuperAdmin': 'SuperAdmin' },
+        inputValue: currentRole,
+        showCancelButton: true,
+        confirmButtonText: 'Change Role',
+        confirmButtonColor: '#3b82f6'
+    });
+    if (!newRole) return;
+    if (newRole === currentRole) {
+        await Swal.fire({ icon: 'info', title: 'No Change', text: 'Role is already ' + currentRole + '.', timer: 1500, showConfirmButton: false });
+        return;
+    }
+    await this.changeUserRole(userId, newRole);
+},
+
+changeUserRole: async function(userId, newRole) {
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(this.endpoints.changeUserRole + '/' + userId),
+            { method: 'PATCH', headers: this.getHeaders(), body: JSON.stringify({ newRole }) }
+        );
+        if (response.ok) {
+            await Swal.fire({ icon: 'success', title: 'Role Updated!', text: 'Changed to ' + newRole + '.', timer: 1500, showConfirmButton: false });
+            this.loadUsers();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not change role.' });
+        }
+    } catch (e) {
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+    }
+},
+
+// ─── EDIT PROFILE ────────────────────────────────────────────────────────────
+// PUT /api/Admin/Users/{userId}  Body: { fullName, phoneNumber, city, street }
+editProfileModal: async function(userId) {
+    let user = {};
+    try {
+        const base = (this.endpoints.userFullDetails || this.endpoints.users + '/FullDetails');
+        const res  = await fetch(API_CONFIG.getApiUrl(base + '/' + userId), { headers: this.getHeaders() });
+        if (res.ok) {
+            const json = await res.json();
+            user = (json.success !== undefined ? json.data : json) || {};
+        }
+    } catch (e) { /* proceed with empty */ }
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Edit User Profile',
+        html: `
+            <div class="um-swal-form">
+                <div class="um-form-row">
+                    <label>Full Name <span class="um-required">*</span></label>
+                    <input id="swal-fullName" class="swal2-input" placeholder="Full Name" value="${user.fullName || ''}">
+                </div>
+                <div class="um-form-row">
+                    <label>Phone Number</label>
+                    <input id="swal-phone" class="swal2-input" placeholder="Phone Number" value="${user.phoneNumber || ''}">
+                </div>
+                <div class="um-form-row">
+                    <label>City</label>
+                    <input id="swal-city" class="swal2-input" placeholder="City" value="${user.city || ''}">
+                </div>
+                <div class="um-form-row">
+                    <label>Street</label>
+                    <input id="swal-street" class="swal2-input" placeholder="Street" value="${user.street || ''}">
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Save Changes',
+        confirmButtonColor: '#8b5cf6',
+        preConfirm: () => {
+            const fullName = document.getElementById('swal-fullName').value.trim();
+            if (!fullName) { Swal.showValidationMessage('Full Name is required.'); return false; }
+            return {
+                fullName,
+                phoneNumber: document.getElementById('swal-phone').value.trim()  || null,
+                city:        document.getElementById('swal-city').value.trim()   || null,
+                street:      document.getElementById('swal-street').value.trim() || null
+            };
+        }
+    });
+
+    if (formValues) await this.updateUserProfile(userId, formValues);
+},
+
+updateUserProfile: async function(userId, profileData) {
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(this.endpoints.updateUser + '/' + userId),
+            { method: 'PUT', headers: this.getHeaders(), body: JSON.stringify(profileData) }
+        );
+        if (response.ok) {
+            await Swal.fire({ icon: 'success', title: 'Profile Updated!', timer: 1500, showConfirmButton: false });
+            this.loadUsers();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not update profile.' });
+        }
+    } catch (e) {
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+    }
+},
+
+// ─── CHANGE PASSWORD ─────────────────────────────────────────────────────────
+changePasswordModal: async function(userId) {
+    const { value: formValues } = await Swal.fire({
+        title: 'Change Password',
+        html: `
+            <div class="um-swal-form">
+                <div class="um-form-row">
+                    <label>New Password <span class="um-required">*</span></label>
+                    <input id="swal-newPassword" class="swal2-input" type="password" placeholder="New Password">
+                </div>
+                <div class="um-form-row">
+                    <label>Confirm Password <span class="um-required">*</span></label>
+                    <input id="swal-confirmPassword" class="swal2-input" type="password" placeholder="Confirm Password">
+                </div>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Change Password',
+        confirmButtonColor: '#ec4899',
+        preConfirm: () => {
+            const np = document.getElementById('swal-newPassword').value;
+            const cp = document.getElementById('swal-confirmPassword').value;
+            if (!np || np.length < 6) { Swal.showValidationMessage('Minimum 6 characters.'); return false; }
+            if (np !== cp)            { Swal.showValidationMessage('Passwords do not match.'); return false; }
+            return { newPassword: np };
+        }
+    });
+    if (formValues) await this.changeUserPassword(userId, formValues.newPassword);
+},
+
+changeUserPassword: async function(userId, newPassword) {
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(this.endpoints.changePassword + '/' + userId),
+            { method: 'PATCH', headers: this.getHeaders(), body: JSON.stringify({ newPassword }) }
+        );
+        if (response.ok) {
+            await Swal.fire({ icon: 'success', title: 'Password Changed!', timer: 1500, showConfirmButton: false });
+        } else {
+            const err = await response.json().catch(() => ({}));
+            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not change password.' });
+        }
+    } catch (e) {
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+    }
+},
+
+// ─── DELETE USER ─────────────────────────────────────────────────────────────
+deleteUser: async function(userId) {
+    const result = await Swal.fire({
+        title: 'Delete User?',
+        text: 'This cannot be undone. All user data will be permanently deleted.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete',
+        confirmButtonColor: '#d33'
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(
+            API_CONFIG.getApiUrl(this.endpoints.deleteUser + '/' + userId),
+            { method: 'DELETE', headers: this.getHeaders() }
+        );
+        if (response.ok) {
+            await Swal.fire({ icon: 'success', title: 'User Deleted!', timer: 1500, showConfirmButton: false });
+            this.loadUsers();
+        } else {
+            const err = await response.json().catch(() => ({}));
+            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not delete user.' });
+        }
+    } catch (e) {
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+    }
+},
 
     // --- Products ---
     loadProducts: async function () {
@@ -3214,6 +3811,405 @@ generateDeliveryPaymentLink: async function (orderId) {
                 icon: 'error',
                 title: 'Error',
                 text: 'Network error.'
+            });
+        }
+    }
+
+
+    ,
+
+    viewUserDetails: async function(userId) {
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.users + '/' + userId), {
+                headers: this.getHeaders()
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const user = data.data || data;
+                const createdDate = this.formatDate(user.create_at);
+                const status = user.isBlocked ? 'Blocked' : 'Active';
+                await Swal.fire({
+                    title: 'User Details',
+                    html: '<div style="text-align:left;margin:20px 0;"><div style="margin-bottom:15px;"><strong>Username:</strong> ' + user.userName + '</div><div style="margin-bottom:15px;"><strong>Email:</strong> ' + user.email + '</div><div style="margin-bottom:15px;"><strong>Full Name:</strong> ' + user.fullName + '</div><div style="margin-bottom:15px;"><strong>Phone:</strong> ' + user.phoneNumber + '</div><div style="margin-bottom:15px;"><strong>Role:</strong> ' + user.userRole + '</div><div style="margin-bottom:15px;"><strong>Status:</strong> <span style="padding:4px 8px;background:' + (user.isBlocked ? '#ffe0e0' : '#e0ffe0') + ';border-radius:3px;">' + status + '</span></div><div style="margin-bottom:15px;"><strong>Email Verified:</strong> ' + (user.emailConfirmed ? 'Yes' : 'No') + '</div><div style="margin-bottom:15px;"><strong>Created:</strong> ' + createdDate + '</div></div>',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Close'
+                });
+            } else {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Could not load user details.'
+                });
+            }
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error loading user details: ' + e.message
+            });
+        }
+    },
+
+    blockUserModal: async function(userId) {
+        const swalResult = await Swal.fire({
+            title: 'Block User',
+            input: 'number',
+            inputLabel: 'Block Duration (days)',
+            inputValue: '1',
+            inputAttributes: { min: 1, max: 365 },
+            showCancelButton: true,
+            confirmButtonText: 'Block',
+            confirmButtonColor: '#f59e0b'
+        });
+        if (swalResult.value !== undefined && swalResult.value !== null) {
+            await this.blockUser(userId, parseInt(swalResult.value));
+        }
+    },
+
+    blockUser: async function(userId, days) {
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.blockUser + '/' + userId + '?days=' + (days || 1)),
+                { method: 'PATCH', headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'User Blocked!',
+                    text: 'User blocked for ' + days + ' day(s).',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadUsers();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not block user.'
+                });
+            }
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error: ' + e.message
+            });
+        }
+    },
+
+    unblockUser: async function(userId) {
+        const result = await Swal.fire({
+            title: 'Unblock User?',
+            text: 'This will restore user account access.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, unblock',
+            confirmButtonColor: '#10b981'
+        });
+        if (!result.isConfirmed) return;
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.unBlockUser + '/' + userId),
+                { method: 'PATCH', headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'User Unblocked!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadUsers();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not unblock user.'
+                });
+            }
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error: ' + e.message
+            });
+        }
+    },
+
+    changeRoleModal: async function(userId, currentRole) {
+        const swalResult = await Swal.fire({
+            title: 'Change User Role',
+            input: 'select',
+            inputOptions: {
+                'Customer': 'Customer',
+                'Admin': 'Admin',
+                'SuperAdmin': 'SuperAdmin'
+            },
+            inputValue: currentRole,
+            showCancelButton: true,
+            confirmButtonText: 'Change Role',
+            confirmButtonColor: '#3b82f6'
+        });
+        const newRole = swalResult.value;
+        if (newRole && newRole !== currentRole) {
+            await this.changeUserRole(userId, newRole);
+        } else if (newRole === currentRole) {
+            await Swal.fire({
+                icon: 'info',
+                title: 'No Change',
+                text: 'The new role is the same as the current role.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    },
+
+    changeUserRole: async function(userId, newRole) {
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.changeUserRole + '/' + userId),
+                {
+                    method: 'PATCH',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify({ newRole: newRole })
+                }
+            );
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Role Updated!',
+                    text: 'User role changed to ' + newRole + '.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadUsers();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not change user role.'
+                });
+            }
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error: ' + e.message
+            });
+        }
+    },
+
+    deleteUser: async function(userId) {
+        const result = await Swal.fire({
+            title: 'Delete User?',
+            text: 'This action cannot be undone. All user data will be deleted.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete',
+            confirmButtonColor: '#d33'
+        });
+        if (!result.isConfirmed) return;
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.deleteUser + '/' + userId),
+                { method: 'DELETE', headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'User Deleted!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadUsers();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not delete user.'
+                });
+            }
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error: ' + e.message
+            });
+        }
+    },
+
+    editProfileModal: async function(userId) {
+        try {
+            // Fetch full user details
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.getUserFullDetails + '/' + userId),
+                { method: 'GET', headers: this.getHeaders() }
+            );
+            if (!response.ok) throw new Error('Failed to fetch user details');
+            const userData = await response.json();
+            
+            const result = await Swal.fire({
+                title: 'Edit User Profile',
+                html: `
+                    <div style="text-align:left;padding:10px;">
+                        <label style="display:block;margin-bottom:8px;font-weight:600;color:#374151;">Full Name</label>
+                        <input type="text" id="swal-fullname" class="swal2-input" placeholder="Full Name" value="${userData.fullName || ''}" style="width:100%;">
+                        
+                        <label style="display:block;margin-bottom:8px;margin-top:12px;font-weight:600;color:#374151;">Phone Number</label>
+                        <input type="text" id="swal-phone" class="swal2-input" placeholder="Phone Number" value="${userData.phoneNumber || ''}" style="width:100%;">
+                        
+                        <label style="display:block;margin-bottom:8px;margin-top:12px;font-weight:600;color:#374151;">City</label>
+                        <input type="text" id="swal-city" class="swal2-input" placeholder="City" value="${userData.city || ''}" style="width:100%;">
+                        
+                        <label style="display:block;margin-bottom:8px;margin-top:12px;font-weight:600;color:#374151;">Street</label>
+                        <input type="text" id="swal-street" class="swal2-input" placeholder="Street" value="${userData.street || ''}" style="width:100%;">
+                    </div>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Save Changes',
+                confirmButtonColor: '#3b82f6',
+                preConfirm: () => {
+                    return {
+                        fullName: document.getElementById('swal-fullname').value || '',
+                        phoneNumber: document.getElementById('swal-phone').value || null,
+                        city: document.getElementById('swal-city').value || null,
+                        street: document.getElementById('swal-street').value || null
+                    };
+                }
+            });
+            if (!result.isConfirmed) return;
+            
+            const response2 = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.updateUserProfile + '/' + userId),
+                {
+                    method: 'PUT',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify(result.value)
+                }
+            );
+            if (response2.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Profile Updated!',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                this.loadUsers();
+            } else {
+                const err = await response2.json().catch(() => ({}));
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not update profile.'
+                });
+            }
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error: ' + e.message
+            });
+        }
+    },
+
+    changePasswordModal: async function(userId) {
+        const result = await Swal.fire({
+            title: 'Change User Password',
+            html: `
+                <div style="text-align:left;padding:10px;">
+                    <label style="display:block;margin-bottom:8px;font-weight:600;color:#374151;">New Password</label>
+                    <input type="password" id="swal-newpassword" class="swal2-input" placeholder="Enter new password" style="width:100%;">
+                    <small style="color:#6b7280;display:block;margin-top:6px;">Password must be at least 8 characters</small>
+                </div>
+            `,
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Change Password',
+            confirmButtonColor: '#ec4899',
+            preConfirm: () => {
+                const pwd = document.getElementById('swal-newpassword').value;
+                if (!pwd || pwd.length < 8) {
+                    Swal.showValidationMessage('Password must be at least 8 characters');
+                    return false;
+                }
+                return { newPassword: pwd };
+            }
+        });
+        if (!result.isConfirmed) return;
+        
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.changeUserPassword + '/' + userId),
+                {
+                    method: 'PATCH',
+                    headers: this.getHeaders(),
+                    body: JSON.stringify(result.value)
+                }
+            );
+            if (response.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Password Changed!',
+                    text: 'User password has been updated successfully.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } else {
+                const err = await response.json().catch(() => ({}));
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Could not change password.'
+                });
+            }
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error: ' + e.message
+            });
+        }
+    },
+
+    viewUserFullDetails: async function(userId) {
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.getUserFullDetails + '/' + userId),
+                { method: 'GET', headers: this.getHeaders() }
+            );
+            if (!response.ok) throw new Error('Failed to fetch user details');
+            const userData = await response.json();
+            
+            await Swal.fire({
+                title: 'User Full Details',
+                html: `
+                    <div style="text-align:left;padding:15px;background:#f9fafb;border-radius:10px;">
+                        <p><strong>Username:</strong> ${userData.userName || '—'}</p>
+                        <p><strong>Email:</strong> ${userData.email || '—'}</p>
+                        <p><strong>Full Name:</strong> ${userData.fullName || '—'}</p>
+                        <p><strong>Phone:</strong> ${userData.phoneNumber || '—'}</p>
+                        <p><strong>City:</strong> ${userData.city || '—'}</p>
+                        <p><strong>Street:</strong> ${userData.street || '—'}</p>
+                        <p><strong>Role:</strong> ${userData.userRole || '—'}</p>
+                        <p><strong>Email Confirmed:</strong> ${userData.emailConfirmed ? 'Yes' : 'No'}</p>
+                        <p><strong>Status:</strong> <span style="padding:3px 8px;border-radius:5px;background:${userData.isBlocked ? '#fee2e2' : '#d1fae5'};color:${userData.isBlocked ? '#7f1d1d' : '#065f46'};">${userData.isBlocked ? 'Blocked' : 'Active'}</span></p>
+                        <p><strong>Created:</strong> ${new Date(userData.create_at).toLocaleString()}</p>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'Close',
+                confirmButtonColor: '#3b82f6'
+            });
+        } catch (e) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Network error: ' + e.message
             });
         }
     }
