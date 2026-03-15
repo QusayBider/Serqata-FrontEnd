@@ -192,62 +192,62 @@ const AdminDashboardManager = {
         $('#stat-total-users').text(data.totalUsers || 0);
     },
 
-    // --- Orders ---
-// Delegate to OrderController with modern MVC pattern
-loadOrders: async function (status = 'All') {
-    // normalize status so filter/count logic stays correct
-    status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
-
-    if (typeof OrderController !== 'undefined' && OrderController.model && OrderController.view) {
-        return await OrderController.loadOrders(status);
-    } else {
-        // Fallback for legacy code
-        $('#admin-orders-container').html('<div style="color:#e55;padding:20px;">Order management system not initialized.</div>');
-    }
-},
-
-filterOrdersLocal: function (status = 'All') {
-    if (typeof OrderController !== 'undefined') {
+        // --- Orders ---
+    // Delegate to OrderController with modern MVC pattern
+    loadOrders: async function (status = 'All') {
+        // normalize status so filter/count logic stays correct
         status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
-        return OrderController.filter(status);
-    }
-},
 
-openOrderModal: async function (orderId) {
-    if (typeof OrderController !== 'undefined') {
-        return await OrderController.openModal(orderId);
-    }
-},
-
-updateOrderStatus: async function (orderId) {
-    if (typeof OrderController !== 'undefined') {
-        const result = await OrderController.updateStatus(orderId);
-
-        // refresh using current active filter so status numbers/view stay correct
-        let activeStatus = 'All';
-        const $active = $('.order-status-filter.active, .active[data-status]').first();
-        if ($active.length) {
-            activeStatus = $active.data('status') || 'All';
+        if (typeof OrderController !== 'undefined' && OrderController.model && OrderController.view) {
+            return await OrderController.loadOrders(status);
+        } else {
+            // Fallback for legacy code
+            $('#admin-orders-container').html('<div style="color:#e55;padding:20px;">Order management system not initialized.</div>');
         }
+    },
 
-        await OrderController.loadOrders(activeStatus);
-        return result;
-    }
-},
+    filterOrdersLocal: function (status = 'All') {
+        if (typeof OrderController !== 'undefined') {
+            status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
+            return OrderController.filter(status);
+        }
+    },
 
-updateOrderPaidAmount: async function (orderId) {
-    if (typeof OrderController !== 'undefined') {
-        return await OrderController.updatePaidAmount(orderId);
-    }
-},
+    openOrderModal: async function (orderId) {
+        if (typeof OrderController !== 'undefined') {
+            return await OrderController.openModal(orderId);
+        }
+    },
 
-generateDeliveryPaymentLink: async function (orderId) {
-    if (typeof OrderController !== 'undefined') {
-        return await OrderController.generatePaymentLink(orderId);
-    }
-},
+    updateOrderStatus: async function (orderId) {
+        if (typeof OrderController !== 'undefined') {
+            const result = await OrderController.updateStatus(orderId);
 
-  // =====================
+            // refresh using current active filter so status numbers/view stay correct
+            let activeStatus = 'All';
+            const $active = $('.order-status-filter.active, .active[data-status]').first();
+            if ($active.length) {
+                activeStatus = $active.data('status') || 'All';
+            }
+
+            await OrderController.loadOrders(activeStatus);
+            return result;
+        }
+    },
+
+    updateOrderPaidAmount: async function (orderId) {
+        if (typeof OrderController !== 'undefined') {
+            return await OrderController.updatePaidAmount(orderId);
+        }
+    },
+
+    generateDeliveryPaymentLink: async function (orderId) {
+        if (typeof OrderController !== 'undefined') {
+            return await OrderController.generatePaymentLink(orderId);
+        }
+    },
+
+// =====================
 // --- Users Management ---
 // =====================
 
@@ -346,7 +346,9 @@ renderUsers: function (users) {
         const phone       = user.phoneNumber || '—';
         const role        = (Array.isArray(user.roles) && user.roles[0]) || user.userRole || 'Customer';
         const createdDate = this.formatDate(user.create_at);
-        const isBlocked   = !!user.isBlocked;
+
+        // Support both boolean isBlocked and string status field
+        const isBlocked   = !!user.isBlocked || (user.status && user.status.toLowerCase() === 'blocked');
         const statusLabel = isBlocked ? 'Blocked' : 'Active';
         const blockedClass = isBlocked ? 'badge-danger' : 'badge-success';
         const isAdmin     = ['admin','superadmin'].includes(role.toLowerCase());
@@ -402,33 +404,59 @@ renderUsers: function (users) {
     });
 },
 
-// ─── VIEW FULL DETAILS ───────────────────────────────────────────────────────
+// ─── FETCH USER FULL DETAILS (shared helper) ─────────────────────────────────
 // GET /api/Admin/Users/FullDetails/{userId}
 // Response: { success, message, data: { id, userName, email, fullName,
-//             phoneNumber, city, street, roles[], orders[], token } }
+//             phoneNumber, city, street, status, roles[], orders[], token } }
+_fetchUserFullDetails: async function(userId) {
+    // Build URL: prefer explicit endpoint key, else append /FullDetails to base users path
+    let base = this.endpoints.userFullDetails;
+    if (!base) {
+        // e.g. "Admin/Users" → "Admin/Users/FullDetails"
+        base = this.endpoints.users.replace(/\/$/, '') + '/FullDetails';
+    }
+    const url = API_CONFIG.getApiUrl(base + '/' + userId);
+    console.log('[UM] fetchUserFullDetails →', url);
+
+    const response = await fetch(url, { headers: this.getHeaders() });
+
+    // Try to get body regardless of status for better error messages
+    let json;
+    try { json = await response.json(); } catch(e) { json = {}; }
+
+    if (!response.ok) {
+        const msg = json.message || json.title || ('Server returned ' + response.status);
+        throw new Error(msg);
+    }
+
+    // Unwrap all possible envelope shapes:
+    //   { success, data: {...} }   ← your API
+    //   { data: {...} }
+    //   { ...user fields directly }
+    let user = null;
+    if (json && typeof json === 'object') {
+        if (json.data && typeof json.data === 'object' && json.data.id) {
+            user = json.data;                   // ← matches your API response
+        } else if (json.id) {
+            user = json;                        // plain user object
+        } else if (json.success !== undefined && json.data) {
+            user = json.data;
+        }
+    }
+
+    if (!user || !user.id) {
+        console.error('[UM] Unexpected response shape:', json);
+        throw new Error('No user data returned. Check the console for the raw response.');
+    }
+    return user;
+},
+
+// ─── VIEW FULL DETAILS ───────────────────────────────────────────────────────
+// GET /api/Admin/Users/FullDetails/{userId}
 viewUserDetails: async function(userId) {
-    // Build the URL — supports both endpoint key styles
-    const base = (this.endpoints.userFullDetails || this.endpoints.users + '/FullDetails');
-    const url  = API_CONFIG.getApiUrl(base + '/' + userId);
-
     try {
-        const response = await fetch(url, { headers: this.getHeaders() });
-
-        if (!response.ok) {
-            throw new Error('Server returned ' + response.status);
-        }
-
-        const json = await response.json();
-
-        // Unwrap envelope: { success, data } or plain object
-        const user = (json.success !== undefined) ? (json.data || {}) : (json || {});
-
-        if (!user || !user.id) {
-            throw new Error('No user data in response');
-        }
-
+        const user = await this._fetchUserFullDetails(userId);
         this._showUserDetailsModal(user);
-
     } catch (e) {
         await Swal.fire({
             icon: 'error',
@@ -444,86 +472,130 @@ _showUserDetailsModal: function(user) {
     const city        = user.city   || '—';
     const street      = user.street || '—';
 
+    // Support both boolean isBlocked and string status field
+    const isBlocked  = !!user.isBlocked || (user.status && user.status.toLowerCase() === 'blocked');
+    const statusText = isBlocked ? 'Blocked' : 'Active';
+    const statusClass = isBlocked ? 'um-status-blocked' : 'um-status-active';
+
     const initials = (user.fullName || user.userName || 'U')
         .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
-    // Build a modern custom modal — no SweetAlert2 limitations
+    const isAdmin = ['admin', 'superadmin'].includes(role.toLowerCase());
+
     const modalHtml = `
         <div id="um-details-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeDetailsModal()">
-            <div class="um-modal">
-                <button class="um-modal-close" onclick="AdminDashboardManager._closeDetailsModal()" title="Close">&times;</button>
+            <div class="um-modal um-modal-details">
+                <button class="um-modal-close" onclick="AdminDashboardManager._closeDetailsModal()" title="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
 
                 <div class="um-modal-hero">
-                    <div class="um-modal-avatar">${initials}</div>
-                    <div class="um-modal-name">${user.fullName || '—'}</div>
-                    <div class="um-modal-email">${user.email || '—'}</div>
-                    <span class="um-modal-role-badge">${role}</span>
+                    <div class="um-modal-avatar-wrap">
+                        <div class="um-modal-avatar">${initials}</div>
+                        <span class="um-modal-status-dot ${statusClass}"></span>
+                    </div>
+                    <div class="um-modal-hero-info">
+                        <div class="um-modal-name">${user.fullName || '—'}</div>
+                        <div class="um-modal-email">${user.email || '—'}</div>
+                        <div class="um-modal-badges">
+                            <span class="um-modal-role-badge ${isAdmin ? 'um-badge-admin' : 'um-badge-customer'}">${role}</span>
+                            <span class="um-modal-status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
                 </div>
 
+                <div class="um-modal-divider"></div>
+
                 <div class="um-modal-body">
+                    <div class="um-detail-section-title">Account Information</div>
                     <div class="um-detail-grid">
                         <div class="um-detail-card">
-                            <div class="um-detail-icon">👤</div>
+                            <div class="um-detail-icon-wrap um-icon-blue">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
                             <div>
                                 <div class="um-detail-label">Username</div>
                                 <div class="um-detail-value">${user.userName || '—'}</div>
                             </div>
                         </div>
                         <div class="um-detail-card">
-                            <div class="um-detail-icon">📱</div>
+                            <div class="um-detail-icon-wrap um-icon-purple">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.29 6.29l.83-.83a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            </div>
                             <div>
                                 <div class="um-detail-label">Phone</div>
                                 <div class="um-detail-value">${user.phoneNumber || '—'}</div>
                             </div>
                         </div>
                         <div class="um-detail-card">
-                            <div class="um-detail-icon">🏙️</div>
+                            <div class="um-detail-icon-wrap um-icon-teal">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            </div>
                             <div>
                                 <div class="um-detail-label">City</div>
                                 <div class="um-detail-value">${city}</div>
                             </div>
                         </div>
                         <div class="um-detail-card">
-                            <div class="um-detail-icon">🛣️</div>
+                            <div class="um-detail-icon-wrap um-icon-orange">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                            </div>
                             <div>
                                 <div class="um-detail-label">Street</div>
                                 <div class="um-detail-value">${street}</div>
                             </div>
                         </div>
                         <div class="um-detail-card">
-                            <div class="um-detail-icon">🛒</div>
+                            <div class="um-detail-icon-wrap um-icon-green">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            </div>
                             <div>
                                 <div class="um-detail-label">Total Orders</div>
                                 <div class="um-detail-value">${ordersCount}</div>
                             </div>
                         </div>
-                        <div class="um-detail-card">
-                            <div class="um-detail-icon">🆔</div>
-                            <div>
+                        <div class="um-detail-card um-detail-card-id">
+                            <div class="um-detail-icon-wrap um-icon-gray">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            </div>
+                            <div style="min-width:0;">
                                 <div class="um-detail-label">User ID</div>
-                                <div class="um-detail-value um-detail-id">${user.id || '—'}</div>
+                                <div class="um-detail-value um-detail-id" title="${user.id || ''}">${user.id || '—'}</div>
                             </div>
                         </div>
                     </div>
+
+                    ${ordersCount > 0 ? `
+                    <div class="um-detail-section-title" style="margin-top:22px;">Orders (${ordersCount})</div>
+                    <div class="um-orders-list">
+                        ${user.orders.map(order => `
+                            <div class="um-order-row">
+                                <div class="um-order-id">#${order.id || order.orderId || '—'}</div>
+                                <div class="um-order-status ${order.status ? 'um-os-' + order.status.toLowerCase() : ''}">${order.status || '—'}</div>
+                                <div class="um-order-total">${order.totalPrice != null ? '$' + Number(order.totalPrice).toFixed(2) : '—'}</div>
+                            </div>
+                        `).join('')}
+                    </div>` : ''}
                 </div>
 
                 <div class="um-modal-footer">
+                    <button class="um-modal-btn um-modal-btn-edit" onclick="AdminDashboardManager._closeDetailsModal(); AdminDashboardManager.editProfileModal('${user.id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Edit Profile
+                    </button>
                     <button class="um-modal-btn um-modal-btn-close" onclick="AdminDashboardManager._closeDetailsModal()">Close</button>
                 </div>
             </div>
         </div>
     `;
 
-    // Remove any stale overlay first
     $('#um-details-overlay').remove();
     $('body').append(modalHtml);
 
-    // Animate in
     requestAnimationFrame(() => {
         $('#um-details-overlay').addClass('um-overlay-visible');
     });
 
-    // ESC key closes
     $(document).one('keydown.umdetails', (e) => {
         if (e.key === 'Escape') AdminDashboardManager._closeDetailsModal();
     });
@@ -590,15 +662,16 @@ blockUser: async function(userId, days) {
     }
 },
 
-// ─── UNBLOCK USER — modern custom modal ──────────────────────────────────────
+// ─── UNBLOCK USER ────────────────────────────────────────────────────────────
 unblockUser: function(userId) {
-    // Remove any stale overlay
     $('#um-confirm-overlay').remove();
 
     const modalHtml = `
         <div id="um-confirm-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeConfirmModal()">
             <div class="um-modal um-modal-confirm">
-                <button class="um-modal-close" onclick="AdminDashboardManager._closeConfirmModal()">&times;</button>
+                <button class="um-modal-close" onclick="AdminDashboardManager._closeConfirmModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
 
                 <div class="um-confirm-icon-wrap">
                     <div class="um-confirm-icon um-confirm-icon-success">
@@ -694,57 +767,152 @@ changeUserRole: async function(userId, newRole) {
 },
 
 // ─── EDIT PROFILE ────────────────────────────────────────────────────────────
-// PUT /api/Admin/Users/{userId}  Body: { fullName, phoneNumber, city, street }
+// GET  /api/Admin/Users/FullDetails/{userId}  →  pre-fill form
+// PUT  /api/Admin/Users/{userId}              →  save changes
+// Body: { fullName, phoneNumber, city, street }
 editProfileModal: async function(userId) {
-    let user = {};
-    try {
-        const base = (this.endpoints.userFullDetails || this.endpoints.users + '/FullDetails');
-        const res  = await fetch(API_CONFIG.getApiUrl(base + '/' + userId), { headers: this.getHeaders() });
-        if (res.ok) {
-            const json = await res.json();
-            user = (json.success !== undefined ? json.data : json) || {};
-        }
-    } catch (e) { /* proceed with empty */ }
-
-    const { value: formValues } = await Swal.fire({
-        title: 'Edit User Profile',
-        html: `
-            <div class="um-swal-form">
-                <div class="um-form-row">
-                    <label>Full Name <span class="um-required">*</span></label>
-                    <input id="swal-fullName" class="swal2-input" placeholder="Full Name" value="${user.fullName || ''}">
-                </div>
-                <div class="um-form-row">
-                    <label>Phone Number</label>
-                    <input id="swal-phone" class="swal2-input" placeholder="Phone Number" value="${user.phoneNumber || ''}">
-                </div>
-                <div class="um-form-row">
-                    <label>City</label>
-                    <input id="swal-city" class="swal2-input" placeholder="City" value="${user.city || ''}">
-                </div>
-                <div class="um-form-row">
-                    <label>Street</label>
-                    <input id="swal-street" class="swal2-input" placeholder="Street" value="${user.street || ''}">
+    // Show loading state
+    $('#um-edit-overlay').remove();
+    const loadingHtml = `
+        <div id="um-edit-overlay" class="um-overlay um-overlay-visible">
+            <div class="um-modal um-modal-edit">
+                <div class="um-edit-loading">
+                    <div class="um-spinner"></div>
+                    <span>Loading profile…</span>
                 </div>
             </div>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Save Changes',
-        confirmButtonColor: '#8b5cf6',
-        preConfirm: () => {
-            const fullName = document.getElementById('swal-fullName').value.trim();
-            if (!fullName) { Swal.showValidationMessage('Full Name is required.'); return false; }
-            return {
-                fullName,
-                phoneNumber: document.getElementById('swal-phone').value.trim()  || null,
-                city:        document.getElementById('swal-city').value.trim()   || null,
-                street:      document.getElementById('swal-street').value.trim() || null
-            };
-        }
-    });
+        </div>
+    `;
+    $('body').append(loadingHtml);
 
-    if (formValues) await this.updateUserProfile(userId, formValues);
+    let user = {};
+    try {
+        user = await this._fetchUserFullDetails(userId);
+    } catch (e) {
+        // Proceed with empty — don't block the modal
+        console.warn('editProfileModal: could not prefetch user:', e.message);
+    }
+
+    // Replace loading content with the actual form
+    const formHtml = `
+        <div id="um-edit-overlay" class="um-overlay um-overlay-visible" onclick="if(event.target===this)AdminDashboardManager._closeEditModal()">
+            <div class="um-modal um-modal-edit">
+                <button class="um-modal-close" onclick="AdminDashboardManager._closeEditModal()" title="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+
+                <div class="um-edit-header">
+                    <div class="um-edit-avatar">${((user.fullName || user.userName || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase())}</div>
+                    <div>
+                        <div class="um-edit-title">Edit Profile</div>
+                        <div class="um-edit-subtitle">${user.email || 'User #' + userId}</div>
+                    </div>
+                </div>
+
+                <div class="um-modal-divider"></div>
+
+                <div class="um-modal-body">
+                    <div class="um-edit-form">
+                        <div class="um-edit-field">
+                            <label class="um-edit-label" for="ep-fullName">
+                                Full Name <span class="um-required">*</span>
+                            </label>
+                            <div class="um-edit-input-wrap">
+                                <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <input id="ep-fullName" class="um-edit-input" type="text" placeholder="Enter full name" value="${this._esc(user.fullName || '')}">
+                            </div>
+                        </div>
+
+                        <div class="um-edit-field">
+                            <label class="um-edit-label" for="ep-phone">Phone Number</label>
+                            <div class="um-edit-input-wrap">
+                                <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.29 6.29l.83-.83a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <input id="ep-phone" class="um-edit-input" type="tel" placeholder="Enter phone number" value="${this._esc(user.phoneNumber || '')}">
+                            </div>
+                        </div>
+
+                        <div class="um-edit-row">
+                            <div class="um-edit-field">
+                                <label class="um-edit-label" for="ep-city">City</label>
+                                <div class="um-edit-input-wrap">
+                                    <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <input id="ep-city" class="um-edit-input" type="text" placeholder="Enter city" value="${this._esc(user.city || '')}">
+                                </div>
+                            </div>
+                            <div class="um-edit-field">
+                                <label class="um-edit-label" for="ep-street">Street</label>
+                                <div class="um-edit-input-wrap">
+                                    <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                    <input id="ep-street" class="um-edit-input" type="text" placeholder="Enter street" value="${this._esc(user.street || '')}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="um-edit-error" class="um-edit-error" style="display:none;"></div>
+                </div>
+
+                <div class="um-modal-footer">
+                    <button class="um-modal-btn um-modal-btn-cancel" onclick="AdminDashboardManager._closeEditModal()">Cancel</button>
+                    <button class="um-modal-btn um-modal-btn-save" id="um-edit-save-btn" onclick="AdminDashboardManager._doEditProfile('${userId}')">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('#um-edit-overlay').remove();
+    $('body').append(formHtml);
+
+    // Focus first field
+    setTimeout(() => document.getElementById('ep-fullName')?.focus(), 50);
+
+    $(document).one('keydown.umedit', (e) => {
+        if (e.key === 'Escape') AdminDashboardManager._closeEditModal();
+    });
+},
+
+// ─── Helper: HTML-escape attribute values ────────────────────────────────────
+_esc: function(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+},
+
+_closeEditModal: function() {
+    const $o = $('#um-edit-overlay');
+    $o.removeClass('um-overlay-visible');
+    setTimeout(() => $o.remove(), 280);
+    $(document).off('keydown.umedit');
+},
+
+_doEditProfile: async function(userId) {
+    const fullName = document.getElementById('ep-fullName')?.value.trim();
+    const phone    = document.getElementById('ep-phone')?.value.trim()  || null;
+    const city     = document.getElementById('ep-city')?.value.trim()   || null;
+    const street   = document.getElementById('ep-street')?.value.trim() || null;
+
+    const $error = $('#um-edit-error');
+    const $btn   = $('#um-edit-save-btn');
+
+    if (!fullName) {
+        $error.text('Full Name is required.').show();
+        document.getElementById('ep-fullName')?.focus();
+        return;
+    }
+
+    $error.hide();
+    $btn.prop('disabled', true).html(`
+        <svg class="um-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        Saving…
+    `);
+
+    await this.updateUserProfile(userId, { fullName, phoneNumber: phone, city, street });
+
+    $btn.prop('disabled', false).html(`
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Changes
+    `);
 },
 
 updateUserProfile: async function(userId, profileData) {
@@ -754,14 +922,15 @@ updateUserProfile: async function(userId, profileData) {
             { method: 'PUT', headers: this.getHeaders(), body: JSON.stringify(profileData) }
         );
         if (response.ok) {
+            this._closeEditModal();
             await Swal.fire({ icon: 'success', title: 'Profile Updated!', timer: 1500, showConfirmButton: false });
             this.loadUsers();
         } else {
             const err = await response.json().catch(() => ({}));
-            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not update profile.' });
+            $('#um-edit-error').text(err.message || 'Could not update profile.').show();
         }
     } catch (e) {
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+        $('#um-edit-error').text('Network error: ' + e.message).show();
     }
 },
 
@@ -841,7 +1010,6 @@ deleteUser: async function(userId) {
         await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
     }
 },
-
     // --- Products ---
     loadProducts: async function () {
         $('#admin-products-container').html('<p>Loading products...</p>');

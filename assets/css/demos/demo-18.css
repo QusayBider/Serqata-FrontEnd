@@ -43,7 +43,7 @@
 }
 .header.header-11 .header-search-extended .btn.btn-primary:hover,.header.header-11 .header-search-extended .btn.btn-primary:focus,.header.header-11 .header-search-extended .btn.btn-primary:active{
     background-color:transparent;
-    color:#c96
+    color:#26264C
 }
 .header.header-11 .header-search-extended .form-control{
     padding-left:.7rem;
@@ -75,7 +75,7 @@
     letter-spacing:0
 }
 .btn-outline-white{
-    border-color:#c96
+    border-color:#26264C
 }
 .btn-outline-primary-2:not(:hover):not(:focus){
     color:#333333
@@ -128,7 +128,7 @@
     text-transform:uppercase;
     border:none;
     font-size:1.3rem;
-    color:#c96;
+    color:#26264C;
     letter-spacing:.1em;
     min-width:0
 }
@@ -290,7 +290,7 @@
     display:none
 }
 .product.product-4 .btn-product:hover,.product.product-4 .btn-product:focus{
-    background-color:#c96
+    background-color:#26264C;
 }
 .btn-product-icon:not(:hover):not(:focus){
     color:#333
@@ -436,7 +436,7 @@
 .footer .icon-boxes-container{
     padding-top:0;
     padding-bottom:0;
-    background-color:transparent
+    background-color:#26264C
 }
 .footer .icon-boxes-container .container{
     position:relative;
@@ -461,7 +461,7 @@
 }
 .footer .icon-box-side .icon-box-icon{
     min-width:7rem;
-    color:#c96;
+    color:#ffffff;
     font-size:4rem
 }
 .footer .icon-box-side .icon-box-title{

@@ -1,20 +1,9 @@
-/**
- * login-auth.js
- * UI wiring for the glassmorphism login/register/forgot-password page.
- * Delegates all API calls & token storage to auth.js (which must load first).
- *
- * Load order in login.html:
- *   1. assets/js/config.js
- *   2. assets/js/auth.js        ← contains login(), register(), forgetPassword(), storeToken() …
- *   3. login-auth.js            ← this file
- */
+
 
 (function () {
   "use strict";
 
-  /* ─────────────────────────────────────────────
-   * Panel navigation
-   * ───────────────────────────────────────────── */
+
   function showPanel(id) {
     document.querySelectorAll(".panel").forEach((p) => {
       p.classList.remove("active");
@@ -27,10 +16,7 @@
     target.classList.add("active");
   }
 
-  /* ─────────────────────────────────────────────
-   * UI helpers (override the auth.js versions so
-   * they work with the new glassmorphism markup)
-   * ───────────────────────────────────────────── */
+
   function uiShowMessage(elementId, text, isError = false) {
     const el = document.getElementById(elementId);
     if (!el) return;
@@ -247,6 +233,46 @@
     }
 
     initPasswordToggle();
+
+    // Initialize label animation for all inputs
+    function initLabelAnimation() {
+      const inputs = document.querySelectorAll(".input-field input");
+      inputs.forEach((input) => {
+        const field = input.closest(".input-field");
+        if (!field) return;
+
+        // Check initial state
+        if (input.value.trim()) {
+          field.classList.add("has-value");
+        }
+
+        // Add class on focus
+        input.addEventListener("focus", () => {
+          field.classList.add("focused");
+        });
+
+        // Remove class on blur if empty
+        input.addEventListener("blur", () => {
+          field.classList.remove("focused");
+          if (!input.value.trim()) {
+            field.classList.remove("has-value");
+          } else {
+            field.classList.add("has-value");
+          }
+        });
+
+        // Update class on input
+        input.addEventListener("input", () => {
+          if (input.value.trim()) {
+            field.classList.add("has-value");
+          } else {
+            field.classList.remove("has-value");
+          }
+        });
+      });
+    }
+
+    initLabelAnimation();
 
     // Forms
     document.getElementById("login-form")

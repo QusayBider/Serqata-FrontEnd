@@ -769,8 +769,6 @@ const ProductDetailsManager = {
                                     <i class="${this.isProductInWishlist(productId) ? 'icon-heart' : 'icon-heart-o'}"></i>
                                     <span>${this.isProductInWishlist(productId) ? 'remove from wishlist' : 'add to wishlist'}</span>
                                 </a>
-                                <a href="popup/quickView.html" class="btn-product-icon btn-quickview" title="Quick view"><span>Quick view</span></a>
-                                <a href="#" class="btn-product-icon btn-compare" title="Compare"><span>Compare</span></a>
                             </div>
                             <div class="product-action">
                                 <a href="#" class="btn-product btn-cart" data-product-id="${productId}"><span>add to cart</span></a>
@@ -842,16 +840,6 @@ const ProductDetailsManager = {
                         if (productId) {
                             ProductDetailsManager.handleAddToWishlist(productId);
                         }
-                    });
-                });
-
-                // Quick view buttons - handled by main.js magnific popup
-                // Compare buttons
-                section.querySelectorAll('.btn-compare').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        notyf.info('Compare functionality coming soon!');
                     });
                 });
             }, 100);

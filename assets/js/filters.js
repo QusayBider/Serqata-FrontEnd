@@ -520,61 +520,80 @@ const FilterManager = {
             const reviewCount = product.reviewCount || product.reviews?.length || 0;
 
             return `
-                <div class="col-6 col-md-4 col-lg-4 col-xl-3 col-xxl-2">
-                    <div class="product">
-                        <figure class="product-media">
-                            ${discount > 0 ? `<span class="product-label label-primary">Sale</span>` : ''}
-                            <a href="product.html?id=${product.id}">
-                                <img src="${mainImage}" alt="${product.name}" class="product-image" onerror="this.src='assets/images/products/error/error.png'">
-                            </a>
+    <div class="col-6 col-md-4 col-lg-3 d-flex">
+        <div class="product product-4 product-card w-100" data-product-id="${product.id}">
+            <figure class="product-media product-media-fixed">
+                ${product.discount ? `<span class="product-label label-primary">Sale</span>` : ''}
 
-                            <div class="product-action-vertical">
-                                <a href="#" class="btn-product-icon btn-wishlist btn-expandable ${wishlistClass}" data-product-id="${product.id}" title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
-                                    <i class="${wishlistIcon}"></i>
-                                    <span>${inWishlist ? 'remove from wishlist' : 'add to wishlist'}</span>
-                                </a>
-                            </div><!-- End .product-action -->
+                <a href="Product_Details.html?id=${product.id}" class="product-image-wrapper">
+                    <img src="${mainImage}" 
+                         alt="${product.name}" 
+                         class="product-image product-image-main"
+                         onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">
 
-                            <div class="product-action action-icon-top">
-                                <a href="#" class="btn-product btn-cart" data-product-id="${product.id}">
-                                    <span>add to cart</span>
-                                </a>
-                                <a href="popup/quickView.html" class="btn-product btn-quickview" title="Quick view">
-                                    <span>quick view</span>
-                                </a>
-                                <a href="#" class="btn-product btn-compare" title="Compare">
-                                    <span>compare</span>
-                                </a>
-                            </div><!-- End .product-action -->
-                        </figure><!-- End .product-media -->
+                    ${
+                        product.subImagesUrl && Array.isArray(product.subImagesUrl) && product.subImagesUrl.length
+                            ? `<img src="${product.subImagesUrl[0]}" 
+                                    alt="${product.name}" 
+                                    class="product-image product-image-hover"
+                                    onerror="this.onerror=null; this.src='assets/images/products/error/error.png';">`
+                            : ''
+                    }
+                </a>
 
-                        <div class="product-body">
-                            <div class="product-cat">
-                                <a href="#">${categoryName}</a>
-                            </div><!-- End .product-cat -->
-                            <h3 class="product-title">
-                                <a href="Product_Details.html?id=${product.id}">${product.name}</a>
-                            </h3><!-- End .product-title -->
-                            <div class="product-price">
-                                ${discount > 0
-                    ? `<span class="new-price">Now ILs ${finalPrice.toFixed(2)}</span><span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
-                    : `ILs ${product.price.toFixed(2)}`}
-                            </div><!-- End .product-price -->
-                            <div class="ratings-container">
-                                <div class="ratings">
-                                    <div class="ratings-val" style="width: ${ratingPercentage}%;"></div><!-- End .ratings-val -->
-                                </div><!-- End .ratings -->
-                                <span class="ratings-text">( ${reviewCount} Reviews )</span>
-                            </div><!-- End .rating-container -->
+                <div class="product-action-vertical">
+                    <a href="#"
+                       class="btn-product-icon btn-wishlist ${wishlistClass}"
+                       data-product-id="${product.id}"
+                       onclick="addToWishlistHandler(event, ${product.id})"
+                       title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
+                        <i class="${wishlistIcon}"></i>
+                        <span>${inWishlist ? 'remove from wishlist' : 'add to wishlist'}</span>
+                    </a>
+                </div>
 
-                            ${colorDots ? `
-                            <div class="product-nav product-nav-dots">
-                                ${colorDots}
-                            </div><!-- End .product-nav -->
-                            ` : ''}
-                        </div><!-- End .product-body -->
-                    </div><!-- End .product -->
-                </div><!-- End .col-sm-6 col-lg-4 col-xl-3 -->
+                <div class="product-action">
+                    <a href="#" class="btn-product btn-cart" data-product-id="${product.id}">
+                        <span>add to cart</span>
+                    </a>
+                </div>
+            </figure>
+
+            <div class="product-body product-body-fixed">
+                <div class="product-cat">
+                    <a href="./Category.html?id=${product.categoryId}">${categoryName}</a>
+                </div>
+
+                <h3 class="product-title product-title-fixed">
+                    <a href="Product_Details.html?id=${product.id}">${product.name}</a>
+                </h3>
+
+                <div class="product-price">
+                    ${
+                        product.discount
+                            ? `<span class="new-price">Now ILs ${(product.price * (1 - product.discount / 100)).toFixed(2)}</span>
+                               <span class="old-price">Was ILs ${product.price.toFixed(2)}</span>`
+                            : `ILs ${product.price.toFixed(2)}`
+                    }
+                </div>
+
+                <div class="product-nav product-nav-dots ml-1">
+                    ${
+                        product.colors && Array.isArray(product.colors)
+                            ? product.colors.map((color, index) => `
+                                <a href="Product_Details.html?id=${product.id}"
+                                   class="${index === 0 ? 'active' : ''}"
+                                   style="background: ${color.hexCode || color.hex || color.code || '#cccccc'};"
+                                   title="${color.name || 'Color'}">
+                                    <span class="sr-only">${color.name || 'Color'}</span>
+                                </a>
+                            `).join('')
+                            : ``
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
             `;
         }).join('');
 
@@ -666,16 +685,6 @@ const FilterManager = {
                     if (window.notyf) {
                         window.notyf.error('Wishlist feature is not available');
                     }
-                }
-            });
-        });
-
-        // Quick View buttons
-        container.querySelectorAll('.btn-quickview').forEach(button => {
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
-                if (window.notyf) {
-                    window.notyf.info('Quick view feature coming soon');
                 }
             });
         });

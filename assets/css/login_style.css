@@ -7,12 +7,12 @@
   --glass-bg: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.18);
   --glass-shadow: rgba(0, 0, 0, 0.35);
-  --accent: #c9a96e;
-  --accent-light: #e8cfaa;
+  --accent: #17173a;
+  --accent-light: #e8e1d6;
   --text-primary: #fff;
   --text-muted: rgba(255,255,255,0.55);
   --input-border: rgba(255,255,255,0.25);
-  --input-focus: #c9a96e;
+  --input-focus: #ad6e2f;
   --danger: #ff6b7a;
   --success: #6bcb8b;
   --radius: 20px;
@@ -25,9 +25,46 @@ body {
   align-items: center;
   justify-content: center;
   font-family: "DM Sans", sans-serif;
-  background: #0d0d18;
-  overflow: hidden;
+  background-image: url('../images/Login.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: #1a1a2e;
+  overflow: auto;
   padding: 20px;
+}
+
+/* ── Back button ── */
+.back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition);
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateX(-2px);
+}
+
+.back-button:active {
+  transform: scale(0.95);
 }
 
 /* ── Animated background ── */
@@ -35,8 +72,12 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: radial-gradient(ellipse at 20% 50%, #1a0a2e 0%, #0d0d18 60%),
-              radial-gradient(ellipse at 80% 20%, #0a1628 0%, transparent 60%);
+  background-image: url('../images/Login.jpeg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  overflow: hidden;
 }
 
 .orb {
@@ -113,10 +154,11 @@ body {
   font-size: 1.5rem;
   color: var(--accent);
   line-height: 1;
+  width: 35px; height: 35px;
 }
 .brand-name {
   font-family: "Playfair Display", serif;
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   color: var(--text-primary);
   letter-spacing: 0.04em;
 }
@@ -168,7 +210,9 @@ h2 {
 }
 
 .input-field input:focus ~ label,
-.input-field input:valid ~ label {
+.input-field input:valid ~ label,
+.input-field.focused label,
+.input-field.has-value label {
   top: 4px;
   transform: translateY(0);
   font-size: 0.72rem;
@@ -248,7 +292,7 @@ h2 {
 
 .remember input:checked ~ .checkmark,
 .policy-check input:checked ~ .checkmark {
-  background: var(--accent);
+  background: var(--accent-light);
   border-color: var(--accent);
 }
 
@@ -280,8 +324,8 @@ h2 {
 .btn-primary {
   width: 100%;
   height: 50px;
-  background: linear-gradient(135deg, var(--accent) 0%, #a8834a 100%);
-  color: #0d0d18;
+  background: linear-gradient(135deg, var(--accent) 0%, #895129 100%);
+  color: #e1dddd;
   font-family: "DM Sans", sans-serif;
   font-weight: 600;
   font-size: 0.9rem;
@@ -415,11 +459,11 @@ h2 {
 
 /* ── Wrapper links ── */
 .wrapper a {
-  color: var(--accent);
+  color: var(--accent-light);
   text-decoration: none;
   transition: color var(--transition);
 }
-.wrapper a:hover { color: var(--accent-light); text-decoration: underline; }
+.wrapper a:hover { color: #373ac8; text-decoration: underline; }
 
 /* ── Responsive ── */
 @media (max-width: 520px) {

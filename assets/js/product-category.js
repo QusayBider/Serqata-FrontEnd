@@ -100,60 +100,50 @@ const ProductCategoryManager = {
     },
 
     renderCategories(categories) {
-    const container = document.getElementById('categories-grid-container');
-    if (!container) {
-        console.error('Categories container not found');
-        return;
-    }
+        const container = document.getElementById('categories-grid-container');
+        if (!container) {
+            console.error('Categories container not found');
+            return;
+        }
 
-    if (!categories || categories.length === 0) {
-        this.showNoCategories();
-        return;
-    }
+        if (!categories || categories.length === 0) {
+            this.showNoCategories();
+            return;
+        }
 
-    const html = categories.map((category) => {
-        const productCountText = this.formatProductCount(this.getProductCount(category));
-        const imageUrl = this.getImageUrl(category);
+        const html = categories.map((category, index) => {
+            const productCountText = this.formatProductCount(this.getProductCount(category));
+            const imageUrl = this.getImageUrl(category);
+            const isFirst = index === 0;
 
-        return `
-            <div class="size-202 m-lr-auto respon4 layout-item">
-                <div class="block11 wrap-pic-w hov-img-zoom pos-relative">
-                    <img
-                        src="${imageUrl}"
-                        alt="${category.name}"
-                        onerror="this.src='assets/images/products/error/error.png'">
-
-                    <a href="All_products.html?categoryId=${category.id}"
-                       class="block11-txt ab-t-l s-full flex-col-l-sb p-lr-38 p-tb-34 trans-03 respon3">
-                        
-                        <div class="block11-txt-child1 flex-col-l">
-                            <span class="block11-name ltext-102 trans-04 p-b-8">
-                                ${category.name}
-                            </span>
-
-                            <span class="block11-info stext-102 trans-04">
-                                ${productCountText}
-                            </span>
-                        </div>
-
-                        <div class="block11-txt-child2 p-b-4 trans-05">
-                            <div class="block11-link stext-101 cl0 trans-09">
-                                Shop Now
-                            </div>
-                        </div>
-                    </a>
+            return `
+                <div class="category-card : ''}">
+                    <div class="category-card-image-wrapper">
+                        <img 
+                            src="${imageUrl}" 
+                            alt="${category.name}"
+                            class="category-card-image"
+                            loading="lazy"
+                            onerror="this.src='assets/images/products/error/error.png'"
+                        >
+                    </div>
+                    <div class="category-card-content">
+                        <h3 class="category-card-title">${category.name}</h3>
+                        <p class="category-card-desc">${productCountText}</p>
+                        <a href="All_products.html?categoryId=${category.id}" class="category-card-link">
+                            View Products →
+                        </a>
+                    </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
 
-    container.innerHTML = `
-        <div class="sec-banner bg0">
-            <div class="flex-w flex-c-m categories-mosaic-layout">
-                ${html}
-            </div>
-        </div>
-    `;
+        container.innerHTML = html;
+        
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+        container.style.gap = '2rem';
+        container.style.padding = '2rem 0';
     },
 
     async updateSidebarCategories() {
