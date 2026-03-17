@@ -1,7 +1,4 @@
-/* ============================================================
-   DISCOUNT CODES — Responsive Admin Panel CSS
-   Design: Clean, sharp admin aesthetic with warm amber accents
-   ============================================================ */
+
 
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap');
 
@@ -13,14 +10,14 @@
   --dc-bg:           #f7f6f3;
   --dc-surface:      #ffffff;
   --dc-border:       #e8e4de;
-  --dc-border-focus: #c9a84c;
+  --dc-border-focus: #44447e;
 
   --dc-text-primary: #1a1714;
   --dc-text-secondary:#6b6560;
   --dc-text-muted:   #9e9890;
 
-  --dc-accent:       #c9a84c;
-  --dc-accent-hover: #b8962e;
+  --dc-accent:       #4e4e95;
+  --dc-accent-hover: #44447e;
   --dc-accent-light: #fdf6e3;
 
   --dc-danger:       #d33;
@@ -33,7 +30,7 @@
 
   --dc-warning:      #8a6100;
   --dc-warning-light:#fff3cd;
-  --dc-warning-border:#f0d070;
+  --dc-warning-border:#44447e;
 
   --dc-shadow-sm:    0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
   --dc-shadow-md:    0 4px 16px rgba(0,0,0,.09), 0 1px 4px rgba(0,0,0,.06);
@@ -47,15 +44,11 @@
   --dc-transition:   0.2s ease;
 }
 
-/* ══════════════════════════════════════════════════════════
-   DASHBOARD LAYOUT
-   ══════════════════════════════════════════════════════════ */
 
 .dashboard {
   padding: 20px 0 40px;
 }
 
-/* ─── Stats Cards (Analytics tab) ──────────────────────── */
 .stats-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -300,7 +293,6 @@
   font-family: var(--dc-font-base);
   font-size: 13.5px;
   color: var(--dc-text-primary);
-  padding: 11px 0;
 }
 
 .ads-search::placeholder {

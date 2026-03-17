@@ -729,10 +729,7 @@ $(document).ready(async function () {
         };
 
         // Create full address for API if needed, otherwise use street address
-        let fullAddress = address;
-        if (city) fullAddress += ', ' + city;
-        if (countryText) fullAddress += ', ' + countryText;
-        formData.address = fullAddress;
+        formData.address = address;
 
         // Check main discount input if the top one is empty
         if (!formData.discountCode) {

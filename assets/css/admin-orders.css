@@ -1,310 +1,757 @@
-/* Admin Orders Dashboard Styles */
+/* ============================================
+   Admin Orders Dashboard — Modern Redesign
+   Aesthetic: Refined Dark-Accented Luxury Admin
+   Font pairing: DM Sans + JetBrains Mono
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+    --gold: #c96;
+    --gold-soft: rgba(204, 153, 102, 0.12);
+    --gold-mid: rgba(204, 153, 102, 0.25);
+    --gold-hover: #b88240;
+
+    --surface: #ffffff;
+    --surface-2: #f7f7f8;
+    --surface-3: #f0f0f2;
+    --border: #ebebed;
+    --border-soft: #f3f3f5;
+
+    --text-primary: #0d0d0f;
+    --text-secondary: #5a5a6a;
+    --text-muted: #9898a8;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-hover: 0 8px 28px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05);
+    --shadow-focus: 0 0 0 3px rgba(204, 153, 102, 0.18);
+
+    --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Panel ─────────────────────────────────── */
 
 .orders-panel {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-    padding: 25px;
-    margin-bottom: 30px;
+    background: var(--surface);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    padding: 28px 30px;
+    margin-bottom: 28px;
+    font-family: 'DM Sans', sans-serif;
+    animation: panelFadeIn 0.4s ease both;
 }
+
+@keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Header ─────────────────────────────────── */
 
 .orders-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: 25px;
-    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 24px;
     padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
 }
 
 .orders-header-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 24px;
-    font-weight: 800;
-    margin: 0 0 5px 0;
-    color: #111;
-    letter-spacing: -0.5px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+    line-height: 1.2;
 }
 
 .orders-header-title span {
-    color: #c96;
+    color: var(--gold);
+    position: relative;
 }
 
 .orders-header-meta {
-    font-size: 13px;
-    color: #888;
+    font-size: 12.5px;
+    color: var(--text-muted);
     font-weight: 500;
+    letter-spacing: 0.1px;
 }
+
+/* ─── Toolbar ────────────────────────────────── */
 
 .orders-toolbar {
     display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
+    gap: 12px;
+    margin-bottom: 24px;
     flex-wrap: wrap;
+    align-items: center;
 }
+
+/* Search */
 
 .orders-search-wrap {
     flex: 1;
     position: relative;
-    min-width: 250px;
+    min-width: 240px;
 }
 
 .orders-search-wrap svg {
     position: absolute;
-    left: 15px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #999;
+    color: var(--text-muted);
+    pointer-events: none;
+    width: 15px;
+    height: 15px;
 }
 
 .orders-search {
     width: 100%;
-    height: 42px;
-    background: #f8f9fa;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 0 15px 0 40px;
+    height: 40px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0 14px 0 40px;
     font-size: 13px;
-    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.orders-search::placeholder {
+    color: var(--text-muted);
 }
 
 .orders-search:focus {
     outline: none;
-    background: #fff;
-    border-color: #c96;
-    box-shadow: 0 0 0 3px rgba(204, 153, 102, 0.1);
+    background: var(--surface);
+    border-color: var(--gold);
+    box-shadow: var(--shadow-focus);
 }
 
+/* Filter select */
+
 .orders-filter-select {
-    height: 42px;
-    background: #f8f9fa;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 0 35px 0 15px;
+    height: 40px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0 34px 0 14px;
     font-size: 13px;
     font-weight: 500;
-    color: #333;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239898a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 15px center;
+    background-position: right 13px center;
     cursor: pointer;
-    transition: all 0.2s;
-    min-width: 150px;
+    min-width: 148px;
+    transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .orders-filter-select:focus {
     outline: none;
-    border-color: #c96;
+    border-color: var(--gold);
+    box-shadow: var(--shadow-focus);
+    background-color: var(--surface);
 }
 
-/* Table overrides for a modern look */
+/* ─── Table ──────────────────────────────────── */
+
 .table-orders {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 8px;
+    border-spacing: 0 6px;
+    font-family: 'DM Sans', sans-serif;
 }
 
-.table-orders th {
+.table-orders thead th {
     background: transparent;
     border: none;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     font-weight: 600;
-    color: #888;
-    padding: 0 15px 10px;
-    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 0 16px 10px;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
 }
 
 .table-orders tbody tr {
-    background: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    border-radius: 8px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition);
+    cursor: default;
 }
 
 .table-orders tbody tr:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-hover);
 }
 
 .table-orders td {
-    padding: 18px 15px;
+    padding: 16px 16px;
     vertical-align: middle;
-    border-top: 1px solid #f8f9fa;
-    border-bottom: 1px solid #f8f9fa;
-    font-size: 14px;
-    color: #333;
+    border-top: 1px solid var(--border-soft);
+    border-bottom: 1px solid var(--border-soft);
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .table-orders td:first-child {
-    border-left: 1px solid #f8f9fa;
-    border-radius: 8px 0 0 8px;
-    font-weight: 600;
-    color: #111;
+    border-left: 1px solid var(--border-soft);
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.3px;
 }
 
 .table-orders td:last-child {
-    border-right: 1px solid #f8f9fa;
-    border-radius: 0 8px 8px 0;
+    border-right: 1px solid var(--border-soft);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
-/* Status Pills */
+/* ─── Status Pills ───────────────────────────── */
+
 .order-status-pill {
     display: inline-flex;
     align-items: center;
-    padding: 5px 10px;
+    gap: 5px;
+    padding: 4px 10px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     text-transform: capitalize;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+}
+
+.order-status-pill::before {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .order-status-pill.pending {
-    background: #fff3cd;
-    color: #856404;
+    background: #fff8e6;
+    color: #a06800;
 }
+.order-status-pill.pending::before { background: #f0a500; }
 
 .order-status-pill.approved {
-    background: #d4edda;
-    color: #155724;
+    background: #edfbf0;
+    color: #1a7a38;
 }
+.order-status-pill.approved::before { background: #28a74e; }
 
 .order-status-pill.processing {
-    background: #cce5ff;
-    color: #004085;
+    background: #eff5ff;
+    color: #1a4fbf;
 }
+.order-status-pill.processing::before { background: #3b6fe0; }
 
 .order-status-pill.shipped {
-    background: #d4edda;
-    color: #155724;
+    background: #f0f8ff;
+    color: #0070b3;
 }
+.order-status-pill.shipped::before { background: #0090e0; }
 
 .order-status-pill.delivered {
-    background: #d4edda;
-    color: #155724;
+    background: #edfbf0;
+    color: #1a7a38;
 }
+.order-status-pill.delivered::before { background: #28a74e; }
 
 .order-status-pill.complete {
-    background: #cfe9ff;
-    color: #003d82;
-    font-weight: 700;
+    background: var(--gold-soft);
+    color: #8a5a00;
+    border: 1px solid rgba(204, 153, 102, 0.3);
 }
+.order-status-pill.complete::before { background: var(--gold); }
 
 .order-status-pill.cancelled {
-    background: #f8d7da;
-    color: #721c24;
+    background: #fff0f0;
+    color: #b81c1c;
 }
+.order-status-pill.cancelled::before { background: #e53535; }
 
 .order-status-pill.default {
-    background: #e2e3e5;
-    color: #383d41;
+    background: var(--surface-3);
+    color: var(--text-secondary);
 }
+.order-status-pill.default::before { background: var(--text-muted); }
+
+/* ─── View Button ────────────────────────────── */
 
 .btn-order-view {
-    padding: 6px 12px;
+    padding: 6px 13px;
     font-size: 12px;
     font-weight: 600;
-    color: #c96;
-    background: rgba(204, 153, 102, 0.1);
-    border: none;
-    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gold-hover);
+    background: var(--gold-soft);
+    border: 1px solid rgba(204, 153, 102, 0.2);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background var(--transition), color var(--transition), border-color var(--transition), transform var(--transition);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
 }
 
 .btn-order-view:hover {
-    background: rgba(204, 153, 102, 0.2);
-    color: #b88655;
+    background: var(--gold-mid);
+    color: #8a5a00;
+    border-color: rgba(204, 153, 102, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-order-view:active {
+    transform: translateY(0);
 }
 
 .btn-order-view svg {
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
 }
 
-/* Modal specific styles */
+/* ─── Modal ──────────────────────────────────── */
+
 .order-modal-section {
-    padding: 15px 0;
-    border-bottom: 1px solid #eee;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
 }
 
 .order-modal-section:last-child {
     border-bottom: none;
+    padding-bottom: 0;
 }
 
 .order-modal-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 15px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 14px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    font-family: 'DM Sans', sans-serif;
 }
 
 .order-detail-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 14px;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 9px;
+    font-size: 13.5px;
 }
 
 .order-detail-label {
-    color: #888;
+    color: var(--text-muted);
+    font-weight: 400;
+    flex-shrink: 0;
 }
 
 .order-detail-value {
-    font-weight: 500;
-    color: #111;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
 }
+
+/* Order items list */
 
 .order-items-list {
     max-height: 200px;
     overflow-y: auto;
-    border: 1px solid #f0f0f0;
-    border-radius: 8px;
-    padding: 10px;
-    background: #fcfcfc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    background: var(--surface-2);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.order-items-list::-webkit-scrollbar {
+    width: 4px;
+}
+.order-items-list::-webkit-scrollbar-track { background: transparent; }
+.order-items-list::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
 }
 
 .order-item-row {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px dashed #eee;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border-soft);
     font-size: 13px;
+    color: var(--text-secondary);
+    font-family: 'DM Sans', sans-serif;
+    gap: 12px;
 }
 
 .order-item-row:last-child {
     border-bottom: none;
 }
 
+/* Action Card */
+
 .order-action-card {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 15px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-top: 16px;
 }
 
 .btn-generate-link {
-    background: #111;
+    background: var(--text-primary);
     color: #fff;
     border: none;
-    border-radius: 6px;
-    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    padding: 9px 18px;
     font-size: 13px;
     font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background var(--transition), transform var(--transition);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
+    letter-spacing: 0.1px;
 }
 
 .btn-generate-link:hover {
-    background: #333;
+    background: #2a2a2e;
+    transform: translateY(-1px);
 }
 
+.btn-generate-link:active {
+    transform: translateY(0);
+}
+
+/* ─── Edit Order Modal Overrides ─────────────── */
+
+.edit-order-modal .modal-content {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    font-family: 'DM Sans', sans-serif;
+    overflow: hidden;
+}
+
+.edit-order-modal .modal-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+}
+
+.edit-order-modal .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+}
+
+.edit-order-modal .modal-body {
+    padding: 22px 0px;
+    background: var(--surface);
+}
+
+.edit-order-modal .modal-footer {
+    padding: 16px 24px;
+    gap: 10px;
+}
+
+.edit-order-modal .form-control {
+    height: 38px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text-primary);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    padding: 0 12px;
+}
+
+.edit-order-modal .form-control:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: var(--shadow-focus);
+    background: var(--surface);
+}
+
+.edit-order-modal .table-bordered {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-size: 13px;
+    border: 1px solid var(--border) !important;
+}
+
+.edit-order-modal .table-bordered thead th {
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 10px 12px;
+    border: none;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.edit-order-modal .table-bordered td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    border: none !important;
+    border-bottom: 1px solid var(--border-soft) !important;
+}
+
+.edit-order-modal .btn-outline-secondary {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+    color: var(--text-secondary);
+    background: var(--surface-2);
+    padding: 6px 14px;
+    transition: all var(--transition);
+}
+
+.edit-order-modal .btn-outline-secondary:hover {
+    border-color: var(--gold);
+    color: var(--gold-hover);
+    background: var(--gold-soft);
+}
+
+.edit-order-modal .btn-secondary {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-3);
+    color: var(--text-secondary);
+    padding: 8px 18px;
+    transition: all var(--transition);
+}
+
+.edit-order-modal .btn-secondary:hover {
+    background: var(--border);
+    color: var(--text-primary);
+}
+
+.edit-order-modal .btn-primary {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--text-primary);
+    border: none;
+    color: #fff;
+    padding: 8px 20px;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.edit-order-modal .btn-primary:hover {
+    background: #2a2a2e;
+    transform: translateY(-1px);
+}
+
+.edit-order-modal .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.edit-order-modal .btn-danger {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    background: #fff0f0;
+    color: #c0392b;
+    border: 1px solid #ffd5d5;
+    font-family: 'DM Sans', sans-serif;
+    transition: all var(--transition);
+}
+
+.edit-order-modal .btn-danger:hover {
+    background: #c0392b;
+    color: #fff;
+    border-color: #c0392b;
+}
+
+#edit-order-error {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    background: #fff0f0;
+    color: #b81c1c;
+    border: 1px solid #ffd5d5;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+}
+
+#edit-items-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+#edit-items-table thead th:nth-child(1) { width: 32%; }
+#edit-items-table thead th:nth-child(2) { width: 20%; }
+#edit-items-table thead th:nth-child(3) { width: 16%; }
+#edit-items-table thead th:nth-child(4) { width: 14%; }
+#edit-items-table thead th:nth-child(5) { width: 18%; }
+
+/* All cells — single-line, no overflow */
+#edit-items-table td {
+    vertical-align: middle;
+    padding: 10px 10px;
+    overflow: hidden;
+}
+
+/* Inputs & selects fill their cell */
+#edit-items-table .form-control,
+#edit-items-table select.form-control {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+}
+
+/* Hide the hidden inputs — they must NOT create visible space */
+#edit-items-table input[type="hidden"] {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    position: absolute !important;
+}
+
+/* Read-only name spans — single line, fill cell */
+#edit-items-table .edit-item-productName,
+#edit-items-table .edit-item-colorName,
+#edit-items-table .edit-item-sizeName {
+    display: block;
+    font-size: 13px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+/* Qty input */
+#edit-items-table .edit-item-quantity {
+    text-align: center;
+    padding: 0 6px;
+}
+
+/* Delete button cell */
+#edit-items-table td:last-child {
+    text-align: center;
+    padding: 8px 6px;
+}
+
+/* ─── Delete button — fully explicit, beats Bootstrap ─── */
+button.remove-edit-item-row,
+#edit-items-table .remove-edit-item-row,
+.remove-edit-item-row {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    border-radius: 6px !important;
+    background-color: #fff0f0 !important;
+    color: #c0392b !important;
+    border: 1px solid #ffd5d5 !important;
+    /* Force the × to render */
+    font-size: 16px !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    text-indent: 0 !important;
+    letter-spacing: 0 !important;
+    /* Undo Bootstrap overrides */
+    text-shadow: none !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s, color 0.15s !important;
+    flex-shrink: 0 !important;
+}
+
+button.remove-edit-item-row:hover,
+.remove-edit-item-row:hover {
+    background-color: #c0392b !important;
+    color: #ffffff !important;
+    border-color: #c0392b !important;
+}
+
+/* ─── Responsive ─────────────────────────────── */
+
+@media (max-width: 768px) {
+    .orders-panel {
+        padding: 20px 16px;
+        border-radius: var(--radius-lg);
+    }
+
+    .orders-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .orders-toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .orders-search-wrap,
+    .orders-filter-select {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .table-orders td,
+    .table-orders th {
+        padding: 12px 10px;
+    }
+}

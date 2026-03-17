@@ -1,4 +1,122 @@
-﻿@import url("https://fonts.googleapis.com/css?family=Poppins:200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800");
+﻿/* Modern Edit Order Modal Styles */
+.edit-order-modal .modal-content {
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(38,38,76,0.12);
+    background: #fff;
+    padding: 2.5rem 2rem;
+}
+.edit-order-modal .modal-header {
+    border-bottom: none;
+    background: linear-gradient(90deg, #26264C 0%, #a6c76c 100%);
+    color: #fff;
+    border-radius: 18px 18px 0 0;
+    padding: 2rem 2rem 1rem 2rem;
+}
+.edit-order-modal .modal-title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    letter-spacing: -.02em;
+}
+.edit-order-modal .close {
+    color: #fff;
+    opacity: 0.8;
+    font-size: 2.2rem;
+}
+.edit-order-modal .modal-body {
+    padding: 2rem 2rem 1rem 2rem;
+}
+
+
+.edit-order-modal .form-control {
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    font-size: 1.4rem;
+    padding: 0.9rem 1.2rem;
+    background: #f9f9f9;
+    transition: border-color 0.2s;
+}
+.edit-order-modal .form-control:focus {
+    border-color: #a6c76c;
+    background: #fff;
+}
+.edit-order-modal #edit-items-table th,
+.edit-order-modal #edit-items-table td {
+    padding: 0.7rem 1rem;
+    font-size: 1.3rem;
+}
+.edit-order-modal #edit-items-table {
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+.edit-order-modal #add-edit-item-row {
+    border-radius: 8px;
+    border: 1px solid #26264C;
+    color: #26264C;
+    background: #f4f5f8;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+.edit-order-modal #add-edit-item-row:hover {
+    background: #26264C;
+    color: #fff;
+}
+.edit-order-modal .remove-edit-item-row {
+    border-radius: 50%;
+    background: #e55;
+    color: #fff;
+    border: none;
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+}
+.edit-order-modal .remove-edit-item-row:hover {
+    background: #c0392b;
+}
+.edit-order-modal .modal-footer {
+    border-top: none;
+    padding: 1.5rem 2rem 2rem 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+.edit-order-modal .btn.btn-primary {
+    background: linear-gradient(90deg, #26264C 0%, #a6c76c 100%);
+    border: none;
+    border-radius: 8px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    padding: 0.9rem 2.2rem;
+    transition: background 0.2s;
+}
+.edit-order-modal .btn.btn-primary:hover {
+    background: #26264C;
+    color: #fff;
+}
+.edit-order-modal .btn.btn-secondary {
+    border-radius: 8px;
+    font-size: 1.4rem;
+    padding: 0.8rem 2.2rem;
+    background: #f4f5f8;
+    color: #26264C;
+    border: 1px solid #e5e7eb;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+.edit-order-modal .btn.btn-secondary:hover {
+    background: #a6c76c;
+    color: #fff;
+}
+.edit-order-modal #edit-order-error {
+    font-size: 1.3rem;
+    margin-top: 1rem;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    background: #fff3f3;
+    color: #e55;
+}
+@import url("https://fonts.googleapis.com/css?family=Poppins:200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800");
 
 html {
     font-size: 62.5%;
@@ -1738,7 +1856,7 @@ blockquote.text-white cite span {
 
 @media screen and (max-width: 991px) {
     .top-menu:not(.top-link-menu) {
-        display: flex;
+        display: none;
         align-items: center;
         align-self: stretch
     }
@@ -2728,7 +2846,7 @@ blockquote.text-white cite span {
     top: 0;
     bottom: 0;
     z-index: 1001;
-    background-color: #333;
+    background-color: #26264C;
     width: 100%;
     max-width: 280px;
     overflow-y: scroll;
@@ -2846,14 +2964,14 @@ blockquote.text-white cite span {
 
 .mobile-menu li a:hover,
 .mobile-menu li a:focus {
-    color: #26264C;
+    color: #fff;
     text-decoration: none;
     outline: none !important
 }
 
 .mobile-menu li.open>a,
 .mobile-menu li.active>a {
-    color: #26264C
+    color: #fff
 }
 
 .mobile-menu li ul {
@@ -2946,19 +3064,19 @@ blockquote.text-white cite span {
     line-height: 1.5;
     padding: .8rem 1.5rem;
     max-width: calc(100% - 36px);
-    background-color: #333;
+    background-color: #ffffff;
     border-color: rgba(255, 255, 255, 0.1);
     border-right-width: 0
 }
 
 .mobile-search .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.45)
+    color: #26264C
 }
 
 .mobile-search .form-control:focus {
-    color: #fff;
+    color: #26264C;
     border-color: #26264C;
-    background-color: #333
+    background-color: #fff
 }
 
 .mobile-search .btn {
@@ -10927,12 +11045,12 @@ small.form-text {
 
 .alert-info {
     color: #fff;
-    background-color: #32b1d6
+    background-color: #26264C
 }
 
 .alert-success {
     color: #fff;
-    background-color: #20cb55
+    background-color: #26264C
 }
 
 .alert-warning {
@@ -20440,5 +20558,35 @@ button:focus {
     .product-cat a {
         font-size: 10px;
     }
+}
+
+/* Notyf Success Notification Styling - Override Green Background */
+.notyf__toast--success {
+    background: #26264C !important;
+    background-color: #26264C !important;
+}
+
+.notyf .notyf__toast--success {
+    background: #26264C !important;
+    background-color: #26264C !important;
+}
+
+.notyf__toast.notyf__toast--success {
+    background: #26264C !important;
+    background-color: #26264C !important;
+}
+
+/* Change icon color to white */
+.notyf__toast--success .notyf__icon {
+    background-color: transparent !important;
+}
+
+.notyf__toast--success .notyf__icon svg {
+    fill: #fff !important;
+}
+
+/* Ensure text stays white */
+.notyf__toast--success .notyf__message {
+    color: #fff !important;
 }
 

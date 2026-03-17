@@ -554,10 +554,6 @@ class OrderView {
 
         return html;
     }
-
-    /**
-     * Build payment badge HTML
-     */
     _buildPaymentBadge(paidAmount, totalAmount, unpaid) {
         if (paidAmount >= totalAmount) {
             return `<span style="color:#10b981; font-weight:600;">✓ Fully Paid</span>`;
@@ -567,15 +563,10 @@ class OrderView {
         }
         return '';
     }
-
-    /**
-     * Build complete modal HTML
-     */
     _buildModalHtml(order, currentStatus, paidAmount, totalAmount, paymentBadge, itemsHtml) {
         const escapeHtml = OrderModel.escapeHtml;
         const isPaymentLocked =
-            ['Complete', 'Cancelled'].includes(currentStatus) ||
-            paidAmount >= totalAmount;
+            ['Complete', 'Cancelled'].includes(currentStatus);
 
         return `
             <div style="text-align:left; padding:10px;">
@@ -597,6 +588,14 @@ class OrderView {
                     <div class="order-detail-row">
                         <span class="order-detail-label">Customer</span>
                         <span class="order-detail-value">${escapeHtml(order.userName || 'Guest')}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="order-detail-label">Discount Code</span>
+                        <span class="order-detail-value">${order.discountCode ? escapeHtml(order.discountCode) : '<span style="color:#aaa;">None</span>'}</span>
+                    </div>
+                    <div class="order-detail-row">
+                        <span class="order-detail-label">Discount (%)</span>
+                        <span class="order-detail-value">${order.discountPercentage != null ? escapeHtml(order.discountPercentage.toString()) + '%' : '<span style="color:#aaa;">None</span>'}</span>
                     </div>
                     ${order.userEmail || order.guestEmail ? `
                     <div class="order-detail-row">
@@ -625,6 +624,8 @@ class OrderView {
                         <span class="order-detail-label">Payment</span>
                         <span class="order-detail-value">${order.paymentMethod || '—'}</span>
                     </div>
+                    <button type="button" class="btn-order-view p-3" onclick="AdminDashboardManager.closeOrderModal(); AdminDashboardManager.editOrder(${order.id})">✏️ Edit Order</button>
+
                 </div>
 
                 <!-- Items -->
@@ -710,7 +711,7 @@ class OrderView {
                         </div>
 
                         <!-- Payment - Generate Link -->
-                        <div class="order-action-card" style="background: linear-gradient(135deg, #fff5e6 0%, #fffbf0 100%); border: 1px solid #ffe8c2; border-radius: 8px; padding: 16px; margin-top: 12px;">
+                        <div class="order-action-card" style="background: linear-grsadient(135deg, #fff5e6 0%, #fffbf0 100%); border: 1px solid #ffe8c2; border-radius: 8px; padding: 16px; margin-top: 12px;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: #f59e0b;">
                                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -749,15 +750,12 @@ class OrderView {
                                 Generate Payment Link
                             </button>
                         </div>
+
                     `}
                 </div>
             </div>
         `;
     }
-
-    /**
-     * Setup modal event handlers
-     */
     _setupModalHandlers() {
         const statusSelect = document.getElementById('modal-order-status');
         const shippingFields = document.getElementById('shipping-fields');
@@ -770,19 +768,11 @@ class OrderView {
             });
         }
     }
-
-    /**
-     * Show loading state
-     */
     showLoading() {
         if (this.container) {
             this.container.innerHTML = '<div class="text-center p-5">Loading orders...</div>';
         }
     }
-
-    /**
-     * Show error state
-     */
     showError(message) {
         if (this.container) {
             this.container.innerHTML = `<div style="color:#e55;padding:20px;">${OrderModel.escapeHtml(message)}</div>`;
@@ -790,24 +780,17 @@ class OrderView {
     }
 }
 
-// ==========================================
-// ORDER CONTROLLER - Business Logic Layer
-// ==========================================
+
 class OrderController {
     static model = null;
     static view = null;
 
-    /**
-     * Initialize controller with Model and View
-     */
+
     static init(model, view) {
         this.model = model;
         this.view = view;
     }
 
-    /**
-     * Load orders by status
-     */
     static async loadOrders(status = 'All') {
         if (!this.model || !this.view) {
             console.error('Controller not initialized');

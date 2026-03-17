@@ -46,6 +46,13 @@ const getAllCategories = async () => {
 
 const displayALLProducts = async () => {
   const mainContainer = document.getElementById('recent-arrivals-container');
+  
+  // If container doesn't exist (e.g., on admin pages), skip this function
+  if (!mainContainer) {
+    console.warn('[product.js] recent-arrivals-container not found on this page');
+    return;
+  }
+  
   const loaderElement = mainContainer.querySelector('.loader');
 
   try {

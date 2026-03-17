@@ -35,35 +35,32 @@
     <link rel="stylesheet" href="assets/css/demos/demo-18.css">
     <link rel="stylesheet" href="assets/css/admin-Discountcodes.css">
     <link rel="stylesheet" href="assets/css/admin-orders.css">
-    <link rel="stylesheet" href="assets/css/admin-Ordersdashbord.css">
     <link rel="stylesheet" href="assets/css/admin-users.css">
 
 </head>
 
 <body>
     <div class="page-wrapper">
-        <header class="header ">
+         <header class="header ">
             <div class="header-top">
                 <div class="container-fluid">
                     <div class="header-right p-2 ">
-                        <ul class="top-menu ">
-                            <li>
-                                <a href="#">Links</a>
-                                <ul id="top-menu-ul">
-                                    <li>
-                                        <a href="https://wa.me/970568291008?text=Hello%20there!%20I%20would%20like%20to%20chat%20with%20you"
-                                            target="_blank">
-                                            <i class="icon-phone"></i> Chat on WhatsApp
-                                        </a>
-                                    </li>
-                                    <li><a href="contact.html">Contact Us</a></li>
-                                    <li><a href="login.html" id="loginLink"><i class="icon-user"></i>Login /
-                                            Register</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul><!-- End .top-menu -->
-                    </div><!-- End .header-right -->
+                    <ul class="top-menu ">
+                        <li>
+                            <a href="#">Links</a>
+                            <ul id="top-menu-ul">
+                                <li>
+                                <a href="https://wa.me/970568291008?text=Hello%20there!%20I%20would%20like%20to%20chat%20with%20you" target="_blank">
+                                    <i class="icon-phone"></i> Chat on WhatsApp
+                                </a>
+                                </li>
+                                <li><a href="contact.html">Contact Us</a></li>
+                                <li><a href="login.html" id="loginLink"><i class="icon-user"></i>Login / Register</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul><!-- End .top-menu -->
+                </div><!-- End .header-right -->
                 </div><!-- End .container -->
             </div><!-- End .header-top -->
             <div class="header-middle sticky-header">
@@ -78,11 +75,11 @@
                         </a>
 
                         <nav class="main-nav">
-                            <ul class="menu sf-arrows">
+                           <ul class="menu sf-arrows">
                                 <li class="megamenu-container ">
                                     <a href="index.html" class="sf-with">Home</a>
                                 </li>
-                                <li>
+                                <li class="">
                                     <a href="./about-2.html" class="sf-with">About Us</a>
                                 </li>
                                 <li>
@@ -106,12 +103,12 @@
                     <div class="header-right">
                         <div class="header-search">
                             <a href="#" class="search-toggle" role="button"><i class="icon-search"></i></a>
-                            <form action="#" method="get">
+                            <form action="./All_products.html" method="get">
                                 <div class="header-search-wrapper">
                                     <label for="q" class="sr-only">Search</label>
                                     <input type="search" class="form-control white" name="q" id="q"
                                         placeholder="Search product ..." required>
-                                    <button class="btn btn-primary" type="submit"><i class="icon-search"></i></button>
+                                    <button class="btn btn-primary" type="submit"><i class=""></i></button>
                                 </div><!-- End .header-search-wrapper -->
                             </form>
                         </div><!-- End .header-search -->
@@ -136,14 +133,11 @@
 
                                 <div class="dropdown-cart-total">
                                     <span>Total</span>
-                                    <span class="cart-total-price">
-                                        <header class="header">
-                                    </span>
+                                    <span class="cart-total-price"><header class="header"></span>
                                 </div><!-- End .dropdown-cart-total -->
                                 <div class="dropdown-cart-action">
                                     <a href="cart.html" class="btn btn-primary">View Cart</a>
-                                    <a href="checkout.html" class="btn btn-outline-primary-2"><span>Checkout</span><i
-                                            class="icon-long-arrow-right"></i></a>
+                                    <a href="checkout.html" class="btn btn-outline-primary-2"><span>Checkout</span><i class="icon-long-arrow-right"></i></a>
                                 </div><!-- End .dropdown-cart-total -->
                             </div><!-- End .dropdown-menu -->
                         </div><!-- End .cart-dropdown -->
@@ -397,9 +391,9 @@
         <div class="mobile-menu-wrapper">
             <span class="mobile-menu-close"><i class="icon-close"></i></span>
 
-            <form action="#" method="get" class="mobile-search">
+            <form action="./All_products.html" method="get" class="mobile-search">
                 <label for="mobile-search" class="sr-only">Search</label>
-                <input type="search" class="form-control" name="mobile-search" id="mobile-search"
+                <input type="search" class="form-control" name="q" id="mobile-search"
                     placeholder="Search in..." required>
                 <button class="btn btn-primary" type="submit"><i class="icon-search"></i></button>
             </form>
@@ -586,15 +580,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Notyf JS -->
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Authentication & Navigation -->
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/navigation.js"></script>
     <!-- Order Management System (Modern MVC Pattern) -->
     <script src="assets/js/order-manager.js"></script>
     <!-- Admin Dashboard JS File -->
-    <script src="assets/js/admin-dashboard.js"></script>
+    <script src="assets/js/admin-dashboard.js?v=2"></script>
 </body>
 
 </html>

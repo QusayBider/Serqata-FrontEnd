@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Molla - Analysis & Charts</title>
+    <title>Serqata - Analysis & Charts</title>
     <!-- Plugins CSS File -->
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
     <!-- Main CSS File -->
@@ -16,24 +16,110 @@
 
 <body>
     <div class="page-wrapper">
-        <header class="header">
+         <header class="header ">
+            <div class="header-top">
+                <div class="container-fluid">
+                    <div class="header-right p-2 ">
+                    <ul class="top-menu ">
+                        <li>
+                            <a href="#">Links</a>
+                            <ul id="top-menu-ul">
+                                <li>
+                                <a href="https://wa.me/970568291008?text=Hello%20there!%20I%20would%20like%20to%20chat%20with%20you" target="_blank">
+                                    <i class="icon-phone"></i> Chat on WhatsApp
+                                </a>
+                                </li>
+                                <li><a href="contact.html">Contact Us</a></li>
+                                <li><a href="login.html" id="loginLink"><i class="icon-user"></i>Login / Register</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul><!-- End .top-menu -->
+                </div><!-- End .header-right -->
+                </div><!-- End .container -->
+            </div><!-- End .header-top -->
             <div class="header-middle sticky-header">
-                <div class="container">
+                <div class="container-fluid">
                     <div class="header-left">
+                        <button class="mobile-menu-toggler">
+                            <span class="sr-only">Toggle mobile menu</span>
+                            <i class="icon-bars"></i>
+                        </button>
                         <a href="index.html" class="logo">
                             <img src="assets/images/logo.png" alt="Serqata Logo" width="105" height="25">
                         </a>
+
                         <nav class="main-nav">
-                            <ul class="menu sf-arrows">
-                                <li><a href="index.html">Home</a></li>
-                                <li><a href="dashboard.html">Dashboard</a></li>
-                                <li><a href="admin-dashboard.html">Admin</a></li>
-                            </ul>
-                        </nav>
-                    </div>
-                </div>
-            </div>
-        </header>
+                           <ul class="menu sf-arrows">
+                                <li class="megamenu-container ">
+                                    <a href="index.html" class="sf-with">Home</a>
+                                </li>
+                                <li class="">
+                                    <a href="./about-2.html" class="sf-with">About Us</a>
+                                </li>
+                                <li>
+                                    <a href="./All_products.html" class="sf-with">Shop</a>
+                                </li>
+                                <li>
+                                    <a href="" class="sf-with-ul">Pages</a>
+                                    <ul>
+                                        <li> <a href="./Category.html">Categories</a></li>
+                                        <li><a href="./cart.html">Cart</a></li>
+                                        <li><a href="./wishlist.html">Wishlist</a></li>
+                                        <li><a href="./contact.html">Contact</a></li>
+                                        <li><a href="./coming-soon.html">Coming Soon</a></li>
+                                        <li><a href="./login.html">Login</a></li>
+                                    </ul>
+                                </li>
+                            </ul><!-- End .menu -->
+                        </nav><!-- End .main-nav -->
+                    </div><!-- End .header-left -->
+
+                    <div class="header-right">
+                        <div class="header-search">
+                            <a href="#" class="search-toggle" role="button"><i class="icon-search"></i></a>
+                            <form action="./All_products.html" method="get">
+                                <div class="header-search-wrapper">
+                                    <label for="q" class="sr-only">Search</label>
+                                    <input type="search" class="form-control white" name="q" id="q"
+                                        placeholder="Search product ..." required>
+                                    <button class="btn btn-primary" type="submit"><i class=""></i></button>
+                                </div><!-- End .header-search-wrapper -->
+                            </form>
+                        </div><!-- End .header-search -->
+
+                        <a href="wishlist.html" class="wishlist-link">
+                            <i class="icon-heart-o"></i>
+                            <span class="wishlist-count "></span>
+                        </a>
+
+                        <div class="dropdown cart-dropdown">
+                            <a href="#" class="dropdown-toggle" role="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false" data-display="static">
+                                <i class="icon-shopping-cart"></i>
+                                <span class="cart-count">0</span>
+                            </a>
+
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <div class="dropdown-cart-products">
+                                    <!-- Cart items will be loaded dynamically -->
+                                    <div class="text-center p-3">Loading cart...</div>
+                                </div><!-- End .cart-product -->
+
+                                <div class="dropdown-cart-total">
+                                    <span>Total</span>
+                                    <span class="cart-total-price"><header class="header"></span>
+                                </div><!-- End .dropdown-cart-total -->
+                                <div class="dropdown-cart-action">
+                                    <a href="cart.html" class="btn btn-primary">View Cart</a>
+                                    <a href="checkout.html" class="btn btn-outline-primary-2"><span>Checkout</span><i class="icon-long-arrow-right"></i></a>
+                                </div><!-- End .dropdown-cart-total -->
+                            </div><!-- End .dropdown-menu -->
+                        </div><!-- End .cart-dropdown -->
+                    </div><!-- End .header-right -->
+                </div><!-- End .container -->
+            </div><!-- End .header-middle -->
+        </header><!-- End .header -->
 
         <main class="main">
             <div class="page-header text-center" style="background-image: url('assets/images/page-header-bg.jpg')">

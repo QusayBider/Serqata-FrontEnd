@@ -1,3 +1,4 @@
+
 const AdminDashboardManager = {
     // API Endpoints
     endpoints: {
@@ -8,6 +9,7 @@ const AdminDashboardManager = {
         getOrderById: 'Admin/Orders/GetOrderById',
         updatePaidAmount: 'Admin/Orders/Update-paid-amount',
         generateDeliveryPaymentLink: 'Admin/Orders/Generate-delivery-payment-link',
+        editOrder: 'Admin/Orders/Edit',   
         users: 'Admin/Users',
         products: 'Products/GetAllProducts',
         advertisements: 'Admin/Advertisements',
@@ -192,12 +194,10 @@ const AdminDashboardManager = {
         $('#stat-total-users').text(data.totalUsers || 0);
     },
 
-        // --- Orders ---
-    // Delegate to OrderController with modern MVC pattern
+    // --- Orders ---
     loadOrders: async function (status = 'All') {
         // normalize status so filter/count logic stays correct
         status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
-
         if (typeof OrderController !== 'undefined' && OrderController.model && OrderController.view) {
             return await OrderController.loadOrders(status);
         } else {
@@ -205,811 +205,502 @@ const AdminDashboardManager = {
             $('#admin-orders-container').html('<div style="color:#e55;padding:20px;">Order management system not initialized.</div>');
         }
     },
-
     filterOrdersLocal: function (status = 'All') {
         if (typeof OrderController !== 'undefined') {
             status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
             return OrderController.filter(status);
         }
     },
-
     openOrderModal: async function (orderId) {
         if (typeof OrderController !== 'undefined') {
             return await OrderController.openModal(orderId);
         }
     },
-
     updateOrderStatus: async function (orderId) {
         if (typeof OrderController !== 'undefined') {
             const result = await OrderController.updateStatus(orderId);
-
             // refresh using current active filter so status numbers/view stay correct
             let activeStatus = 'All';
             const $active = $('.order-status-filter.active, .active[data-status]').first();
             if ($active.length) {
                 activeStatus = $active.data('status') || 'All';
             }
-
             await OrderController.loadOrders(activeStatus);
             return result;
         }
     },
-
     updateOrderPaidAmount: async function (orderId) {
         if (typeof OrderController !== 'undefined') {
             return await OrderController.updatePaidAmount(orderId);
         }
     },
-
     generateDeliveryPaymentLink: async function (orderId) {
         if (typeof OrderController !== 'undefined') {
             return await OrderController.generatePaymentLink(orderId);
         }
     },
+    editOrder: async function (orderId) {
+    if (typeof OrderController === 'undefined' || !OrderController.model) return;
 
-// =====================
-// --- Users Management ---
-// =====================
-
-loadUsers: async function () {
-    const $container = $('#admin-users-container');
-
-    const skeletonHtml = Array(5).fill(0).map(() => `
-        <div class="user-skeleton">
-            <div style="display:flex;align-items:center;gap:10px;flex:1;">
-                <div class="skel" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;"></div>
-                <div>
-                    <div class="skel" style="width:110px;height:12px;margin-bottom:6px;"></div>
-                    <div class="skel" style="width:160px;height:10px;"></div>
-                </div>
-            </div>
-            <div style="display:flex;gap:4px;">
-                ${Array(6).fill('<div class="skel" style="width:30px;height:30px;border-radius:6px;"></div>').join('')}
-            </div>
-        </div>
-    `).join('');
-
-    $container.html(`
-        <div class="um-header">
-            <h2 class="um-title">Users Management</h2>
-        </div>
-        <div class="um-toolbar">
-            <div class="um-search-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input type="text" id="user-search-input" placeholder="Search by username or email…" class="form-control">
-            </div>
-        </div>
-        <div class="um-table-card">${skeletonHtml}</div>
-    `);
-
+    let order;
     try {
-        const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.users), {
-            headers: this.getHeaders()
-        });
-        if (response.ok) {
-            const data = await response.json();
-            this.renderUsers(data.data || data);
-        } else {
-            $container.html(`<div class="um-error">Could not load users.</div>`);
-        }
-    } catch (e) {
-        $container.html(`<div class="um-error">Error loading users: ${e.message}</div>`);
-    }
-},
-
-renderUsers: function (users) {
-    const $container = $('#admin-users-container');
-
-    if (!users || users.length === 0) {
-        $container.html(`
-            <div class="um-header"><h2 class="um-title">Users Management</h2></div>
-            <div class="um-table-card" style="padding:60px 20px;text-align:center;color:var(--text-muted);">
-                <p>No users found.</p>
-            </div>
-        `);
+        order = await OrderController.model.fetchOrderById(orderId);
+    } catch (err) {
+        Swal.fire('Error', 'Could not load order details. Please try again.', 'error');
         return;
     }
+    if (!order) return;
 
-    let html = `
-        <div class="um-header">
-            <h2 class="um-title">
-                Users Management
-                <span class="um-title-count">${users.length} total</span>
-            </h2>
-        </div>
-        <div class="um-toolbar">
-            <div class="um-search-wrap">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input type="text" id="user-search-input" placeholder="Search by username or email…" class="form-control">
-            </div>
-        </div>
-        <div class="um-table-wrap">
-        <table class="table um-table" id="users-table">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th class="um-hide-sm">Username</th>
-                    <th class="um-hide-md">Phone</th>
-                    <th class="um-hide-sm">Role</th>
-                    <th>Status</th>
-                    <th class="um-hide-md">Joined</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    // Fetch all products
+    let products = [];
+    try {
+        const productsResp = await fetch(API_CONFIG.getApiUrl(this.endpoints.products), { headers: this.getHeaders() });
+        if (productsResp.ok) {
+            const productsData = await productsResp.json();
+            products = productsData.data || productsData;
+        }
+    } catch (e) {}
 
-    users.forEach(user => {
-        const userName    = user.userName    || '—';
-        const email       = user.email       || '—';
-        const fullName    = user.fullName    || '—';
-        const phone       = user.phoneNumber || '—';
-        const role        = (Array.isArray(user.roles) && user.roles[0]) || user.userRole || 'Customer';
-        const createdDate = this.formatDate(user.create_at);
+    let sectionsData = [];   // raw API response array
+    let flatCities   = [];   // flat list of all city objects for easy lookup
 
-        // Support both boolean isBlocked and string status field
-        const isBlocked   = !!user.isBlocked || (user.status && user.status.toLowerCase() === 'blocked');
-        const statusLabel = isBlocked ? 'Blocked' : 'Active';
-        const blockedClass = isBlocked ? 'badge-danger' : 'badge-success';
-        const isAdmin     = ['admin','superadmin'].includes(role.toLowerCase());
-        const initials    = fullName !== '—'
-            ? fullName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-            : userName.slice(0, 2).toUpperCase();
+    try {
+        const deliveryResp = await fetch(API_CONFIG.getApiUrl(this.endpoints.deliveryCosts), { headers: this.getHeaders() });
+        if (deliveryResp.ok) {
+            const deliveryData = await deliveryResp.json();
+            sectionsData = deliveryData.data || deliveryData;
+            // Flatten all cities into one array for matching
+            sectionsData.forEach(sec => {
+                (sec.cities || []).forEach(city => flatCities.push(city));
+            });
+        }
+    } catch (e) {}
 
-        html += `
-            <tr>
-                <td>
-                    <div class="um-user-cell">
-                        <div class="um-avatar">${initials}</div>
-                        <div class="um-user-info">
-                            <div class="um-fullname">${fullName}</div>
-                            <div class="um-username-sub">${email}</div>
-                        </div>
-                    </div>
-                </td>
-                <td class="um-hide-sm">${userName}</td>
-                <td class="um-hide-md">${phone}</td>
-                <td class="um-hide-sm">
-                    <span class="um-role ${isAdmin ? 'um-role-admin' : ''}">${role}</span>
-                </td>
-                <td><span class="badge ${blockedClass}">${statusLabel}</span></td>
-                <td class="um-hide-md" style="color:var(--text-muted);font-size:12.5px;">${createdDate}</td>
-                <td>
-                    <div class="um-actions">
-                        <button class="um-btn um-btn-info"     onclick="AdminDashboardManager.viewUserDetails('${user.id}')"            title="View Details"><i class="icon-eye"></i><span class="um-btn-label"> View</span></button>
-                        ${!isBlocked
-                            ? `<button class="um-btn um-btn-warning"  onclick="AdminDashboardManager.blockUserModal('${user.id}')"           title="Block User"><i class="icon-lock"></i><span class="um-btn-label"> Block</span></button>`
-                            : `<button class="um-btn um-btn-success"  onclick="AdminDashboardManager.unblockUser('${user.id}')"              title="Unblock User"><i class="icon-unlock"></i><span class="um-btn-label"> Unblock</span></button>`
-                        }
-                        <button class="um-btn um-btn-primary"  onclick="AdminDashboardManager.changeRoleModal('${user.id}', '${role}')"   title="Change Role"><i class="icon-cog"></i><span class="um-btn-label"> Role</span></button>
-                        <button class="um-btn um-btn-edit"     onclick="AdminDashboardManager.editProfileModal('${user.id}')"             title="Edit Profile"><i class="icon-edit"></i><span class="um-btn-label"> Edit</span></button>
-                        <button class="um-btn um-btn-password" onclick="AdminDashboardManager.changePasswordModal('${user.id}')"          title="Change Password"><i class="icon-key"></i><span class="um-btn-label"> Password</span></button>
-                        <button class="um-btn um-btn-danger"   onclick="AdminDashboardManager.deleteUser('${user.id}')"                  title="Delete User"><i class="icon-trash"></i><span class="um-btn-label"> Delete</span></button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    const getSectionNames = () => sectionsData.map(s => s.sectionName).filter(Boolean);
 
-    html += `</tbody></table></div>`;
-    $container.html(html);
+    const getCitiesForSection = (sectionName) => {
+        const sec = sectionsData.find(s => s.sectionName === sectionName);
+        return sec ? (sec.cities || []) : [];
+    };
 
-    $('#user-search-input').on('keyup', function () {
-        const q = $(this).val().toLowerCase();
-        $('#users-table tbody tr').each(function () {
-            const u = $(this).find('td:eq(1)').text().toLowerCase();
-            const e = $(this).find('.um-username-sub').text().toLowerCase();
-            $(this).toggle(u.includes(q) || e.includes(q));
-        });
-    });
-},
+    const findCityById = (cityId) => flatCities.find(c => c.id === cityId) || null;
 
-// ─── FETCH USER FULL DETAILS (shared helper) ─────────────────────────────────
-// GET /api/Admin/Users/FullDetails/{userId}
-// Response: { success, message, data: { id, userName, email, fullName,
-//             phoneNumber, city, street, status, roles[], orders[], token } }
-_fetchUserFullDetails: async function(userId) {
-    // Build URL: prefer explicit endpoint key, else append /FullDetails to base users path
-    let base = this.endpoints.userFullDetails;
-    if (!base) {
-        // e.g. "Admin/Users" → "Admin/Users/FullDetails"
-        base = this.endpoints.users.replace(/\/$/, '') + '/FullDetails';
-    }
-    const url = API_CONFIG.getApiUrl(base + '/' + userId);
-    console.log('[UM] fetchUserFullDetails →', url);
+    const findCityByNameAndSection = (sectionName, cityName) =>
+        flatCities.find(c => c.sectionName === sectionName && c.cityName === cityName) || null;
 
-    const response = await fetch(url, { headers: this.getHeaders() });
+    // ── Resolve initial section/city from order ───────────────────────────────
 
-    // Try to get body regardless of status for better error messages
-    let json;
-    try { json = await response.json(); } catch(e) { json = {}; }
+    let initialSection   = (order.sectionName || '').trim();
+    let initialCity      = (order.cityName    || '').trim();
+    let initialCityId    = order.deliveryCostId || null;  // keep to pre-select deliveryCostId
 
-    if (!response.ok) {
-        const msg = json.message || json.title || ('Server returned ' + response.status);
-        throw new Error(msg);
-    }
-
-    // Unwrap all possible envelope shapes:
-    //   { success, data: {...} }   ← your API
-    //   { data: {...} }
-    //   { ...user fields directly }
-    let user = null;
-    if (json && typeof json === 'object') {
-        if (json.data && typeof json.data === 'object' && json.data.id) {
-            user = json.data;                   // ← matches your API response
-        } else if (json.id) {
-            user = json;                        // plain user object
-        } else if (json.success !== undefined && json.data) {
-            user = json.data;
+    // Priority 2: resolve from stored deliveryCostId
+    if ((!initialSection || !initialCity) && initialCityId) {
+        const matched = findCityById(initialCityId);
+        if (matched) {
+            initialSection = matched.sectionName;
+            initialCity    = matched.cityName;
         }
     }
 
-    if (!user || !user.id) {
-        console.error('[UM] Unexpected response shape:', json);
-        throw new Error('No user data returned. Check the console for the raw response.');
+    // Priority 3 + 4: parse/scan the address string
+    if (!initialSection || !initialCity) {
+        const rawAddress = (order.guestAddress || order.address || '').trim();
+
+        if (rawAddress) {
+            const parts = rawAddress.split(',').map(p => p.trim()).filter(Boolean);
+
+            if (parts.length >= 3) {
+                const candidateSection = parts[parts.length - 1];
+                const candidateCity    = parts[parts.length - 2];
+
+                const secExists  = sectionsData.some(s => s.sectionName === candidateSection);
+                const cityExists = flatCities.some(c => c.cityName === candidateCity && c.sectionName === candidateSection);
+
+                if (secExists  && !initialSection) initialSection = candidateSection;
+                if (cityExists && !initialCity)    initialCity    = candidateCity;
+
+            } else if (parts.length === 2) {
+                const candidateSection = parts[parts.length - 1];
+                const candidateCity    = parts[parts.length - 2];
+
+                const secExists  = sectionsData.some(s => s.sectionName === candidateSection);
+                const cityExists = flatCities.some(c => c.cityName === candidateCity && c.sectionName === candidateSection);
+
+                if (secExists  && !initialSection) initialSection = candidateSection;
+                if (cityExists && !initialCity)    initialCity    = candidateCity;
+            }
+
+            // ── Priority 4: fuzzy scan fallback if split didn't resolve both ─────
+            if (!initialSection || !initialCity) {
+                const addressLower = rawAddress.toLowerCase();
+                const sorted = [...flatCities].sort((a, b) =>
+                    (b.sectionName + b.cityName).length - (a.sectionName + a.cityName).length
+                );
+                for (const c of sorted) {
+                    const sec  = (c.sectionName || '').toLowerCase();
+                    const city = (c.cityName    || '').toLowerCase();
+                    if (!initialSection && sec  && addressLower.includes(sec))  initialSection = c.sectionName;
+                    if (!initialCity    && city && addressLower.includes(city)) initialCity    = c.cityName;
+                    if (initialSection && initialCity) break;
+                }
+            }
+        }
     }
-    return user;
-},
 
-// ─── VIEW FULL DETAILS ───────────────────────────────────────────────────────
-// GET /api/Admin/Users/FullDetails/{userId}
-viewUserDetails: async function(userId) {
-    try {
-        const user = await this._fetchUserFullDetails(userId);
-        this._showUserDetailsModal(user);
-    } catch (e) {
-        await Swal.fire({
-            icon: 'error',
-            title: 'Could not load details',
-            text: e.message
-        });
+        let displayAddress = (order.guestAddress || order.address || '').trim();
+        let streetAddress = displayAddress;
+        if (displayAddress && initialCity && initialSection) {
+            // Remove trailing ", CityName, SectionName" to get clean street address
+            const parts = displayAddress.split(',').map(p => p.trim());
+            streetAddress = parts[0] || '';
+            const suffix1 = `, ${initialCity}, ${initialSection}`;
+            const suffix2 = `, ${initialSection}, ${initialCity}`; // handle either order
+            if (displayAddress.endsWith(suffix1)) {
+                displayAddress = displayAddress.slice(0, -suffix1.length).trim();
+            } else if (displayAddress.endsWith(suffix2)) {
+                displayAddress = displayAddress.slice(0, -suffix2.length).trim();
+            }
+        }
+
+        // Re-resolve deliveryCostId in case we found section/city from address parsing
+        if (!initialCityId && initialSection && initialCity) {
+            const matched = findCityByNameAndSection(initialSection, initialCity);
+            if (matched) initialCityId = matched.id;
+        }
+
+    // ── Build dropdown option strings ─────────────────────────────────────────
+    const buildSectionOptions = (selected) =>
+        getSectionNames().map(s =>
+            `<option value="${s}"${s === selected ? ' selected' : ''}>${s}</option>`
+        ).join('');
+
+    const buildCityOptions = (sectionName, selectedCity) => {
+        const cities = getCitiesForSection(sectionName);
+        if (!cities.length) return '<option value="">Select City</option>';
+        return cities.map(c =>
+            `<option value="${c.cityName}"${c.cityName === selectedCity ? ' selected' : ''}>${c.cityName}</option>`
+        ).join('');
+    };
+
+    const sectionOptions = buildSectionOptions(initialSection);
+    const cityOptions    = buildCityOptions(initialSection, initialCity);
+
+    // ── Product helpers ───────────────────────────────────────────────────────
+    function getProductName(productId) {
+        const p = products.find(p => p.id === productId);
+        return p ? p.name : productId;
     }
-},
+    function getColorName(productId, colorId) {
+        const p = products.find(p => p.id === productId);
+        if (!p || !p.colors) return colorId;
+        const c = p.colors.find(c => c.id === colorId);
+        return c ? c.name : colorId;
+    }
+    function getSizeName(productId, sizeId) {
+        const p = products.find(p => p.id === productId);
+        if (!p || !p.sizes) return sizeId;
+        const s = p.sizes.find(s => s.id === sizeId);
+        return s ? s.name : sizeId;
+    }
 
-_showUserDetailsModal: function(user) {
-    const role        = Array.isArray(user.roles) ? user.roles.join(', ') : (user.userRole || '—');
-    const ordersCount = Array.isArray(user.orders) ? user.orders.length : 0;
-    const city        = user.city   || '—';
-    const street      = user.street || '—';
-
-    // Support both boolean isBlocked and string status field
-    const isBlocked  = !!user.isBlocked || (user.status && user.status.toLowerCase() === 'blocked');
-    const statusText = isBlocked ? 'Blocked' : 'Active';
-    const statusClass = isBlocked ? 'um-status-blocked' : 'um-status-active';
-
-    const initials = (user.fullName || user.userName || 'U')
-        .split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-
-    const isAdmin = ['admin', 'superadmin'].includes(role.toLowerCase());
+    const buildItemRows = (items = []) =>
+        items.map((item, i) => `
+            <tr data-index="${i}">
+                <td>
+                    <label class="edit-label">Product</label>
+                    <input class="form-control edit-item-productId" type="hidden" value="${item.productId ?? ''}" />
+                    <span class="edit-item-productName">${getProductName(item.productId)}</span>
+                </td>
+                <td>
+                    <label class="edit-label">Color</label>
+                    <input class="form-control edit-item-colorId" type="hidden" value="${item.colorId ?? ''}" />
+                    <span class="edit-item-colorName">${getColorName(item.productId, item.colorId)}</span>
+                </td>
+                <td>
+                    <label class="edit-label">Size</label>
+                    <input class="form-control edit-item-sizeId" type="hidden" value="${item.sizeId ?? ''}" />
+                    <span class="edit-item-sizeName">${getSizeName(item.productId, item.sizeId)}</span>
+                </td>
+                <td>
+                    <label class="edit-label">Qty</label>
+                    <input class="form-control edit-item-quantity" type="number" value="${item.quantity ?? 1}" min="1" />
+                </td>
+                <td>
+                    <input type="hidden" class="edit-item-id" value="${item.id ?? ''}" />
+                    <button type="button" class="btn btn-sm btn-danger remove-edit-item-row">&times;</button>
+                </td>
+            </tr>`).join('');
 
     const modalHtml = `
-        <div id="um-details-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeDetailsModal()">
-            <div class="um-modal um-modal-details">
-                <button class="um-modal-close" onclick="AdminDashboardManager._closeDetailsModal()" title="Close">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-
-                <div class="um-modal-hero">
-                    <div class="um-modal-avatar-wrap">
-                        <div class="um-modal-avatar">${initials}</div>
-                        <span class="um-modal-status-dot ${statusClass}"></span>
+        <div id="edit-order-modal" class="modal fade edit-order-modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Order #${orderId}</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
-                    <div class="um-modal-hero-info">
-                        <div class="um-modal-name">${user.fullName || '—'}</div>
-                        <div class="um-modal-email">${user.email || '—'}</div>
-                        <div class="um-modal-badges">
-                            <span class="um-modal-role-badge ${isAdmin ? 'um-badge-admin' : 'um-badge-customer'}">${role}</span>
-                            <span class="um-modal-status-badge ${statusClass}">${statusText}</span>
+                    <div class="modal-body">
+                        <h6 class="font-weight-bold mb-2">Customer Info</h6>
+                        <div class="form-row">
+                            <div class="col">
+                                <label class="edit-label">Name</label>
+                                <input id="edit-guestName" class="form-control" placeholder="Name" value="${order.guestName ?? ''}" />
+                            </div>
+                            <div class="col">
+                                <label class="edit-label">Email</label>
+                                <input id="edit-guestEmail" class="form-control" placeholder="Email" value="${order.guestEmail ?? ''}" />
+                            </div>
                         </div>
+                        <div class="form-row mt-2">
+                            <div class="col">
+                                <label class="edit-label">Phone</label>
+                                <input id="edit-guestPhoneNumber" class="form-control" placeholder="Phone" value="${order.guestPhoneNumber ?? order.phone ?? ''}" />
+                            </div>
+                            <div class="col">
+                                <label class="edit-label">Street / Detail Address</label>
+                                <input id="edit-guestAddress" class="form-control" placeholder="Street address" value="${streetAddress}" />
+                            </div>
+                        </div>
+                        <div class="form-row mt-2">
+                            <div class="col">
+                                <label class="edit-label">Section (Country/Region)</label>
+                                <select id="edit-section" class="form-control">
+                                    <option value="">Select Section</option>
+                                    ${sectionOptions}
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label class="edit-label">City</label>
+                                <select id="edit-city" class="form-control">
+                                    <option value="">Select City</option>
+                                    ${cityOptions}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row mt-2">
+                            <div class="col">
+                                <label class="edit-label">Discount Code</label>
+                                <input id="edit-discountCode" class="form-control" placeholder="Discount Code" value="${order.discountCode ?? ''}" />
+                            </div>
+                        </div>
+
+                        <h6 class="font-weight-bold mb-2 mt-3">Order Items</h6>
+                        <table class="table table-bordered table-sm" id="edit-items-table">
+                            <thead>
+                                <tr><th>Product</th><th>Color</th><th>Size</th><th>Qty</th><th></th></tr>
+                            </thead>
+                            <tbody>${buildItemRows(order.orderItems)}</tbody>
+                        </table>
+                        <button type="button" id="add-edit-item-row" class="btn btn-sm btn-outline-secondary mb-2">+ Add Item</button>
+                        <div id="edit-order-error" class="text-danger mt-2" style="display:none;"></div>
                     </div>
-                </div>
-
-                <div class="um-modal-divider"></div>
-
-                <div class="um-modal-body">
-                    <div class="um-detail-section-title">Account Information</div>
-                    <div class="um-detail-grid">
-                        <div class="um-detail-card">
-                            <div class="um-detail-icon-wrap um-icon-blue">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
-                            <div>
-                                <div class="um-detail-label">Username</div>
-                                <div class="um-detail-value">${user.userName || '—'}</div>
-                            </div>
-                        </div>
-                        <div class="um-detail-card">
-                            <div class="um-detail-icon-wrap um-icon-purple">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.29 6.29l.83-.83a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            </div>
-                            <div>
-                                <div class="um-detail-label">Phone</div>
-                                <div class="um-detail-value">${user.phoneNumber || '—'}</div>
-                            </div>
-                        </div>
-                        <div class="um-detail-card">
-                            <div class="um-detail-icon-wrap um-icon-teal">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            </div>
-                            <div>
-                                <div class="um-detail-label">City</div>
-                                <div class="um-detail-value">${city}</div>
-                            </div>
-                        </div>
-                        <div class="um-detail-card">
-                            <div class="um-detail-icon-wrap um-icon-orange">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                            </div>
-                            <div>
-                                <div class="um-detail-label">Street</div>
-                                <div class="um-detail-value">${street}</div>
-                            </div>
-                        </div>
-                        <div class="um-detail-card">
-                            <div class="um-detail-icon-wrap um-icon-green">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                            </div>
-                            <div>
-                                <div class="um-detail-label">Total Orders</div>
-                                <div class="um-detail-value">${ordersCount}</div>
-                            </div>
-                        </div>
-                        <div class="um-detail-card um-detail-card-id">
-                            <div class="um-detail-icon-wrap um-icon-gray">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                            </div>
-                            <div style="min-width:0;">
-                                <div class="um-detail-label">User ID</div>
-                                <div class="um-detail-value um-detail-id" title="${user.id || ''}">${user.id || '—'}</div>
-                            </div>
-                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" id="save-edit-order-btn" class="btn btn-primary">Save Changes</button>
                     </div>
-
-                    ${ordersCount > 0 ? `
-                    <div class="um-detail-section-title" style="margin-top:22px;">Orders (${ordersCount})</div>
-                    <div class="um-orders-list">
-                        ${user.orders.map(order => `
-                            <div class="um-order-row">
-                                <div class="um-order-id">#${order.id || order.orderId || '—'}</div>
-                                <div class="um-order-status ${order.status ? 'um-os-' + order.status.toLowerCase() : ''}">${order.status || '—'}</div>
-                                <div class="um-order-total">${order.totalPrice != null ? '$' + Number(order.totalPrice).toFixed(2) : '—'}</div>
-                            </div>
-                        `).join('')}
-                    </div>` : ''}
-                </div>
-
-                <div class="um-modal-footer">
-                    <button class="um-modal-btn um-modal-btn-edit" onclick="AdminDashboardManager._closeDetailsModal(); AdminDashboardManager.editProfileModal('${user.id}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        Edit Profile
-                    </button>
-                    <button class="um-modal-btn um-modal-btn-close" onclick="AdminDashboardManager._closeDetailsModal()">Close</button>
                 </div>
             </div>
-        </div>
-    `;
+        </div>`;
 
-    $('#um-details-overlay').remove();
+    $('#edit-order-modal').remove();
     $('body').append(modalHtml);
+    $('#edit-order-modal').modal('show');
 
-    requestAnimationFrame(() => {
-        $('#um-details-overlay').addClass('um-overlay-visible');
+    // ── Section → City cascade ────────────────────────────────────────────────
+    $('#edit-section').on('change', function () {
+        const selectedSection = $(this).val();
+        const cities = getCitiesForSection(selectedSection);
+        let cityHtml = '<option value="">Select City</option>';
+        cityHtml += cities.map(c => `<option value="${c.cityName}">${c.cityName}</option>`).join('');
+        $('#edit-city').html(cityHtml);
     });
 
-    $(document).one('keydown.umdetails', (e) => {
-        if (e.key === 'Escape') AdminDashboardManager._closeDetailsModal();
+    // ── Add new item row ──────────────────────────────────────────────────────
+    $(document).off('click', '#add-edit-item-row').on('click', '#add-edit-item-row', function () {
+        const newIndex = $('#edit-items-table tbody tr').length;
+        const productOptions = products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+        $('#edit-items-table tbody').append(`
+            <tr data-index="${newIndex}">
+                <td>
+                    <label class="edit-label">Product</label>
+                    <select class="form-control edit-item-productId">
+                        <option value="">Select Product</option>
+                        ${productOptions}
+                    </select>
+                </td>
+                <td>
+                    <label class="edit-label">Color</label>
+                    <select class="form-control edit-item-colorId"><option value="">Select Color</option></select>
+                </td>
+                <td>
+                    <label class="edit-label">Size</label>
+                    <select class="form-control edit-item-sizeId"><option value="">Select Size</option></select>
+                </td>
+                <td>
+                    <label class="edit-label">Qty</label>
+                    <input class="form-control edit-item-quantity" type="number" value="1" min="1" />
+                </td>
+                <td>
+                    <input type="hidden" class="edit-item-id" value="" />
+                    <button type="button" class="btn btn-sm btn-danger remove-edit-item-row">&times;</button>
+                </td>
+            </tr>`);
+
+        const $row = $('#edit-items-table tbody tr:last');
+        $row.find('.edit-item-productId').on('change', function () {
+            const productId = parseInt($(this).val());
+            const product   = products.find(p => p.id === productId);
+            let colorHtml = '<option value="">Select Color</option>';
+            let sizeHtml  = '<option value="">Select Size</option>';
+            if (product?.colors) colorHtml += product.colors.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            if (product?.sizes)  sizeHtml  += product.sizes.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            $(this).closest('tr').find('.edit-item-colorId').html(colorHtml);
+            $(this).closest('tr').find('.edit-item-sizeId').html(sizeHtml);
+        });
     });
-},
 
-_closeDetailsModal: function() {
-    const $overlay = $('#um-details-overlay');
-    $overlay.removeClass('um-overlay-visible');
-    setTimeout(() => $overlay.remove(), 280);
-    $(document).off('keydown.umdetails');
-},
+    // ── Remove item row ───────────────────────────────────────────────────────
+    $(document).off('click', '.remove-edit-item-row').on('click', '.remove-edit-item-row', function () {
+        $(this).closest('tr').remove();
+    });
 
-// ─── IS BLOCKED ──────────────────────────────────────────────────────────────
-checkIsBlocked: async function(userId) {
-    try {
+    const self = this;
+
+    // ── Save button — bound directly to modal element (avoids stale handlers) ─
+    $('#edit-order-modal').find('#save-edit-order-btn').off('click').on('click', async function () {
+        const $btn = $(this);
+        $('#edit-order-error').hide().text('');
+
+        // ── Collect order items ───────────────────────────────────────────────
+        const orderItems = [];
+        let valid = true;
+        $('#edit-items-table tbody tr').each(function () {
+            const productId = parseInt($(this).find('.edit-item-productId').val());
+            const quantity  = parseInt($(this).find('.edit-item-quantity').val());
+            const colorId   = $(this).find('.edit-item-colorId').val();
+            const sizeId    = $(this).find('.edit-item-sizeId').val();
+            const itemId    = $(this).find('.edit-item-id').val();
+
+            if (!productId || !quantity || quantity < 1) { valid = false; return; }
+
+            orderItems.push({
+                id:        itemId ? parseInt(itemId) : undefined,
+                productId: productId,
+                colorId:   colorId ? parseInt(colorId) : null,
+                sizeId:    sizeId  ? parseInt(sizeId)  : null,
+                quantity:  quantity,
+            });
+        });
+
+        if (!valid || orderItems.length === 0) {
+            $('#edit-order-error').text('Please fill in all required item fields (Product & Quantity).').show();
+            return;
+        }
+
+        // ── Discount code — only validate if entered ──────────────────────────
+        const discountCode = $('#edit-discountCode').val().trim();
+        if (discountCode) {
+            try {
+                const resp = await fetch(API_CONFIG.getApiUrl('DiscountCodes/Validate'), {
+                    method: 'POST',
+                    headers: self.getHeaders(),
+                    body: JSON.stringify({ code: discountCode })
+                });
+                let data = {};
+                try { data = await resp.json(); } catch (_) {}
+                console.log('DEBUG discount validation:', resp.status, data);
+
+                if (data.success === false) {
+                    $('#edit-order-error').text(data.message || 'Invalid discount code.').show();
+                    return; // stop — do NOT save
+                }
+                // success === true → fall through and save
+            } catch (e) {
+                console.warn('Discount validation network error:', e);
+                // Don't block save on network failure
+            }
+        }
+
+        // ── Resolve deliveryCostId from selected section + city ───────────────
+        const selectedSection = $('#edit-section').val();
+        const selectedCity    = $('#edit-city').val();
+        const matchedCity     = findCityByNameAndSection(selectedSection, selectedCity);
+
+        // ── Build full address = street + city + section ──────────────────────
+        const streetAddress = $('#edit-guestAddress').val().trim();
+        const addressParts  = [streetAddress].filter(Boolean);
+        const fullAddress   = addressParts.join(', ');
+
+        // ── Build payload ─────────────────────────────────────────────────────
+        const payload = {
+            guestName:        $('#edit-guestName').val()          || null,
+            guestEmail:       $('#edit-guestEmail').val()         || null,
+            Address:          fullAddress                         || null,
+            Phone:            $('#edit-guestPhoneNumber').val()   || null,
+            discountCode:     discountCode                        || null,
+            sectionName:      selectedSection                     || null,
+            cityName:         selectedCity                        || null,
+            deliveryCostId:   matchedCity ? matchedCity.id        : null,
+            orderItems,
+        };
+
+        console.log('DEBUG: submitting payload:', payload);
+
+        // ── Submit ────────────────────────────────────────────────────────────
+        try {
+            $btn.prop('disabled', true).text('Saving…');
+            await self._submitEditOrder(orderId, payload);
+            $('#edit-order-modal').modal('hide');
+            Swal.fire('Success', 'Order updated successfully!', 'success');
+
+            let activeStatus = 'All';
+            const $active = $('.order-status-filter.active, .active[data-status]').first();
+            if ($active.length) activeStatus = $active.data('status') || 'All';
+            await OrderController.loadOrders(activeStatus);
+
+        } catch (err) {
+            console.error('DEBUG: submit error:', err);
+            $('#edit-order-error').text(err?.message || 'Failed to save changes. Please try again.').show();
+            $btn.prop('disabled', false).text('Save Changes');
+        }
+    });
+
+    $('#edit-order-modal').on('hidden.bs.modal', function () {
+        $('#edit-order-modal').remove();
+    });
+    },
+    _submitEditOrder: async function (orderId, payload) {
         const response = await fetch(
-            API_CONFIG.getApiUrl(this.endpoints.isBlocked + '/' + userId),
-            { headers: this.getHeaders() }
+            API_CONFIG.getApiUrl(`${this.endpoints.editOrder}/${orderId}`),
+            {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(payload)
+            }
         );
-        if (response.ok) {
-            const json = await response.json();
-            return !!(json.data?.isBlocked ?? json.isBlocked ?? false);
+
+        if (!response.ok) {
+            let msg = `Server error: ${response.status}`;
+            try { const err = await response.json(); msg = err.message || msg; } catch (_) {}
+            throw new Error(msg);
         }
-    } catch (e) { console.error('checkIsBlocked:', e); }
-    return false;
-},
 
-// ─── BLOCK USER ──────────────────────────────────────────────────────────────
-blockUserModal: async function(userId) {
-    const { value: days } = await Swal.fire({
-        title: 'Block User',
-        input: 'number',
-        inputLabel: 'Block Duration (days)',
-        inputValue: '1',
-        inputAttributes: { min: 1, max: 365, step: 1 },
-        showCancelButton: true,
-        confirmButtonText: 'Block User',
-        confirmButtonColor: '#f59e0b',
-        inputValidator: (v) => {
-            if (!v || parseInt(v) < 1) return 'Enter at least 1 day.';
-            if (parseInt(v) > 365)    return 'Maximum is 365 days.';
+        const data = await response.json().catch(() => ({}));
+        return data.data || data;
+    },
+    closeOrderModal: function () {
+        if (typeof Swal !== 'undefined' && Swal.isVisible()) {
+            Swal.close();
         }
-    });
-    if (days !== undefined && days !== null) {
-        await this.blockUser(userId, parseInt(days));
-    }
-},
+        $('#edit-order-modal').modal('hide');
+        $('#edit-order-modal').remove();
+    },
 
-blockUser: async function(userId, days) {
-    try {
-        const response = await fetch(
-            API_CONFIG.getApiUrl(this.endpoints.blockUser + '/' + userId + '?days=' + (days || 1)),
-            { method: 'PATCH', headers: this.getHeaders() }
-        );
-        if (response.ok) {
-            await Swal.fire({ icon: 'success', title: 'User Blocked!', text: 'Blocked for ' + days + ' day(s).', timer: 1500, showConfirmButton: false });
-            this.loadUsers();
-        } else {
-            const err = await response.json().catch(() => ({}));
-            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not block user.' });
-        }
-    } catch (e) {
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
-    }
-},
 
-// ─── UNBLOCK USER ────────────────────────────────────────────────────────────
-unblockUser: function(userId) {
-    $('#um-confirm-overlay').remove();
-
-    const modalHtml = `
-        <div id="um-confirm-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeConfirmModal()">
-            <div class="um-modal um-modal-confirm">
-                <button class="um-modal-close" onclick="AdminDashboardManager._closeConfirmModal()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-
-                <div class="um-confirm-icon-wrap">
-                    <div class="um-confirm-icon um-confirm-icon-success">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                            <polyline points="9 12 11 14 15 10"/>
-                        </svg>
-                    </div>
-                </div>
-
-                <div class="um-confirm-title">Unblock User?</div>
-                <div class="um-confirm-text">This will restore full account access for this user. They will be able to log in and use all features immediately.</div>
-
-                <div class="um-modal-footer um-confirm-footer">
-                    <button class="um-modal-btn um-modal-btn-cancel" onclick="AdminDashboardManager._closeConfirmModal()">Cancel</button>
-                    <button class="um-modal-btn um-modal-btn-confirm-success" onclick="AdminDashboardManager._doUnblock('${userId}')">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><polyline points="20 6 9 17 4 12"/></svg>
-                        Yes, Unblock
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    $('body').append(modalHtml);
-    requestAnimationFrame(() => $('#um-confirm-overlay').addClass('um-overlay-visible'));
-    $(document).one('keydown.umconfirm', (e) => {
-        if (e.key === 'Escape') AdminDashboardManager._closeConfirmModal();
-    });
-},
-
-_closeConfirmModal: function() {
-    const $o = $('#um-confirm-overlay');
-    $o.removeClass('um-overlay-visible');
-    setTimeout(() => $o.remove(), 280);
-    $(document).off('keydown.umconfirm');
-},
-
-_doUnblock: async function(userId) {
-    this._closeConfirmModal();
-    try {
-        const response = await fetch(
-            API_CONFIG.getApiUrl(this.endpoints.unBlockUser + '/' + userId),
-            { method: 'PATCH', headers: this.getHeaders() }
-        );
-        if (response.ok) {
-            await Swal.fire({ icon: 'success', title: 'User Unblocked!', text: 'Account access has been restored.', timer: 1600, showConfirmButton: false });
-            this.loadUsers();
-        } else {
-            const err = await response.json().catch(() => ({}));
-            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not unblock user.' });
-        }
-    } catch (e) {
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
-    }
-},
-
-// ─── CHANGE ROLE ─────────────────────────────────────────────────────────────
-changeRoleModal: async function(userId, currentRole) {
-    const { value: newRole } = await Swal.fire({
-        title: 'Change User Role',
-        input: 'select',
-        inputOptions: { 'Customer': 'Customer', 'Admin': 'Admin', 'SuperAdmin': 'SuperAdmin' },
-        inputValue: currentRole,
-        showCancelButton: true,
-        confirmButtonText: 'Change Role',
-        confirmButtonColor: '#3b82f6'
-    });
-    if (!newRole) return;
-    if (newRole === currentRole) {
-        await Swal.fire({ icon: 'info', title: 'No Change', text: 'Role is already ' + currentRole + '.', timer: 1500, showConfirmButton: false });
-        return;
-    }
-    await this.changeUserRole(userId, newRole);
-},
-
-changeUserRole: async function(userId, newRole) {
-    try {
-        const response = await fetch(
-            API_CONFIG.getApiUrl(this.endpoints.changeUserRole + '/' + userId),
-            { method: 'PATCH', headers: this.getHeaders(), body: JSON.stringify({ newRole }) }
-        );
-        if (response.ok) {
-            await Swal.fire({ icon: 'success', title: 'Role Updated!', text: 'Changed to ' + newRole + '.', timer: 1500, showConfirmButton: false });
-            this.loadUsers();
-        } else {
-            const err = await response.json().catch(() => ({}));
-            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not change role.' });
-        }
-    } catch (e) {
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
-    }
-},
-
-// ─── EDIT PROFILE ────────────────────────────────────────────────────────────
-// GET  /api/Admin/Users/FullDetails/{userId}  →  pre-fill form
-// PUT  /api/Admin/Users/{userId}              →  save changes
-// Body: { fullName, phoneNumber, city, street }
-editProfileModal: async function(userId) {
-    // Show loading state
-    $('#um-edit-overlay').remove();
-    const loadingHtml = `
-        <div id="um-edit-overlay" class="um-overlay um-overlay-visible">
-            <div class="um-modal um-modal-edit">
-                <div class="um-edit-loading">
-                    <div class="um-spinner"></div>
-                    <span>Loading profile…</span>
-                </div>
-            </div>
-        </div>
-    `;
-    $('body').append(loadingHtml);
-
-    let user = {};
-    try {
-        user = await this._fetchUserFullDetails(userId);
-    } catch (e) {
-        // Proceed with empty — don't block the modal
-        console.warn('editProfileModal: could not prefetch user:', e.message);
-    }
-
-    // Replace loading content with the actual form
-    const formHtml = `
-        <div id="um-edit-overlay" class="um-overlay um-overlay-visible" onclick="if(event.target===this)AdminDashboardManager._closeEditModal()">
-            <div class="um-modal um-modal-edit">
-                <button class="um-modal-close" onclick="AdminDashboardManager._closeEditModal()" title="Close">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-
-                <div class="um-edit-header">
-                    <div class="um-edit-avatar">${((user.fullName || user.userName || 'U').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase())}</div>
-                    <div>
-                        <div class="um-edit-title">Edit Profile</div>
-                        <div class="um-edit-subtitle">${user.email || 'User #' + userId}</div>
-                    </div>
-                </div>
-
-                <div class="um-modal-divider"></div>
-
-                <div class="um-modal-body">
-                    <div class="um-edit-form">
-                        <div class="um-edit-field">
-                            <label class="um-edit-label" for="ep-fullName">
-                                Full Name <span class="um-required">*</span>
-                            </label>
-                            <div class="um-edit-input-wrap">
-                                <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <input id="ep-fullName" class="um-edit-input" type="text" placeholder="Enter full name" value="${this._esc(user.fullName || '')}">
-                            </div>
-                        </div>
-
-                        <div class="um-edit-field">
-                            <label class="um-edit-label" for="ep-phone">Phone Number</label>
-                            <div class="um-edit-input-wrap">
-                                <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.29 6.29l.83-.83a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                                <input id="ep-phone" class="um-edit-input" type="tel" placeholder="Enter phone number" value="${this._esc(user.phoneNumber || '')}">
-                            </div>
-                        </div>
-
-                        <div class="um-edit-row">
-                            <div class="um-edit-field">
-                                <label class="um-edit-label" for="ep-city">City</label>
-                                <div class="um-edit-input-wrap">
-                                    <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    <input id="ep-city" class="um-edit-input" type="text" placeholder="Enter city" value="${this._esc(user.city || '')}">
-                                </div>
-                            </div>
-                            <div class="um-edit-field">
-                                <label class="um-edit-label" for="ep-street">Street</label>
-                                <div class="um-edit-input-wrap">
-                                    <svg class="um-edit-input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                                    <input id="ep-street" class="um-edit-input" type="text" placeholder="Enter street" value="${this._esc(user.street || '')}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="um-edit-error" class="um-edit-error" style="display:none;"></div>
-                </div>
-
-                <div class="um-modal-footer">
-                    <button class="um-modal-btn um-modal-btn-cancel" onclick="AdminDashboardManager._closeEditModal()">Cancel</button>
-                    <button class="um-modal-btn um-modal-btn-save" id="um-edit-save-btn" onclick="AdminDashboardManager._doEditProfile('${userId}')">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                        Save Changes
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    $('#um-edit-overlay').remove();
-    $('body').append(formHtml);
-
-    // Focus first field
-    setTimeout(() => document.getElementById('ep-fullName')?.focus(), 50);
-
-    $(document).one('keydown.umedit', (e) => {
-        if (e.key === 'Escape') AdminDashboardManager._closeEditModal();
-    });
-},
-
-// ─── Helper: HTML-escape attribute values ────────────────────────────────────
-_esc: function(str) {
-    return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-},
-
-_closeEditModal: function() {
-    const $o = $('#um-edit-overlay');
-    $o.removeClass('um-overlay-visible');
-    setTimeout(() => $o.remove(), 280);
-    $(document).off('keydown.umedit');
-},
-
-_doEditProfile: async function(userId) {
-    const fullName = document.getElementById('ep-fullName')?.value.trim();
-    const phone    = document.getElementById('ep-phone')?.value.trim()  || null;
-    const city     = document.getElementById('ep-city')?.value.trim()   || null;
-    const street   = document.getElementById('ep-street')?.value.trim() || null;
-
-    const $error = $('#um-edit-error');
-    const $btn   = $('#um-edit-save-btn');
-
-    if (!fullName) {
-        $error.text('Full Name is required.').show();
-        document.getElementById('ep-fullName')?.focus();
-        return;
-    }
-
-    $error.hide();
-    $btn.prop('disabled', true).html(`
-        <svg class="um-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        Saving…
-    `);
-
-    await this.updateUserProfile(userId, { fullName, phoneNumber: phone, city, street });
-
-    $btn.prop('disabled', false).html(`
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:5px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Changes
-    `);
-},
-
-updateUserProfile: async function(userId, profileData) {
-    try {
-        const response = await fetch(
-            API_CONFIG.getApiUrl(this.endpoints.updateUser + '/' + userId),
-            { method: 'PUT', headers: this.getHeaders(), body: JSON.stringify(profileData) }
-        );
-        if (response.ok) {
-            this._closeEditModal();
-            await Swal.fire({ icon: 'success', title: 'Profile Updated!', timer: 1500, showConfirmButton: false });
-            this.loadUsers();
-        } else {
-            const err = await response.json().catch(() => ({}));
-            $('#um-edit-error').text(err.message || 'Could not update profile.').show();
-        }
-    } catch (e) {
-        $('#um-edit-error').text('Network error: ' + e.message).show();
-    }
-},
-
-// ─── CHANGE PASSWORD ─────────────────────────────────────────────────────────
-changePasswordModal: async function(userId) {
-    const { value: formValues } = await Swal.fire({
-        title: 'Change Password',
-        html: `
-            <div class="um-swal-form">
-                <div class="um-form-row">
-                    <label>New Password <span class="um-required">*</span></label>
-                    <input id="swal-newPassword" class="swal2-input" type="password" placeholder="New Password">
-                </div>
-                <div class="um-form-row">
-                    <label>Confirm Password <span class="um-required">*</span></label>
-                    <input id="swal-confirmPassword" class="swal2-input" type="password" placeholder="Confirm Password">
-                </div>
-            </div>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Change Password',
-        confirmButtonColor: '#ec4899',
-        preConfirm: () => {
-            const np = document.getElementById('swal-newPassword').value;
-            const cp = document.getElementById('swal-confirmPassword').value;
-            if (!np || np.length < 6) { Swal.showValidationMessage('Minimum 6 characters.'); return false; }
-            if (np !== cp)            { Swal.showValidationMessage('Passwords do not match.'); return false; }
-            return { newPassword: np };
-        }
-    });
-    if (formValues) await this.changeUserPassword(userId, formValues.newPassword);
-},
-
-changeUserPassword: async function(userId, newPassword) {
-    try {
-        const response = await fetch(
-            API_CONFIG.getApiUrl(this.endpoints.changePassword + '/' + userId),
-            { method: 'PATCH', headers: this.getHeaders(), body: JSON.stringify({ newPassword }) }
-        );
-        if (response.ok) {
-            await Swal.fire({ icon: 'success', title: 'Password Changed!', timer: 1500, showConfirmButton: false });
-        } else {
-            const err = await response.json().catch(() => ({}));
-            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not change password.' });
-        }
-    } catch (e) {
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
-    }
-},
-
-// ─── DELETE USER ─────────────────────────────────────────────────────────────
-deleteUser: async function(userId) {
-    const result = await Swal.fire({
-        title: 'Delete User?',
-        text: 'This cannot be undone. All user data will be permanently deleted.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete',
-        confirmButtonColor: '#d33'
-    });
-    if (!result.isConfirmed) return;
-
-    try {
-        const response = await fetch(
-            API_CONFIG.getApiUrl(this.endpoints.deleteUser + '/' + userId),
-            { method: 'DELETE', headers: this.getHeaders() }
-        );
-        if (response.ok) {
-            await Swal.fire({ icon: 'success', title: 'User Deleted!', timer: 1500, showConfirmButton: false });
-            this.loadUsers();
-        } else {
-            const err = await response.json().catch(() => ({}));
-            await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not delete user.' });
-        }
-    } catch (e) {
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
-    }
-},
+    
     // --- Products ---
     loadProducts: async function () {
         $('#admin-products-container').html('<p>Loading products...</p>');
@@ -2979,7 +2670,6 @@ deleteUser: async function(userId) {
                 } else if (data.data && Array.isArray(data.data.items)) {
                     costs = data.data.items;
                 }
-                console.log('Fetched delivery costs:', costs);
                 this.renderDeliveryCosts(costs);
             } else {
                 this.renderDeliveryCosts([]);
@@ -3981,406 +3671,846 @@ deleteUser: async function(userId) {
                 text: 'Network error.'
             });
         }
-    }
+    },
 
+    // =====================
+    // --- Users Management ---
+    // =====================
+    loadUsers: async function () {
+        const $container = $('#admin-users-container');
 
-    ,
+        const skeletonHtml = Array(6).fill(0).map(() => `
+            <div class="user-skeleton">
+                <div class="skel-row">
+                    <div class="skel skel-avatar"></div>
+                    <div class="skel-info">
+                        <div class="skel" style="width:120px;height:13px;margin-bottom:7px;"></div>
+                        <div class="skel" style="width:170px;height:11px;"></div>
+                    </div>
+                </div>
+                <div class="skel-actions">
+                    ${Array(6).fill('<div class="skel skel-btn"></div>').join('')}
+                </div>
+            </div>
+        `).join('');
 
-    viewUserDetails: async function(userId) {
+        $container.html(`
+            <div class="um-header">
+                <h2 class="um-title">Users Management</h2>
+            </div>
+            <div class="um-toolbar">
+                <div class="um-search-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" id="user-search-input" placeholder="Search users…" class="form-control">
+                </div>
+            </div>
+            <div class="um-skeleton-wrap">${skeletonHtml}</div>
+        `);
+
         try {
-            const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.users + '/' + userId), {
+            const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.users), {
                 headers: this.getHeaders()
             });
             if (response.ok) {
                 const data = await response.json();
-                const user = data.data || data;
-                const createdDate = this.formatDate(user.create_at);
-                const status = user.isBlocked ? 'Blocked' : 'Active';
-                await Swal.fire({
-                    title: 'User Details',
-                    html: '<div style="text-align:left;margin:20px 0;"><div style="margin-bottom:15px;"><strong>Username:</strong> ' + user.userName + '</div><div style="margin-bottom:15px;"><strong>Email:</strong> ' + user.email + '</div><div style="margin-bottom:15px;"><strong>Full Name:</strong> ' + user.fullName + '</div><div style="margin-bottom:15px;"><strong>Phone:</strong> ' + user.phoneNumber + '</div><div style="margin-bottom:15px;"><strong>Role:</strong> ' + user.userRole + '</div><div style="margin-bottom:15px;"><strong>Status:</strong> <span style="padding:4px 8px;background:' + (user.isBlocked ? '#ffe0e0' : '#e0ffe0') + ';border-radius:3px;">' + status + '</span></div><div style="margin-bottom:15px;"><strong>Email Verified:</strong> ' + (user.emailConfirmed ? 'Yes' : 'No') + '</div><div style="margin-bottom:15px;"><strong>Created:</strong> ' + createdDate + '</div></div>',
-                    showConfirmButton: true,
-                    confirmButtonText: 'Close'
-                });
+                this.renderUsers(data.data || data);
             } else {
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Could not load user details.'
-                });
+                $container.html(`<div class="um-error"><span>⚠</span> Could not load users.</div>`);
             }
         } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Error loading user details: ' + e.message
+            $container.html(`<div class="um-error"><span>⚠</span> Network error: ${e.message}</div>`);
+        }
+    },
+
+    renderUsers: function (users) {
+        const $container = $('#admin-users-container');
+
+        if (!users || users.length === 0) {
+            $container.html(`
+                <div class="um-header"><h2 class="um-title">Users Management</h2></div>
+                <div class="um-empty">
+                    <div class="um-empty-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <p>No users found.</p>
+                </div>
+            `);
+            return;
+        }
+
+        let html = `
+            <div class="um-header">
+                <h2 class="um-title">
+                    Users
+                    <span class="um-title-count">${users.length}</span>
+                </h2>
+            </div>
+            <div class="um-toolbar">
+                <div class="um-search-wrap">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" id="user-search-input" placeholder="Search by name or email…" class="form-control">
+                </div>
+            </div>
+            <div class="um-table-wrap">
+            <table class="um-table" id="users-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th class="um-hide-sm">Username</th>
+                        <th class="um-hide-md">Phone</th>
+                        <th class="um-hide-sm">Role</th>
+                        <th>Status</th>
+                        <th class="um-hide-lg">Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        users.forEach(user => {
+            const userName    = user.userName    || '—';
+            const email       = user.email       || '—';
+            const fullName    = user.fullName    || '—';
+            const phone       = user.phoneNumber || '—';
+            const role        = (Array.isArray(user.roles) && user.roles[0]) || user.userRole || 'Customer';
+            const createdDate = this.formatDate(user.createdAt || user.create_at);
+
+            const isBlocked   = !!user.isBlocked || (user.status && user.status.toLowerCase() === 'blocked');
+            const statusLabel = isBlocked ? 'Blocked' : 'Active';
+            const isAdmin     = ['admin','superadmin'].includes(role.toLowerCase());
+            const initials    = (fullName !== '—' ? fullName : userName)
+                .split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'U';
+
+            html += `
+                <tr data-user-id="${user.id}">
+                    <td>
+                        <div class="um-user-cell">
+                            <div class="um-avatar ${isAdmin ? 'um-avatar-admin' : ''}">${initials}</div>
+                            <div class="um-user-info">
+                                <div class="um-fullname">${fullName}</div>
+                                <div class="um-email-sub">${email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="um-hide-sm um-mono-text">${userName}</td>
+                    <td class="um-hide-md">${phone}</td>
+                    <td class="um-hide-sm">
+                        <span class="um-role-badge ${isAdmin ? 'um-role-admin' : 'um-role-customer'}">${role}</span>
+                    </td>
+                    <td>
+                        <span class="um-status-badge ${isBlocked ? 'um-status-blocked' : 'um-status-active'}">
+                            <span class="um-status-dot"></span>${statusLabel}
+                        </span>
+                    </td>
+                    <td class="um-hide-lg um-date-text">${createdDate}</td>
+                    <td>
+                        <div class="um-actions">
+                            <button class="um-btn um-btn-view"     onclick="AdminDashboardManager.viewUserDetails('${user.id}')"            title="View Details">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <span class="um-btn-label">View</span>
+                            <button class="um-btn um-btn-delete"   onclick="AdminDashboardManager.deleteUser('${user.id}')"                  title="Delete">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                <span class="um-btn-label">Delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div>`;
+        $container.html(html);
+        $('#user-search-input').on('input', function () {
+            const q = $(this).val().toLowerCase().trim();
+            $('#users-table tbody tr').each(function () {
+                const name  = $(this).find('.um-fullname').text().toLowerCase();
+                const email = $(this).find('.um-email-sub').text().toLowerCase();
+                const uname = $(this).find('td:eq(1)').text().toLowerCase();
+                $(this).toggle(!q || name.includes(q) || email.includes(q) || uname.includes(q));
+            });
+        });
+    },
+
+    _fetchUserFullDetails: async function(userId) {
+        const url = API_CONFIG.getApiUrl(this.endpoints.getUserFullDetails + '/' + userId);
+
+        const response = await fetch(url, { headers: this.getHeaders() });
+
+        let json;
+        try { json = await response.json(); } catch(e) { json = {}; }
+
+        if (!response.ok) {
+            const msg = json.message || json.title || ('Server returned ' + response.status);
+            throw new Error(msg);
+        }
+
+        let user = null;
+        if (json && typeof json === 'object') {
+            if (json.success === true && json.data && json.data.id) {
+                user = json.data;
+            } else if (json.data && typeof json.data === 'object' && json.data.id) {
+                user = json.data;
+            } else if (json.id) {
+                user = json;
+            }
+        }
+
+        if (!user || !user.id) {
+            console.error('[UM] Unexpected response shape:', json);
+            throw new Error('No user data in response.');
+        }
+
+        user._isBlocked = !!user.isBlocked || (user.status && user.status.toLowerCase() === 'blocked');
+
+        return user;
+    },
+
+    viewUserDetails: async function(userId) {        
+        $('#um-details-overlay').remove();
+        const loadingHtml = `
+            <div id="um-details-overlay" class="um-overlay um-overlay-visible">
+                <div class="um-modal um-modal-details">
+                    <div class="um-modal-loading">
+                        <div class="um-spinner-ring"></div>
+                        <span>Loading user details…</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('body').append(loadingHtml);
+        
+        try {
+            const user = await this._fetchUserFullDetails(userId);
+            this._showUserDetailsModal(user);
+        } catch (e) {
+            console.error('[UM] Error fetching user details:', e);
+            $('#um-details-overlay').remove();
+            await Swal.fire({ 
+                icon: 'error', 
+                title: 'Could not load details', 
+                text: e.message 
             });
         }
     },
 
+    _showUserDetailsModal: function(user) {
+        const role        = Array.isArray(user.roles) ? user.roles.join(', ') : (user.userRole || '—');
+        const ordersCount = Array.isArray(user.orders) ? user.orders.length : 0;
+        const city        = user.city   || '—';
+        const street      = user.street || '—';
+
+        const isBlocked   = user._isBlocked || (user.status && user.status.toLowerCase() === 'blocked');
+        const statusText  = isBlocked ? 'Blocked' : 'Active';
+        const statusClass = isBlocked ? 'um-status-blocked' : 'um-status-active';
+
+        const initials = (user.fullName || user.userName || 'U')
+            .split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+
+        const isAdmin = ['admin', 'superadmin'].includes(role.toLowerCase());
+
+        const detailCards = [
+            { icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`, color: 'blue',   label: 'Username',     value: user.userName || '—' },
+            { icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.29 6.29l.83-.83a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`, color: 'purple', label: 'Phone',        value: user.phoneNumber || '—' },
+            { icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`, color: 'teal',   label: 'City',         value: city },
+            { icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`, color: 'orange', label: 'Street',       value: street },
+            { icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`, color: 'green',  label: 'Total Orders', value: ordersCount },
+        ].map(c => `
+            <div class="um-detail-card">
+                <div class="um-detail-icon um-icon-${c.color}">${c.icon}</div>
+                <div>
+                    <div class="um-detail-label">${c.label}</div>
+                    <div class="um-detail-value">${c.value}</div>
+                </div>
+            </div>
+        `).join('');
+
+        const ordersHtml = ordersCount > 0 ? `
+            <div class="um-section-title" style="margin-top:20px;">Orders <span class="um-count-pill">${ordersCount}</span></div>
+            <div class="um-orders-list">
+                ${user.orders.map(o => `
+                    <div class="um-order-row">
+                        <span class="um-order-id">#${o.id || o.orderId || '—'}</span>
+                        <span class="um-order-status um-os-${(o.status||'').toLowerCase()}">${o.status || '—'}</span>
+                        <span class="um-order-total">${o.totalAmount != null ? 'ILS ' + Number(o.totalAmount).toFixed(2) : '—'}</span>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
+
+        const modalHtml = `
+            <div id="um-details-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeDetailsModal()">
+                <div class="um-modal um-modal-details">
+                    <button class="um-modal-close" onclick="AdminDashboardManager._closeDetailsModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+
+                    <div class="um-modal-hero">
+                        <div class="um-hero-avatar-wrap">
+                            <div class="um-hero-avatar ${isAdmin ? 'um-avatar-admin' : ''}">${initials}</div>
+                            <div class="um-hero-status-dot ${statusClass}"></div>
+                        </div>
+                        <div class="um-hero-info">
+                            <div class="um-hero-name">${user.fullName || '—'}</div>
+                            <div class="um-hero-email">${user.email || '—'}</div>
+                            <div class="um-hero-badges">
+                                <span class="um-role-badge ${isAdmin ? 'um-role-admin' : 'um-role-customer'}">${role}</span>
+                                <span class="um-status-badge ${statusClass}"><span class="um-status-dot"></span>${statusText}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="um-divider"></div>
+
+                    <div class="um-modal-body">
+                        <div class="um-section-title">Account Information</div>
+                        <div class="um-detail-grid">${detailCards}</div>
+
+                        <div class="um-id-card">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            <span class="um-id-label">User ID</span>
+                            <span class="um-id-value" title="${user.id || ''}">${user.id || '—'}</span>
+                        </div>
+
+                        ${ordersHtml}
+                    </div>
+
+                    <div class="um-modal-footer">
+                        <div class="um-footer-actions">
+                            <button class="um-btn um-btn-view-modal" onclick="AdminDashboardManager._closeDetailsModal(); AdminDashboardManager.editProfileModal('${user.id}')">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+                                Edit Profile
+                            </button>
+                            ${!isBlocked
+                                ? `<button class="um-btn um-btn-block-modal" onclick="AdminDashboardManager._closeDetailsModal(); AdminDashboardManager.blockUserModal('${user.id}')" title="Block User">
+                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                       Block
+                                   </button>`
+                                : `<button class="um-btn um-btn-unblock-modal" onclick="AdminDashboardManager._closeDetailsModal(); AdminDashboardManager.unblockUser('${user.id}')" title="Unblock">
+                                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                                       Unblock
+                                   </button>`
+                            }
+                        </div>
+                        <div class="um-footer-secondary">
+                            <button class="um-btn um-btn-small um-btn-role-modal" onclick="AdminDashboardManager._closeDetailsModal(); AdminDashboardManager.changeRoleModal('${user.id}', '${role}')" title="Change Role">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                                Role
+                            </button>
+                            <button class="um-btn um-btn-small um-btn-password-modal" onclick="AdminDashboardManager._closeDetailsModal(); AdminDashboardManager._closeDetailsModal(); AdminDashboardManager.changePasswordModal('${user.id}')" title="Change Password">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                                Password
+                            </button>
+                            <button class="um-btn um-btn-small um-btn-close-modal" onclick="AdminDashboardManager._closeDetailsModal()">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove old modal if exists
+        $('#um-details-overlay').remove();
+        
+        // Append new modal HTML
+        $('body').append(modalHtml);
+        
+        // Verify modal was added
+        const $overlay = $('#um-details-overlay');
+        if ($overlay.length === 0) {
+            console.error('[UM] ERROR: Modal overlay not found in DOM after append');
+            alert('Error: Could not display modal');
+            return;
+        }
+        
+        console.log('[UM] Modal appended to DOM successfully');
+        
+        requestAnimationFrame(() => {
+            $overlay[0].style.setProperty('display', 'flex', 'important');
+            $overlay[0].style.setProperty('visibility', 'visible', 'important');
+            $overlay[0].style.setProperty('opacity', '0', 'important');
+            
+            void $overlay[0].offsetHeight;
+            
+            // Now add the visible class which will toggle opacity to 1
+            $overlay.addClass('um-overlay-visible');
+            
+            $overlay[0].style.setProperty('opacity', '1', 'important');
+        });
+        
+        // Handle escape key
+        $(document).one('keydown.umdetails', e => { 
+            if (e.key === 'Escape') AdminDashboardManager._closeDetailsModal(); 
+        });
+    },
+
+    _closeDetailsModal: function() {
+        const $o = $('#um-details-overlay');
+        $o.removeClass('um-overlay-visible');
+        setTimeout(() => $o.remove(), 280);
+        $(document).off('keydown.umdetails');
+    },
+
+    checkIsBlocked: async function(userId) {
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(this.endpoints.isBlocked + '/' + userId),
+                { headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                const json = await response.json();
+                // Handle both {data:{isBlocked}} and {isBlocked} and status string
+                if (json.data?.isBlocked !== undefined) return !!json.data.isBlocked;
+                if (json.isBlocked !== undefined) return !!json.isBlocked;
+                if (json.data?.status) return json.data.status.toLowerCase() === 'blocked';
+                if (json.status) return json.status.toLowerCase() === 'blocked';
+            }
+        } catch (e) { console.error('checkIsBlocked:', e); }
+        return false;
+    },
+
     blockUserModal: async function(userId) {
-        const swalResult = await Swal.fire({
+        const { value: days } = await Swal.fire({
             title: 'Block User',
             input: 'number',
             inputLabel: 'Block Duration (days)',
             inputValue: '1',
-            inputAttributes: { min: 1, max: 365 },
+            inputAttributes: { min: 1, max: 365, step: 1 },
             showCancelButton: true,
-            confirmButtonText: 'Block',
-            confirmButtonColor: '#f59e0b'
+            confirmButtonText: 'Block User',
+            confirmButtonColor: '#f59e0b',
+            customClass: { popup: 'um-swal-popup' },
+            inputValidator: v => {
+                if (!v || parseInt(v) < 1) return 'Enter at least 1 day.';
+                if (parseInt(v) > 365)    return 'Maximum is 365 days.';
+            }
         });
-        if (swalResult.value !== undefined && swalResult.value !== null) {
-            await this.blockUser(userId, parseInt(swalResult.value));
+        if (days !== undefined && days !== null) {
+            await this.blockUser(userId, parseInt(days));
         }
     },
 
     blockUser: async function(userId, days) {
         try {
-            const response = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.blockUser + '/' + userId + '?days=' + (days || 1)),
-                { method: 'PATCH', headers: this.getHeaders() }
-            );
+            const url = API_CONFIG.getApiUrl(this.endpoints.blockUser + '/' + userId + '?days=' + (days || 1));
+            const response = await fetch(url, { method: 'PATCH', headers: this.getHeaders() });
             if (response.ok) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'User Blocked!',
-                    text: 'User blocked for ' + days + ' day(s).',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                await Swal.fire({ icon: 'success', title: 'User Blocked', text: `Blocked for ${days} day(s).`, timer: 1800, showConfirmButton: false });
                 this.loadUsers();
             } else {
                 const err = await response.json().catch(() => ({}));
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Could not block user.'
-                });
+                await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not block user.' });
             }
         } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Network error: ' + e.message
-            });
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
         }
     },
 
-    unblockUser: async function(userId) {
-        const result = await Swal.fire({
-            title: 'Unblock User?',
-            text: 'This will restore user account access.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, unblock',
-            confirmButtonColor: '#10b981'
-        });
-        if (!result.isConfirmed) return;
+    unblockUser: function(userId) {
+        $('#um-confirm-overlay').remove();
+
+        $('body').append(`
+            <div id="um-confirm-overlay" class="um-overlay" onclick="if(event.target===this)AdminDashboardManager._closeConfirmModal()">
+                <div class="um-modal um-modal-confirm">
+                    <button class="um-modal-close" onclick="AdminDashboardManager._closeConfirmModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                    <div class="um-confirm-body">
+                        <div class="um-confirm-icon um-confirm-icon-success">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <polyline points="9 12 11 14 15 10"/>
+                            </svg>
+                        </div>
+                        <div class="um-confirm-title">Unblock User?</div>
+                        <div class="um-confirm-text">This will restore full account access immediately.</div>
+                    </div>
+                    <div class="um-modal-footer um-confirm-footer">
+                        <button class="um-modal-btn um-btn-cancel-modal" onclick="AdminDashboardManager._closeConfirmModal()">Cancel</button>
+                        <button class="um-modal-btn um-btn-confirm-success" onclick="AdminDashboardManager._doUnblock('${userId}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Yes, Unblock
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        requestAnimationFrame(() => $('#um-confirm-overlay').addClass('um-overlay-visible'));
+        $(document).one('keydown.umconfirm', e => { if (e.key === 'Escape') AdminDashboardManager._closeConfirmModal(); });
+    },
+
+    _closeConfirmModal: function() {
+        const $o = $('#um-confirm-overlay');
+        $o.removeClass('um-overlay-visible');
+        setTimeout(() => $o.remove(), 280);
+        $(document).off('keydown.umconfirm');
+    },
+
+    _doUnblock: async function(userId) {
+        this._closeConfirmModal();
         try {
-            const response = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.unBlockUser + '/' + userId),
-                { method: 'PATCH', headers: this.getHeaders() }
-            );
+            const url = API_CONFIG.getApiUrl(this.endpoints.unBlockUser + '/' + userId);
+            const response = await fetch(url, { method: 'PATCH', headers: this.getHeaders() });
             if (response.ok) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'User Unblocked!',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                await Swal.fire({ icon: 'success', title: 'User Unblocked', text: 'Account access restored.', timer: 1800, showConfirmButton: false });
                 this.loadUsers();
             } else {
                 const err = await response.json().catch(() => ({}));
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Could not unblock user.'
-                });
+                await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not unblock user.' });
             }
         } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Network error: ' + e.message
-            });
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
         }
     },
 
     changeRoleModal: async function(userId, currentRole) {
-        const swalResult = await Swal.fire({
+        const { value: newRole } = await Swal.fire({
             title: 'Change User Role',
             input: 'select',
-            inputOptions: {
-                'Customer': 'Customer',
-                'Admin': 'Admin',
-                'SuperAdmin': 'SuperAdmin'
-            },
+            inputOptions: { 'Customer': 'Customer', 'Admin': 'Admin', 'SuperAdmin': 'SuperAdmin' },
             inputValue: currentRole,
             showCancelButton: true,
-            confirmButtonText: 'Change Role',
-            confirmButtonColor: '#3b82f6'
+            confirmButtonText: 'Update Role',
+            confirmButtonColor: '#4f6ef7',
+            customClass: { popup: 'um-swal-popup' }
         });
-        const newRole = swalResult.value;
-        if (newRole && newRole !== currentRole) {
-            await this.changeUserRole(userId, newRole);
-        } else if (newRole === currentRole) {
-            await Swal.fire({
-                icon: 'info',
-                title: 'No Change',
-                text: 'The new role is the same as the current role.',
-                timer: 1500,
-                showConfirmButton: false
-            });
+        if (!newRole) return;
+        if (newRole === currentRole) {
+            await Swal.fire({ icon: 'info', title: 'No Change', text: `Role is already ${currentRole}.`, timer: 1500, showConfirmButton: false });
+            return;
         }
+        await this.changeUserRole(userId, newRole);
     },
 
     changeUserRole: async function(userId, newRole) {
         try {
-            const response = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.changeUserRole + '/' + userId),
-                {
-                    method: 'PATCH',
-                    headers: this.getHeaders(),
-                    body: JSON.stringify({ newRole: newRole })
-                }
-            );
+            const url = API_CONFIG.getApiUrl(this.endpoints.changeUserRole + '/' + userId);
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ newRole })
+            });
             if (response.ok) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Role Updated!',
-                    text: 'User role changed to ' + newRole + '.',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                await Swal.fire({ icon: 'success', title: 'Role Updated', text: `Changed to ${newRole}.`, timer: 1800, showConfirmButton: false });
                 this.loadUsers();
             } else {
                 const err = await response.json().catch(() => ({}));
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Could not change user role.'
-                });
+                await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not change role.' });
             }
         } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Network error: ' + e.message
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+        }
+    },
+
+    editProfileModal: async function(userId) {
+        
+        $('#um-edit-overlay').remove();
+        const loadingHtml = `
+            <div id="um-edit-overlay" class="um-overlay um-overlay-visible">
+                <div class="um-modal um-modal-edit">
+                    <div class="um-modal-loading">
+                        <div class="um-spinner-ring"></div>
+                        <span>Loading profile…</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('body').append(loadingHtml);
+
+        let user = {};
+        try {
+            user = await this._fetchUserFullDetails(userId);
+        } catch (e) {
+            console.error('[UM] Error fetching user details for edit:', e.message);
+            $('#um-edit-overlay').remove();
+            await Swal.fire({ 
+                icon: 'error', 
+                title: 'Error', 
+                text: 'Could not load user profile: ' + e.message 
             });
+            return;
+        }
+
+        const isAdmin = Array.isArray(user.roles) && ['admin','superadmin'].includes(user.roles[0]);
+        const initials = ((user.fullName || user.userName || 'U')
+            .split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()) || 'U';
+       
+        const formHtml = `
+            <div id="um-edit-overlay" class="um-overlay um-overlay-visible" onclick="if(event.target===this)AdminDashboardManager._closeEditModal()">
+                <div class="um-modal um-modal-edit">
+                    <button class="um-modal-close" onclick="AdminDashboardManager._closeEditModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+
+                    <div class="um-modal-hero um-edit-hero">
+                        <div class="um-hero-avatar ${isAdmin ? 'um-avatar-admin' : ''}">${initials}</div>
+                        <div>
+                            <div class="um-hero-name" style="font-size:16px;">${this._esc(user.fullName || user.userName || 'Edit User')}</div>
+                            <div class="um-hero-email">${this._esc(user.email || '')}</div>
+                        </div>
+                    </div>
+
+                    <div class="um-divider"></div>
+
+                    <div class="um-modal-body">
+                        <div class="um-form-grid">
+                            <div class="um-form-field um-form-full">
+                                <label class="um-form-label" for="ep-fullName">Full Name <span class="um-required">*</span></label>
+                                <div class="um-input-wrap">
+                                    <svg class="um-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    <input id="ep-fullName" class="um-input" type="text" placeholder="Enter full name" value="${this._esc(user.fullName || '')}">
+                                </div>
+                            </div>
+                            <div class="um-form-field um-form-full">
+                                <label class="um-form-label" for="ep-phone">Phone Number</label>
+                                <div class="um-input-wrap">
+                                    <svg class="um-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.18 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9a16 16 0 0 0 6.29 6.29l.83-.83a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                    <input id="ep-phone" class="um-input" type="tel" placeholder="Enter phone number" value="${this._esc(user.phoneNumber || '')}">
+                                </div>
+                            </div>
+                            <div class="um-form-field">
+                                <label class="um-form-label" for="ep-city">City</label>
+                                <div class="um-input-wrap">
+                                    <svg class="um-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <input id="ep-city" class="um-input" type="text" placeholder="City" value="${this._esc(user.city || '')}">
+                                </div>
+                            </div>
+                            <div class="um-form-field">
+                                <label class="um-form-label" for="ep-street">Street</label>
+                                <div class="um-input-wrap">
+                                    <svg class="um-input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                    <input id="ep-street" class="um-input" type="text" placeholder="Street address" value="${this._esc(user.street || '')}">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="um-edit-error" class="um-form-error" style="display:none;"></div>
+                    </div>
+
+                    <div class="um-modal-footer">
+                        <button class="um-modal-btn um-btn-cancel-modal" onclick="AdminDashboardManager._closeEditModal()">Cancel</button>
+                        <button class="um-modal-btn um-btn-save-modal" id="um-edit-save-btn" onclick="AdminDashboardManager._doEditProfile('${userId}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('#um-edit-overlay').remove();
+        $('body').append(formHtml);
+        
+        // Ensure modal visibility with proper inline styles
+        requestAnimationFrame(() => {
+            const editOverlay = document.getElementById('um-edit-overlay');
+            if (editOverlay) {
+                // Set with !important to ensure styles apply
+                editOverlay.style.setProperty('display', 'flex', 'important');
+                editOverlay.style.setProperty('visibility', 'visible', 'important');
+                editOverlay.style.setProperty('opacity', '1', 'important');
+                editOverlay.style.setProperty('pointer-events', 'auto', 'important');
+            }
+        });
+        
+        // Wait for DOM to render and then populate data
+        setTimeout(() => {
+            
+            // Set and verify each field's value
+            const fullNameInput = document.getElementById('ep-fullName');
+            const phoneInput = document.getElementById('ep-phone');
+            const cityInput = document.getElementById('ep-city');
+            const streetInput = document.getElementById('ep-street');
+            
+            if (fullNameInput) {
+                fullNameInput.value = user.fullName || '';
+            }
+            if (phoneInput) {
+                phoneInput.value = user.phoneNumber || '';
+            }
+            if (cityInput) {
+                cityInput.value = user.city || '';
+            }
+            if (streetInput) {
+                streetInput.value = user.street || '';
+            }
+            
+            const inputFields = document.querySelectorAll('.um-input');
+            inputFields.forEach(field => {
+                field.addEventListener('focus', function() {
+                    this.select();
+                });
+                
+                if (field.value) {
+                    field.classList.add('um-input-filled');
+                }
+            });
+            
+            // Focus first field for easy editing
+            if (fullNameInput) {
+                fullNameInput.focus();
+                fullNameInput.select();
+            }
+        }, 150);
+        
+        $(document).one('keydown.umedit', e => { 
+            if (e.key === 'Escape') AdminDashboardManager._closeEditModal(); 
+        });
+    },
+
+    _esc: function(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    },
+
+    _closeEditModal: function() {
+        const $o = $('#um-edit-overlay');
+        $o.removeClass('um-overlay-visible');
+        setTimeout(() => $o.remove(), 280);
+        $(document).off('keydown.umedit');
+    },
+
+    _doEditProfile: async function(userId) {
+        const fullName = document.getElementById('ep-fullName')?.value.trim();
+        const phone    = document.getElementById('ep-phone')?.value.trim()  || null;
+        const city     = document.getElementById('ep-city')?.value.trim()   || null;
+        const street   = document.getElementById('ep-street')?.value.trim() || null;
+
+        const $error = $('#um-edit-error');
+        const $btn   = $('#um-edit-save-btn');
+
+        if (!fullName) {
+            $error.text('Full Name is required.').show();
+            document.getElementById('ep-fullName')?.focus();
+            return;
+        }
+        $error.hide();
+        $btn.prop('disabled', true).html(`
+            <svg class="um-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            Saving…
+        `);
+
+        const success = await this.updateUserProfile(userId, { fullName, phoneNumber: phone, city, street });
+
+        $btn.prop('disabled', false).html(`
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Changes
+        `);
+    },
+
+    updateUserProfile: async function(userId, profileData) {
+        try {
+            // ✅ Endpoint: PUT /api/Admin/Users/{userId}
+            const url = API_CONFIG.getApiUrl(this.endpoints.updateUserProfile + '/' + userId);
+            
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(profileData)
+            });
+            
+            if (response.ok) {
+                const responseData = await response.json().catch(() => ({}));
+                
+                this._closeEditModal();
+                await Swal.fire({ 
+                    icon: 'success', 
+                    title: 'Profile Updated', 
+                    text: 'User profile saved successfully',
+                    timer: 1800, 
+                    showConfirmButton: false 
+                });
+                this.loadUsers();
+                return true;
+            } else {
+                const err = await response.json().catch(() => ({}));
+                const errorMsg = err.message || 'Could not update profile.';
+                $('#um-edit-error').text(errorMsg).show();
+                return false;
+            }
+        } catch (e) {
+            $('#um-edit-error').text('Network error: ' + e.message).show();
+            return false;
+        }
+    },
+
+    changePasswordModal: async function(userId) {
+        const { value: formValues } = await Swal.fire({
+            title: 'Change Password',
+            html: `
+                <div class="um-swal-form">
+                    <div class="um-swal-field">
+                        <label>New Password <span style="color:#dc2626">*</span></label>
+                        <input id="swal-np" class="swal2-input" type="password" placeholder="Min. 6 characters">
+                    </div>
+                    <div class="um-swal-field">
+                        <label>Confirm Password <span style="color:#dc2626">*</span></label>
+                        <input id="swal-cp" class="swal2-input" type="password" placeholder="Repeat password">
+                    </div>
+                </div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Change Password',
+            confirmButtonColor: '#0d9488',
+            customClass: { popup: 'um-swal-popup' },
+            preConfirm: () => {
+                const np = document.getElementById('swal-np').value;
+                const cp = document.getElementById('swal-cp').value;
+                if (!np || np.length < 6) { Swal.showValidationMessage('Minimum 6 characters.'); return false; }
+                if (np !== cp)            { Swal.showValidationMessage('Passwords do not match.'); return false; }
+                return { newPassword: np };
+            }
+        });
+        if (formValues) await this.changeUserPassword(userId, formValues.newPassword);
+    },
+
+    changeUserPassword: async function(userId, newPassword) {
+        try {
+            const url = API_CONFIG.getApiUrl(this.endpoints.changeUserPassword + '/' + userId);
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ newPassword })
+            });
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Password Changed', timer: 1800, showConfirmButton: false });
+            } else {
+                const err = await response.json().catch(() => ({}));
+                await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not change password.' });
+            }
+        } catch (e) {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
         }
     },
 
     deleteUser: async function(userId) {
         const result = await Swal.fire({
             title: 'Delete User?',
-            text: 'This action cannot be undone. All user data will be deleted.',
+            text: 'This cannot be undone. All user data will be permanently removed.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Yes, delete',
-            confirmButtonColor: '#d33'
+            confirmButtonText: 'Yes, Delete',
+            confirmButtonColor: '#dc2626',
+            customClass: { popup: 'um-swal-popup' }
         });
         if (!result.isConfirmed) return;
+
         try {
-            const response = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.deleteUser + '/' + userId),
-                { method: 'DELETE', headers: this.getHeaders() }
-            );
+            const url = API_CONFIG.getApiUrl(this.endpoints.deleteUser + '/' + userId);
+            const response = await fetch(url, { method: 'DELETE', headers: this.getHeaders() });
             if (response.ok) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'User Deleted!',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                await Swal.fire({ icon: 'success', title: 'User Deleted', timer: 1800, showConfirmButton: false });
                 this.loadUsers();
             } else {
                 const err = await response.json().catch(() => ({}));
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Could not delete user.'
-                });
+                await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not delete user.' });
             }
         } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Network error: ' + e.message
-            });
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
         }
     },
-
-    editProfileModal: async function(userId) {
-        try {
-            // Fetch full user details
-            const response = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.getUserFullDetails + '/' + userId),
-                { method: 'GET', headers: this.getHeaders() }
-            );
-            if (!response.ok) throw new Error('Failed to fetch user details');
-            const userData = await response.json();
-            
-            const result = await Swal.fire({
-                title: 'Edit User Profile',
-                html: `
-                    <div style="text-align:left;padding:10px;">
-                        <label style="display:block;margin-bottom:8px;font-weight:600;color:#374151;">Full Name</label>
-                        <input type="text" id="swal-fullname" class="swal2-input" placeholder="Full Name" value="${userData.fullName || ''}" style="width:100%;">
-                        
-                        <label style="display:block;margin-bottom:8px;margin-top:12px;font-weight:600;color:#374151;">Phone Number</label>
-                        <input type="text" id="swal-phone" class="swal2-input" placeholder="Phone Number" value="${userData.phoneNumber || ''}" style="width:100%;">
-                        
-                        <label style="display:block;margin-bottom:8px;margin-top:12px;font-weight:600;color:#374151;">City</label>
-                        <input type="text" id="swal-city" class="swal2-input" placeholder="City" value="${userData.city || ''}" style="width:100%;">
-                        
-                        <label style="display:block;margin-bottom:8px;margin-top:12px;font-weight:600;color:#374151;">Street</label>
-                        <input type="text" id="swal-street" class="swal2-input" placeholder="Street" value="${userData.street || ''}" style="width:100%;">
-                    </div>
-                `,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: 'Save Changes',
-                confirmButtonColor: '#3b82f6',
-                preConfirm: () => {
-                    return {
-                        fullName: document.getElementById('swal-fullname').value || '',
-                        phoneNumber: document.getElementById('swal-phone').value || null,
-                        city: document.getElementById('swal-city').value || null,
-                        street: document.getElementById('swal-street').value || null
-                    };
-                }
-            });
-            if (!result.isConfirmed) return;
-            
-            const response2 = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.updateUserProfile + '/' + userId),
-                {
-                    method: 'PUT',
-                    headers: this.getHeaders(),
-                    body: JSON.stringify(result.value)
-                }
-            );
-            if (response2.ok) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Profile Updated!',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-                this.loadUsers();
-            } else {
-                const err = await response2.json().catch(() => ({}));
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Could not update profile.'
-                });
-            }
-        } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Network error: ' + e.message
-            });
-        }
-    },
-
-    changePasswordModal: async function(userId) {
-        const result = await Swal.fire({
-            title: 'Change User Password',
-            html: `
-                <div style="text-align:left;padding:10px;">
-                    <label style="display:block;margin-bottom:8px;font-weight:600;color:#374151;">New Password</label>
-                    <input type="password" id="swal-newpassword" class="swal2-input" placeholder="Enter new password" style="width:100%;">
-                    <small style="color:#6b7280;display:block;margin-top:6px;">Password must be at least 8 characters</small>
-                </div>
-            `,
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: 'Change Password',
-            confirmButtonColor: '#ec4899',
-            preConfirm: () => {
-                const pwd = document.getElementById('swal-newpassword').value;
-                if (!pwd || pwd.length < 8) {
-                    Swal.showValidationMessage('Password must be at least 8 characters');
-                    return false;
-                }
-                return { newPassword: pwd };
-            }
-        });
-        if (!result.isConfirmed) return;
-        
-        try {
-            const response = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.changeUserPassword + '/' + userId),
-                {
-                    method: 'PATCH',
-                    headers: this.getHeaders(),
-                    body: JSON.stringify(result.value)
-                }
-            );
-            if (response.ok) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Password Changed!',
-                    text: 'User password has been updated successfully.',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            } else {
-                const err = await response.json().catch(() => ({}));
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: err.message || 'Could not change password.'
-                });
-            }
-        } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Network error: ' + e.message
-            });
-        }
-    },
-
-    viewUserFullDetails: async function(userId) {
-        try {
-            const response = await fetch(
-                API_CONFIG.getApiUrl(this.endpoints.getUserFullDetails + '/' + userId),
-                { method: 'GET', headers: this.getHeaders() }
-            );
-            if (!response.ok) throw new Error('Failed to fetch user details');
-            const userData = await response.json();
-            
-            await Swal.fire({
-                title: 'User Full Details',
-                html: `
-                    <div style="text-align:left;padding:15px;background:#f9fafb;border-radius:10px;">
-                        <p><strong>Username:</strong> ${userData.userName || '—'}</p>
-                        <p><strong>Email:</strong> ${userData.email || '—'}</p>
-                        <p><strong>Full Name:</strong> ${userData.fullName || '—'}</p>
-                        <p><strong>Phone:</strong> ${userData.phoneNumber || '—'}</p>
-                        <p><strong>City:</strong> ${userData.city || '—'}</p>
-                        <p><strong>Street:</strong> ${userData.street || '—'}</p>
-                        <p><strong>Role:</strong> ${userData.userRole || '—'}</p>
-                        <p><strong>Email Confirmed:</strong> ${userData.emailConfirmed ? 'Yes' : 'No'}</p>
-                        <p><strong>Status:</strong> <span style="padding:3px 8px;border-radius:5px;background:${userData.isBlocked ? '#fee2e2' : '#d1fae5'};color:${userData.isBlocked ? '#7f1d1d' : '#065f46'};">${userData.isBlocked ? 'Blocked' : 'Active'}</span></p>
-                        <p><strong>Created:</strong> ${new Date(userData.create_at).toLocaleString()}</p>
-                    </div>
-                `,
-                icon: 'info',
-                confirmButtonText: 'Close',
-                confirmButtonColor: '#3b82f6'
-            });
-        } catch (e) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Network error: ' + e.message
-            });
-        }
-    }
 
 };
 
@@ -4389,3 +4519,6 @@ $(document).ready(function () {
         AdminDashboardManager.init();
     }
 });
+
+
+    
