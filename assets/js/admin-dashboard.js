@@ -194,7 +194,11 @@ const AdminDashboardManager = {
         $('#stat-total-users').text(data.totalUsers || 0);
     },
 
+    // =====================
     // --- Orders ---
+    // =====================
+   
+   // --- Orders ---
     loadOrders: async function (status = 'All') {
         // normalize status so filter/count logic stays correct
         status = (status === undefined || status === null || status === '') ? 'All' : String(status).trim();
@@ -261,15 +265,14 @@ const AdminDashboardManager = {
         }
     } catch (e) {}
 
-    let sectionsData = [];   // raw API response array
-    let flatCities   = [];   // flat list of all city objects for easy lookup
+    let sectionsData = [];
+    let flatCities   = [];
 
     try {
         const deliveryResp = await fetch(API_CONFIG.getApiUrl(this.endpoints.deliveryCosts), { headers: this.getHeaders() });
         if (deliveryResp.ok) {
             const deliveryData = await deliveryResp.json();
             sectionsData = deliveryData.data || deliveryData;
-            // Flatten all cities into one array for matching
             sectionsData.forEach(sec => {
                 (sec.cities || []).forEach(city => flatCities.push(city));
             });
@@ -290,12 +293,10 @@ const AdminDashboardManager = {
         flatCities.find(c => c.sectionName === sectionName && c.cityName === cityName) || null;
 
     // ── Resolve initial section/city from order ───────────────────────────────
-
     let initialSection   = (order.sectionName || '').trim();
     let initialCity      = (order.cityName    || '').trim();
-    let initialCityId    = order.deliveryCostId || null;  // keep to pre-select deliveryCostId
+    let initialCityId    = order.deliveryCostId || null;
 
-    // Priority 2: resolve from stored deliveryCostId
     if ((!initialSection || !initialCity) && initialCityId) {
         const matched = findCityById(initialCityId);
         if (matched) {
@@ -304,35 +305,18 @@ const AdminDashboardManager = {
         }
     }
 
-    // Priority 3 + 4: parse/scan the address string
     if (!initialSection || !initialCity) {
         const rawAddress = (order.guestAddress || order.address || '').trim();
-
         if (rawAddress) {
             const parts = rawAddress.split(',').map(p => p.trim()).filter(Boolean);
-
-            if (parts.length >= 3) {
+            if (parts.length >= 2) {
                 const candidateSection = parts[parts.length - 1];
                 const candidateCity    = parts[parts.length - 2];
-
                 const secExists  = sectionsData.some(s => s.sectionName === candidateSection);
                 const cityExists = flatCities.some(c => c.cityName === candidateCity && c.sectionName === candidateSection);
-
-                if (secExists  && !initialSection) initialSection = candidateSection;
-                if (cityExists && !initialCity)    initialCity    = candidateCity;
-
-            } else if (parts.length === 2) {
-                const candidateSection = parts[parts.length - 1];
-                const candidateCity    = parts[parts.length - 2];
-
-                const secExists  = sectionsData.some(s => s.sectionName === candidateSection);
-                const cityExists = flatCities.some(c => c.cityName === candidateCity && c.sectionName === candidateSection);
-
                 if (secExists  && !initialSection) initialSection = candidateSection;
                 if (cityExists && !initialCity)    initialCity    = candidateCity;
             }
-
-            // ── Priority 4: fuzzy scan fallback if split didn't resolve both ─────
             if (!initialSection || !initialCity) {
                 const addressLower = rawAddress.toLowerCase();
                 const sorted = [...flatCities].sort((a, b) =>
@@ -349,26 +333,24 @@ const AdminDashboardManager = {
         }
     }
 
-        let displayAddress = (order.guestAddress || order.address || '').trim();
-        let streetAddress = displayAddress;
-        if (displayAddress && initialCity && initialSection) {
-            // Remove trailing ", CityName, SectionName" to get clean street address
-            const parts = displayAddress.split(',').map(p => p.trim());
-            streetAddress = parts[0] || '';
-            const suffix1 = `, ${initialCity}, ${initialSection}`;
-            const suffix2 = `, ${initialSection}, ${initialCity}`; // handle either order
-            if (displayAddress.endsWith(suffix1)) {
-                displayAddress = displayAddress.slice(0, -suffix1.length).trim();
-            } else if (displayAddress.endsWith(suffix2)) {
-                displayAddress = displayAddress.slice(0, -suffix2.length).trim();
-            }
+    let displayAddress = (order.guestAddress || order.address || '').trim();
+    let streetAddress = displayAddress;
+    if (displayAddress && initialCity && initialSection) {
+        const parts = displayAddress.split(',').map(p => p.trim());
+        streetAddress = parts[0] || '';
+        const suffix1 = `, ${initialCity}, ${initialSection}`;
+        const suffix2 = `, ${initialSection}, ${initialCity}`;
+        if (displayAddress.endsWith(suffix1)) {
+            displayAddress = displayAddress.slice(0, -suffix1.length).trim();
+        } else if (displayAddress.endsWith(suffix2)) {
+            displayAddress = displayAddress.slice(0, -suffix2.length).trim();
         }
+    }
 
-        // Re-resolve deliveryCostId in case we found section/city from address parsing
-        if (!initialCityId && initialSection && initialCity) {
-            const matched = findCityByNameAndSection(initialSection, initialCity);
-            if (matched) initialCityId = matched.id;
-        }
+    if (!initialCityId && initialSection && initialCity) {
+        const matched = findCityByNameAndSection(initialSection, initialCity);
+        if (matched) initialCityId = matched.id;
+    }
 
     // ── Build dropdown option strings ─────────────────────────────────────────
     const buildSectionOptions = (selected) =>
@@ -409,22 +391,18 @@ const AdminDashboardManager = {
         items.map((item, i) => `
             <tr data-index="${i}">
                 <td>
-                    <label class="edit-label">Product</label>
                     <input class="form-control edit-item-productId" type="hidden" value="${item.productId ?? ''}" />
                     <span class="edit-item-productName">${getProductName(item.productId)}</span>
                 </td>
                 <td>
-                    <label class="edit-label">Color</label>
                     <input class="form-control edit-item-colorId" type="hidden" value="${item.colorId ?? ''}" />
                     <span class="edit-item-colorName">${getColorName(item.productId, item.colorId)}</span>
                 </td>
                 <td>
-                    <label class="edit-label">Size</label>
                     <input class="form-control edit-item-sizeId" type="hidden" value="${item.sizeId ?? ''}" />
                     <span class="edit-item-sizeName">${getSizeName(item.productId, item.sizeId)}</span>
                 </td>
                 <td>
-                    <label class="edit-label">Qty</label>
                     <input class="form-control edit-item-quantity" type="number" value="${item.quantity ?? 1}" min="1" />
                 </td>
                 <td>
@@ -433,243 +411,302 @@ const AdminDashboardManager = {
                 </td>
             </tr>`).join('');
 
+    // ── Modal HTML — styled to match manage order modal ───────────────────────
     const modalHtml = `
-        <div id="edit-order-modal" class="modal fade edit-order-modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Order #${orderId}</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <h6 class="font-weight-bold mb-2">Customer Info</h6>
-                        <div class="form-row">
-                            <div class="col">
-                                <label class="edit-label">Name</label>
-                                <input id="edit-guestName" class="form-control" placeholder="Name" value="${order.guestName ?? ''}" />
-                            </div>
-                            <div class="col">
-                                <label class="edit-label">Email</label>
-                                <input id="edit-guestEmail" class="form-control" placeholder="Email" value="${order.guestEmail ?? ''}" />
-                            </div>
-                        </div>
-                        <div class="form-row mt-2">
-                            <div class="col">
-                                <label class="edit-label">Phone</label>
-                                <input id="edit-guestPhoneNumber" class="form-control" placeholder="Phone" value="${order.guestPhoneNumber ?? order.phone ?? ''}" />
-                            </div>
-                            <div class="col">
-                                <label class="edit-label">Street / Detail Address</label>
-                                <input id="edit-guestAddress" class="form-control" placeholder="Street address" value="${streetAddress}" />
-                            </div>
-                        </div>
-                        <div class="form-row mt-2">
-                            <div class="col">
-                                <label class="edit-label">Section (Country/Region)</label>
-                                <select id="edit-section" class="form-control">
-                                    <option value="">Select Section</option>
-                                    ${sectionOptions}
-                                </select>
-                            </div>
-                            <div class="col">
-                                <label class="edit-label">City</label>
-                                <select id="edit-city" class="form-control">
-                                    <option value="">Select City</option>
-                                    ${cityOptions}
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row mt-2">
-                            <div class="col">
-                                <label class="edit-label">Discount Code</label>
-                                <input id="edit-discountCode" class="form-control" placeholder="Discount Code" value="${order.discountCode ?? ''}" />
-                            </div>
-                        </div>
+        <div style="text-align:left; padding:4px 0;">
 
-                        <h6 class="font-weight-bold mb-2 mt-3">Order Items</h6>
-                        <table class="table table-bordered table-sm" id="edit-items-table">
-                            <thead>
-                                <tr><th>Product</th><th>Color</th><th>Size</th><th>Qty</th><th></th></tr>
-                            </thead>
-                            <tbody>${buildItemRows(order.orderItems)}</tbody>
-                        </table>
-                        <button type="button" id="add-edit-item-row" class="btn btn-sm btn-outline-secondary mb-2">+ Add Item</button>
-                        <div id="edit-order-error" class="text-danger mt-2" style="display:none;"></div>
+            <!-- Customer Info Section -->
+            <div class="order-modal-section">
+                <div class="order-modal-title">Customer Information</div>
+
+                <div class="edit-field-row">
+                    <div class="edit-field-group">
+                        <label class="edit-label">Name <span class="edit-required">*</span></label>
+                        <input id="edit-guestName" class="form-control" placeholder="Full name" value="${order.guestName ?? ''}" />
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="button" id="save-edit-order-btn" class="btn btn-primary">Save Changes</button>
+                    <div class="edit-field-group">
+                        <label class="edit-label">Email</label>
+                        <input id="edit-guestEmail" class="form-control" placeholder="Email address" value="${order.guestEmail ?? ''}" />
+                    </div>
+                </div>
+
+                <div class="edit-field-row">
+                    <div class="edit-field-group">
+                        <label class="edit-label">Phone <span class="edit-required">*</span></label>
+                        <input id="edit-guestPhoneNumber" class="form-control" placeholder="Phone number" value="${order.guestPhoneNumber ?? order.phone ?? ''}" />
+                    </div>
+                    <div class="edit-field-group">
+                        <label class="edit-label">Street / Detail Address <span class="edit-required">*</span></label>
+                        <input id="edit-guestAddress" class="form-control" placeholder="Street address" value="${streetAddress}" />
+                    </div>
+                </div>
+
+                <div class="edit-field-row">
+                    <div class="edit-field-group">
+                        <label class="edit-label">Section (Region)</label>
+                        <select id="edit-section" class="form-control">
+                            <option value="">Select Section</option>
+                            ${sectionOptions}
+                        </select>
+                    </div>
+                    <div class="edit-field-group">
+                        <label class="edit-label">City</label>
+                        <select id="edit-city" class="form-control">
+                            <option value="">Select City</option>
+                            ${cityOptions}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="edit-field-row">
+                    <div class="edit-field-group">
+                        <label class="edit-label">Discount Code</label>
+                        <input id="edit-discountCode" class="form-control" placeholder="Discount code (optional)" value="${order.discountCode ?? ''}" />
                     </div>
                 </div>
             </div>
+
+            <!-- Order Items Section -->
+            <div class="order-modal-section">
+                <div class="order-modal-title">Order Items</div>
+                <table class="table table-bordered table-sm edit-items-table-styled" id="edit-items-table">
+                    <thead>
+                        <tr><th>Product</th><th>Color</th><th>Size</th><th>Qty</th><th></th></tr>
+                    </thead>
+                    <tbody>${buildItemRows(order.orderItems)}</tbody>
+                </table>
+                <button type="button" id="add-edit-item-row" class="btn-add-item">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Add Item
+                </button>
+                <div id="edit-order-error" class="edit-order-error" style="display:none;"></div>
+            </div>
+
         </div>`;
 
-    $('#edit-order-modal').remove();
-    $('body').append(modalHtml);
-    $('#edit-order-modal').modal('show');
-
-    // ── Section → City cascade ────────────────────────────────────────────────
-    $('#edit-section').on('change', function () {
-        const selectedSection = $(this).val();
-        const cities = getCitiesForSection(selectedSection);
-        let cityHtml = '<option value="">Select City</option>';
-        cityHtml += cities.map(c => `<option value="${c.cityName}">${c.cityName}</option>`).join('');
-        $('#edit-city').html(cityHtml);
-    });
-
-    // ── Add new item row ──────────────────────────────────────────────────────
-    $(document).off('click', '#add-edit-item-row').on('click', '#add-edit-item-row', function () {
-        const newIndex = $('#edit-items-table tbody tr').length;
-        const productOptions = products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-
-        $('#edit-items-table tbody').append(`
-            <tr data-index="${newIndex}">
-                <td>
-                    <label class="edit-label">Product</label>
-                    <select class="form-control edit-item-productId">
-                        <option value="">Select Product</option>
-                        ${productOptions}
-                    </select>
-                </td>
-                <td>
-                    <label class="edit-label">Color</label>
-                    <select class="form-control edit-item-colorId"><option value="">Select Color</option></select>
-                </td>
-                <td>
-                    <label class="edit-label">Size</label>
-                    <select class="form-control edit-item-sizeId"><option value="">Select Size</option></select>
-                </td>
-                <td>
-                    <label class="edit-label">Qty</label>
-                    <input class="form-control edit-item-quantity" type="number" value="1" min="1" />
-                </td>
-                <td>
-                    <input type="hidden" class="edit-item-id" value="" />
-                    <button type="button" class="btn btn-sm btn-danger remove-edit-item-row">&times;</button>
-                </td>
-            </tr>`);
-
-        const $row = $('#edit-items-table tbody tr:last');
-        $row.find('.edit-item-productId').on('change', function () {
-            const productId = parseInt($(this).val());
-            const product   = products.find(p => p.id === productId);
-            let colorHtml = '<option value="">Select Color</option>';
-            let sizeHtml  = '<option value="">Select Size</option>';
-            if (product?.colors) colorHtml += product.colors.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            if (product?.sizes)  sizeHtml  += product.sizes.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            $(this).closest('tr').find('.edit-item-colorId').html(colorHtml);
-            $(this).closest('tr').find('.edit-item-sizeId').html(sizeHtml);
-        });
-    });
-
-    // ── Remove item row ───────────────────────────────────────────────────────
-    $(document).off('click', '.remove-edit-item-row').on('click', '.remove-edit-item-row', function () {
-        $(this).closest('tr').remove();
-    });
-
+    // ── Open via SweetAlert2 — matching manage order modal pattern ────────────
     const self = this;
 
-    // ── Save button — bound directly to modal element (avoids stale handlers) ─
-    $('#edit-order-modal').find('#save-edit-order-btn').off('click').on('click', async function () {
-        const $btn = $(this);
-        $('#edit-order-error').hide().text('');
-
-        // ── Collect order items ───────────────────────────────────────────────
-        const orderItems = [];
-        let valid = true;
-        $('#edit-items-table tbody tr').each(function () {
-            const productId = parseInt($(this).find('.edit-item-productId').val());
-            const quantity  = parseInt($(this).find('.edit-item-quantity').val());
-            const colorId   = $(this).find('.edit-item-colorId').val();
-            const sizeId    = $(this).find('.edit-item-sizeId').val();
-            const itemId    = $(this).find('.edit-item-id').val();
-
-            if (!productId || !quantity || quantity < 1) { valid = false; return; }
-
-            orderItems.push({
-                id:        itemId ? parseInt(itemId) : undefined,
-                productId: productId,
-                colorId:   colorId ? parseInt(colorId) : null,
-                sizeId:    sizeId  ? parseInt(sizeId)  : null,
-                quantity:  quantity,
-            });
-        });
-
-        if (!valid || orderItems.length === 0) {
-            $('#edit-order-error').text('Please fill in all required item fields (Product & Quantity).').show();
-            return;
-        }
-
-        // ── Discount code — only validate if entered ──────────────────────────
-        const discountCode = $('#edit-discountCode').val().trim();
-        if (discountCode) {
-            try {
-                const resp = await fetch(API_CONFIG.getApiUrl('DiscountCodes/Validate'), {
-                    method: 'POST',
-                    headers: self.getHeaders(),
-                    body: JSON.stringify({ code: discountCode })
+    Swal.fire({
+        title: `Edit Order <span style="color:var(--gold,#c96);">#${orderId}</span>`,
+        html: modalHtml,
+        width: '620px',
+        showConfirmButton: true,
+        confirmButtonText: 'Save Changes',
+        showCancelButton: true,
+        cancelButtonText: 'Cancel',
+        showCloseButton: true,
+        customClass: {
+            container: 'order-management-modal edit-order-swal',
+            confirmButton: 'swal-btn-primary',
+            cancelButton: 'swal-btn-secondary',
+        },
+        didOpen: () => {
+            // ── Clear invalid state on input ─────────────────────────────────
+            ['edit-guestName', 'edit-guestPhoneNumber', 'edit-guestAddress'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', function () {
+                    this.classList.remove('edit-field-invalid');
+                    if (document.getElementById('edit-order-error')) {
+                        document.getElementById('edit-order-error').style.display = 'none';
+                    }
                 });
-                let data = {};
-                try { data = await resp.json(); } catch (_) {}
-                console.log('DEBUG discount validation:', resp.status, data);
+            });
 
-                if (data.success === false) {
-                    $('#edit-order-error').text(data.message || 'Invalid discount code.').show();
-                    return; // stop — do NOT save
+            // ── Section → City cascade ────────────────────────────────────────
+            document.getElementById('edit-section')?.addEventListener('change', function () {
+                const cities = getCitiesForSection(this.value);
+                let cityHtml = '<option value="">Select City</option>';
+                cityHtml += cities.map(c => `<option value="${c.cityName}">${c.cityName}</option>`).join('');
+                document.getElementById('edit-city').innerHTML = cityHtml;
+            });
+
+            // ── Add new item row ──────────────────────────────────────────────
+            document.getElementById('add-edit-item-row')?.addEventListener('click', function () {
+                const newIndex = document.querySelectorAll('#edit-items-table tbody tr').length;
+                const productOptions = products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                const tbody = document.querySelector('#edit-items-table tbody');
+                const tr = document.createElement('tr');
+                tr.dataset.index = newIndex;
+                tr.innerHTML = `
+                    <td>
+                        <select class="form-control edit-item-productId">
+                            <option value="">Select Product</option>
+                            ${productOptions}
+                        </select>
+                    </td>
+                    <td><select class="form-control edit-item-colorId"><option value="">Color</option></select></td>
+                    <td><select class="form-control edit-item-sizeId"><option value="">Size</option></select></td>
+                    <td><input class="form-control edit-item-quantity" type="number" value="1" min="1" /></td>
+                    <td>
+                        <input type="hidden" class="edit-item-id" value="" />
+                        <button type="button" class="btn btn-sm btn-danger remove-edit-item-row">&times;</button>
+                    </td>`;
+                tbody.appendChild(tr);
+
+                tr.querySelector('.edit-item-productId').addEventListener('change', function () {
+                    const productId = parseInt(this.value);
+                    const product   = products.find(p => p.id === productId);
+                    let colorHtml = '<option value="">Color</option>';
+                    let sizeHtml  = '<option value="">Size</option>';
+                    if (product?.colors) colorHtml += product.colors.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    if (product?.sizes)  sizeHtml  += product.sizes.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                    tr.querySelector('.edit-item-colorId').innerHTML = colorHtml;
+                    tr.querySelector('.edit-item-sizeId').innerHTML  = sizeHtml;
+                });
+
+                tr.querySelector('.remove-edit-item-row').addEventListener('click', function () {
+                    tr.remove();
+                });
+            });
+
+            // ── Remove existing item rows ────────────────────────────────────
+            document.querySelectorAll('.remove-edit-item-row').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    this.closest('tr').remove();
+                });
+            });
+        },
+        preConfirm: async () => {
+            const errorEl = document.getElementById('edit-order-error');
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+
+            // ── Required field validation ─────────────────────────────────────
+            const nameVal    = document.getElementById('edit-guestName')?.value.trim()        || '';
+            const phoneVal   = document.getElementById('edit-guestPhoneNumber')?.value.trim() || '';
+            const addressVal = document.getElementById('edit-guestAddress')?.value.trim()     || '';
+
+            // Clear previous invalid states
+            ['edit-guestName', 'edit-guestPhoneNumber', 'edit-guestAddress'].forEach(id => {
+                document.getElementById(id)?.classList.remove('edit-field-invalid');
+            });
+
+            // Strip all non-digit characters to check if a real number was entered
+            const phoneDigits = phoneVal.replace(/\D/g, '');
+
+            const missing = [];
+            const invalid = [];
+
+            if (!nameVal)    { missing.push('Name');    document.getElementById('edit-guestName')?.classList.add('edit-field-invalid'); }
+            if (!addressVal) { missing.push('Address'); document.getElementById('edit-guestAddress')?.classList.add('edit-field-invalid'); }
+
+            if (!phoneVal || phoneDigits.length === 0) {
+                // Field is empty or only had symbols like "+", "()", "-"
+                missing.push('Phone');
+                document.getElementById('edit-guestPhoneNumber')?.classList.add('edit-field-invalid');
+            } else if (phoneDigits.length < 7) {
+                // Has some digits but not enough to be a real phone number
+                invalid.push('Phone must contain at least 7 digits');
+                document.getElementById('edit-guestPhoneNumber')?.classList.add('edit-field-invalid');
+            }
+
+            if (missing.length > 0) {
+                errorEl.textContent = `Required field${missing.length > 1 ? 's' : ''} missing: ${missing.join(', ')}.`;
+                errorEl.style.display = 'block';
+                return false;
+            }
+
+            if (invalid.length > 0) {
+                errorEl.textContent = invalid.join(' · ');
+                errorEl.style.display = 'block';
+                return false;
+            }
+
+            // ── Collect order items ───────────────────────────────────────────
+            const orderItems = [];
+            let valid = true;
+            document.querySelectorAll('#edit-items-table tbody tr').forEach(row => {
+                const productId = parseInt(row.querySelector('.edit-item-productId')?.value);
+                const quantity  = parseInt(row.querySelector('.edit-item-quantity')?.value);
+                const colorId   = row.querySelector('.edit-item-colorId')?.value;
+                const sizeId    = row.querySelector('.edit-item-sizeId')?.value;
+                const itemId    = row.querySelector('.edit-item-id')?.value;
+                if (!productId || !quantity || quantity < 1) { valid = false; return; }
+                orderItems.push({
+                    id:        itemId ? parseInt(itemId) : undefined,
+                    productId: productId,
+                    colorId:   colorId ? parseInt(colorId) : null,
+                    sizeId:    sizeId  ? parseInt(sizeId)  : null,
+                    quantity:  quantity,
+                });
+            });
+
+            if (!valid || orderItems.length === 0) {
+                errorEl.textContent = 'Please fill in all required item fields (Product & Quantity).';
+                errorEl.style.display = 'block';
+                return false;
+            }
+
+            // ── Discount code validation ──────────────────────────────────────
+            const discountCode = document.getElementById('edit-discountCode')?.value.trim() || '';
+            if (discountCode) {
+                try {
+                    const resp = await fetch(API_CONFIG.getApiUrl('DiscountCodes/Validate'), {
+                        method: 'POST',
+                        headers: self.getHeaders(),
+                        body: JSON.stringify({ code: discountCode })
+                    });
+                    let data = {};
+                    try { data = await resp.json(); } catch (_) {}
+                    if (data.success === false) {
+                        errorEl.textContent = data.message || 'Invalid discount code.';
+                        errorEl.style.display = 'block';
+                        return false;
+                    }
+                } catch (e) {
+                    console.warn('Discount validation network error:', e);
                 }
-                // success === true → fall through and save
-            } catch (e) {
-                console.warn('Discount validation network error:', e);
-                // Don't block save on network failure
+            }
+
+            // ── Resolve deliveryCostId ────────────────────────────────────────
+            const selectedSection = document.getElementById('edit-section')?.value || '';
+            const selectedCity    = document.getElementById('edit-city')?.value    || '';
+            const matchedCity     = findCityByNameAndSection(selectedSection, selectedCity);
+            const streetAddr      = document.getElementById('edit-guestAddress')?.value.trim() || '';
+
+            // ── Build payload ─────────────────────────────────────────────────
+            const payload = {
+                guestName:      document.getElementById('edit-guestName')?.value        || null,
+                guestEmail:     document.getElementById('edit-guestEmail')?.value       || null,
+                Address:        streetAddr                                               || null,
+                Phone:          document.getElementById('edit-guestPhoneNumber')?.value || null,
+                discountCode:   discountCode                                             || null,
+                sectionName:    selectedSection                                          || null,
+                cityName:       selectedCity                                             || null,
+                deliveryCostId: matchedCity ? matchedCity.id                            : null,
+                orderItems,
+            };
+
+            console.log('DEBUG: submitting payload:', payload);
+
+            try {
+                Swal.showLoading();
+                await self._submitEditOrder(orderId, payload);
+                return true;
+            } catch (err) {
+                console.error('DEBUG: submit error:', err);
+                Swal.hideLoading();
+                errorEl.textContent = err?.message || 'Failed to save changes. Please try again.';
+                errorEl.style.display = 'block';
+                return false;
             }
         }
-
-        // ── Resolve deliveryCostId from selected section + city ───────────────
-        const selectedSection = $('#edit-section').val();
-        const selectedCity    = $('#edit-city').val();
-        const matchedCity     = findCityByNameAndSection(selectedSection, selectedCity);
-
-        // ── Build full address = street + city + section ──────────────────────
-        const streetAddress = $('#edit-guestAddress').val().trim();
-        const addressParts  = [streetAddress].filter(Boolean);
-        const fullAddress   = addressParts.join(', ');
-
-        // ── Build payload ─────────────────────────────────────────────────────
-        const payload = {
-            guestName:        $('#edit-guestName').val()          || null,
-            guestEmail:       $('#edit-guestEmail').val()         || null,
-            Address:          fullAddress                         || null,
-            Phone:            $('#edit-guestPhoneNumber').val()   || null,
-            discountCode:     discountCode                        || null,
-            sectionName:      selectedSection                     || null,
-            cityName:         selectedCity                        || null,
-            deliveryCostId:   matchedCity ? matchedCity.id        : null,
-            orderItems,
-        };
-
-        console.log('DEBUG: submitting payload:', payload);
-
-        // ── Submit ────────────────────────────────────────────────────────────
-        try {
-            $btn.prop('disabled', true).text('Saving…');
-            await self._submitEditOrder(orderId, payload);
-            $('#edit-order-modal').modal('hide');
-            Swal.fire('Success', 'Order updated successfully!', 'success');
-
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Order Updated',
+                text: 'Changes saved successfully.',
+                timer: 1800,
+                showConfirmButton: false,
+            });
             let activeStatus = 'All';
             const $active = $('.order-status-filter.active, .active[data-status]').first();
             if ($active.length) activeStatus = $active.data('status') || 'All';
             await OrderController.loadOrders(activeStatus);
-
-        } catch (err) {
-            console.error('DEBUG: submit error:', err);
-            $('#edit-order-error').text(err?.message || 'Failed to save changes. Please try again.').show();
-            $btn.prop('disabled', false).text('Save Changes');
         }
-    });
-
-    $('#edit-order-modal').on('hidden.bs.modal', function () {
-        $('#edit-order-modal').remove();
     });
     },
     _submitEditOrder: async function (orderId, payload) {
@@ -695,13 +732,13 @@ const AdminDashboardManager = {
         if (typeof Swal !== 'undefined' && Swal.isVisible()) {
             Swal.close();
         }
-        $('#edit-order-modal').modal('hide');
-        $('#edit-order-modal').remove();
     },
 
 
     
+    // =====================
     // --- Products ---
+    // =====================
     loadProducts: async function () {
         $('#admin-products-container').html('<p>Loading products...</p>');
         try {
@@ -724,6 +761,9 @@ const AdminDashboardManager = {
         html += '</tbody></table>';
         $container.html(html);
     },
+
+
+
 
     // =====================
     // --- Advertisements ---
@@ -1162,7 +1202,6 @@ const AdminDashboardManager = {
         }
     },
 
-    // Helper to clear the modal image (called by remove button)
     _clearModalImage: function () {
         const fileInput = document.getElementById('ad-image-file');
         const previewImg = document.getElementById('af-img-preview');
@@ -1293,6 +1332,9 @@ const AdminDashboardManager = {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
         }
     },
+
+
+
 
     // =====================
     // --- Brands ---
@@ -1683,6 +1725,8 @@ const AdminDashboardManager = {
             Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
         }
     },
+
+
 
     // =====================
     // --- Categories ---

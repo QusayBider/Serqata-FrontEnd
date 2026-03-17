@@ -16598,14 +16598,14 @@ button:focus {
 
 @media screen and (min-width: 992px) {
     .dashboard .col-lg-3 {
-        -ms-flex: 0 0 30%;
-        flex: 0 0 30%;
+        -ms-flex: 0 0 20%;
+        flex: 0 0 20%;
     }
 
     .dashboard .col-lg-9 {
-        -ms-flex: 0 70%;
-        flex: 0 0 70%;
-        max-width: 70%
+        -ms-flex: 0 80%;
+        flex: 0 0 80%;
+        max-width: 80%
     }
 }
 
