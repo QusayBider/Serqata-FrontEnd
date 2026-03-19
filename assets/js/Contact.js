@@ -1,4 +1,3 @@
-
 (function () {
   const API_URL = API_CONFIG.getApiUrl(`Contact/Submit`);
 

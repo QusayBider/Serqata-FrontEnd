@@ -3,6 +3,7 @@ const AdminDashboardManager = {
     // API Endpoints
     endpoints: {
         analytics: 'Admin/Analytics',
+        //orders
         orders: 'Admin/Orders/Get-All-Orders',
         ordersByStatus: 'Admin/Orders/Get-orders-by-status',
         changeOrderStatus: 'Admin/Orders/Change-order-status',
@@ -10,43 +11,51 @@ const AdminDashboardManager = {
         updatePaidAmount: 'Admin/Orders/Update-paid-amount',
         generateDeliveryPaymentLink: 'Admin/Orders/Generate-delivery-payment-link',
         editOrder: 'Admin/Orders/Edit',   
-        users: 'Admin/Users',
+        //products
         products: 'Products/GetAllProducts',
+        //advertisements
         advertisements: 'Admin/Advertisements',
         addAdvertisement: 'Admin/Advertisements/AddAdvertisement',
         updateAdvertisement: 'Admin/Advertisements/UpdateAdvertisement',
         toggleAdvertisement: 'Admin/Advertisements/ToggleStatus',
         getAdvertisementById: 'Admin/Advertisements/GetAdvertisementById',
         deleteAdvertisement: 'Admin/Advertisements',
+        //brands
         brands: 'Admin/Brands/GetAllBrands',
         addBrand: 'Admin/Brands/AddBrand',
         updateBrand: 'Admin/Brands/UpdateBrand',
         toggleBrand: 'Admin/Brands/ToggleStatus',
         getBrandById: 'Admin/Brands/GetBrandById',
         deleteBrand: 'Admin/Brands',
+        //categories
         categories: 'Admin/Categories',
         addCategory: 'Admin/Categories/AddCategory',
         updateCategory: 'Admin/Categories/UpdateCategory',
         toggleCategory: 'Admin/Categories/ToggleStatus',
         getCategoryById: 'Admin/Categories/GetCategoryById',
         deleteCategory: 'Admin/Categories',
+        //company
         company: 'Admin/Company',
         addCompany: 'Admin/Company/AddCompany',
         updateCompany: 'Admin/Company/UpdateCompany',
         toggleCompany: 'Admin/Company/ToggleStatus',
         getCompanyById: 'Admin/Company/GetCompanyById',
+        //delivery costs
         deliveryCosts: 'DeliveryCosts/GetBySection',
         addDeliveryCost: 'Admin/DeliveryCosts/AddDeliveryCost',
         updateDeliveryCost: 'Admin/DeliveryCosts/UpdateDeliveryCost',
         toggleDeliveryCost: 'Admin/DeliveryCosts/ToggleStatus',
         getDeliveryCostById: 'Admin/DeliveryCosts/GetDeliveryCostById',
         deleteDeliveryCost: 'Admin/DeliveryCosts/DeleteDeliveryCost',
+        //discount codes
         discountCodes: 'Admin/DiscountCodes/GetAllDiscountCodes',
         addDiscountCode: 'Admin/DiscountCodes/AddDiscountCode',
         updateDiscountCode: 'Admin/DiscountCodes/UpdateDiscountCode',
         getDiscountCodeById: 'Admin/DiscountCodes/GetDiscountCodeById',
         deleteDiscountCode: 'Admin/DiscountCodes/DeleteDiscountCode',
         resetDiscountCodeAmount: 'Admin/DiscountCodes/ResetDiscountAmounts',
+        //users
+        users: 'Admin/Users',
         blockUser: 'Admin/Users/Block',
         unBlockUser: 'Admin/Users/UnBlock',
         isBlockedUser: 'Admin/Users/IsBlocked',
@@ -55,6 +64,27 @@ const AdminDashboardManager = {
         updateUserProfile: 'Admin/Users',
         changeUserPassword: 'Admin/Users/ChangePassword',
         getUserFullDetails: 'Admin/Users/FullDetails',
+        //SocialMedia
+        socialMedia: 'Admin/SocialMedia',
+        getSocialMediaById: 'Admin/SocialMedia/GetSocialMediaById',
+        addSocialMedia: 'Admin/SocialMedia/AddSocialMedia',
+        updateSocialMedia: 'Admin/SocialMedia/UpdateSocialMedia',
+        toggleSocialMedia: 'Admin/SocialMedia/ToggleStatus',
+        deleteSocialMedia: 'Admin/SocialMedia',
+        // Colors
+        getAllColors:       'Admin/ProductColors/GetAllColors?includeInactive=true',
+        getColorById:       'Admin/ProductColors/GetColorById',
+        addColor:           'Admin/ProductColors/AddColor',
+        updateColor:        'Admin/ProductColors/UpdateColor',
+        toggleColorStatus:  'Admin/ProductColors/ToggleStatus',
+        deleteColor:        'Admin/ProductColors',
+        // Sizes
+        getAllSizes:         'Admin/ProductSizes/GetAllSizes?includeInactive=true',
+        getSizeById:        'Admin/ProductSizes/GetSizeById',
+        addSize:            'Admin/ProductSizes/AddSize',
+        updateSize:         'Admin/ProductSizes/UpdateSize',
+        toggleSizeStatus:   'Admin/ProductSizes/ToggleStatus',
+        deleteSize:         'Admin/ProductSizes',
     },
 
     init: async function () {
@@ -156,6 +186,10 @@ const AdminDashboardManager = {
             this.loadDeliveryCosts();
         } else if (tabTarget === '#tab-discountcodes') {
             this.loadDiscountCodes();
+        } else if (tabTarget === '#tab-SocialMedia') {
+            this.loadSocialMedia();
+        } else if (tabTarget === '#tab-colors-sizes') {
+            this.loadColorsAndSizes();
         }
     },
 
@@ -4553,6 +4587,1198 @@ const AdminDashboardManager = {
             }
         } catch (e) {
             await Swal.fire({ icon: 'error', title: 'Error', text: 'Network error: ' + e.message });
+        }
+    },
+
+
+    // ====================
+    // --- Social Media ---
+    // ====================
+
+    loadSocialMedia: async function () {
+        const $container = $('#admin-SocialMedia-container'); // ← fixed: was '#admin-SocialMedia-container'
+
+        // Skeleton loading state
+        const skeletonHtml = Array(4).fill(0).map(() => `
+            <div class="sm-skeleton">
+                <div class="sm-skel-icon"></div>
+                <div class="sm-skel-body">
+                    <div class="sm-skel-line w70"></div>
+                    <div class="sm-skel-line w45"></div>
+                </div>
+            </div>
+        `).join('');
+
+        $container.html(`
+            <div class="sm-panel">
+                <div class="sm-header">
+                    <div>
+                        <h2 class="sm-header-title">Social <span>Media</span></h2>
+                        <div class="sm-header-meta">Loading platforms…</div>
+                    </div>
+                </div>
+                <div class="sm-grid">${skeletonHtml}</div>
+            </div>
+        `);
+
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.socialMedia), {
+                headers: this.getHeaders()
+            });
+            if (response.ok) {
+                const data = await response.json();
+                this.renderSocialMedia(data.data || data);
+            } else {
+                $container.html(`
+                    <div class="sm-panel">
+                        <div class="sm-header">
+                            <div>
+                                <h2 class="sm-header-title">Social <span>Media</span></h2>
+                                <div class="sm-header-meta">Could not load platforms</div>
+                            </div>
+                            <button class="btn-sm-new" onclick="AdminDashboardManager.openSocialMediaModal()">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                New Platform
+                            </button>
+                        </div>
+                        <div style="color:#e55;font-size:13px;padding:20px 0;">Could not load social media platforms.</div>
+                    </div>
+                `);
+            }
+        } catch (e) {
+            $container.html(`
+                <div class="sm-panel">
+                    <div class="sm-header">
+                        <div>
+                            <h2 class="sm-header-title">Social <span>Media</span></h2>
+                            <div class="sm-header-meta">Error loading platforms</div>
+                        </div>
+                        <button class="btn-sm-new" onclick="AdminDashboardManager.openSocialMediaModal()">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            New Platform
+                        </button>
+                    </div>
+                    <div style="color:#e55;font-size:13px;padding:20px 0;">Error loading social media.</div>
+                </div>
+            `);
+        }
+    },
+
+    renderSocialMedia: function (items) {
+        const $container = $('#admin-SocialMedia-container');
+        const total  = items ? items.length : 0;
+        const active = items ? items.filter(i => i.isActive !== false).length : 0;
+
+        let html = `
+        <div class="sm-panel">
+            <div class="sm-header">
+                <div>
+                    <h2 class="sm-header-title">Social <span>Media</span></h2>
+                    <div class="sm-header-meta">${total} platform${total !== 1 ? 's' : ''} configured</div>
+                </div>
+                <button class="btn-sm-new" onclick="AdminDashboardManager.openSocialMediaModal()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Platform
+                </button>
+            </div>
+        `;
+
+        // ── Only render toolbar + grid when there is data ─────────────────────
+        if (!items || items.length === 0) {
+            html += `
+            <div class="sm-empty">
+                <h4>No Platforms Yet</h4>
+                <p>Add your first social media link to get started.</p>
+                <button class="btn-sm-new" style="margin-top:16px;" onclick="AdminDashboardManager.openSocialMediaModal()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add First Platform
+                </button>
+            </div>
+            `;
+        } else {
+            html += `
+            <div class="sm-toolbar">
+                <div class="sm-search-wrap">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input class="sm-search" id="sm-search-input" type="text"
+                        placeholder="Search by name or URL…"
+                        oninput="AdminDashboardManager.filterSocialMedia()">
+                </div>
+                <select class="sm-filter-select" id="sm-filter-status"
+                    onchange="AdminDashboardManager.filterSocialMedia()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="sm-grid" id="sm-grid">
+            `;
+
+            items.forEach(item => {
+                const isActive = (item.status || item.Status || '').toLowerCase() === 'active';
+                const name     = item.name  || item.Name  || 'Untitled';
+                const links    = item.links || item.Links || '';
+                const imageUrl = item.imageUrl || item.image || item.Image || '';
+                const id       = item.id || item.Id;
+
+                const imgBlock = imageUrl
+                    ? `<img src="${imageUrl}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+                    : '';
+                const placeholderStyle = imageUrl ? 'style="display:none"' : '';
+
+                html += `
+                    <div class="sm-card"
+                        data-name="${name.toLowerCase()}"
+                        data-links="${links.toLowerCase()}"
+                        data-active="${isActive}">
+
+                        <div class="sm-card-img">
+                            ${imgBlock}
+                            <div class="sm-card-img-placeholder" ${placeholderStyle}>
+                                <span>${name.charAt(0).toUpperCase()}</span>
+                            </div>
+                            <div class="sm-status-pill ${isActive ? 'active' : 'inactive'}">
+                                ${isActive ? '● Active' : '○ Inactive'}
+                            </div>
+                        </div>
+
+                        <div class="sm-card-body">
+                            <div class="sm-card-top">
+                                <h4 class="sm-card-name">${name}</h4>
+                                <span class="sm-card-id">#${id}</span>
+                            </div>
+                            ${links
+                                ? `<a class="sm-card-link" href="${links}" target="_blank" rel="noopener" title="${links}">
+                                    ${links}
+                                </a>`
+                                : `<span class="sm-card-link no-link">No URL set</span>`
+                            }
+                        </div>
+
+                        <div class="sm-card-footer">
+                            <button class="btn-sm-edit" onclick="AdminDashboardManager.openSocialMediaModal(${id})">
+                                Edit
+                            </button>
+                            <button class="btn-sm-edit btn-sm-delete"
+                                onclick="AdminDashboardManager.deleteSocialMedia(${id}, '${name.replace(/'/g, "\\'")}')"
+                                title="Delete platform">
+                                Delete
+                            </button>
+                            <label class="sm-card-toggle status-toggle" title="Toggle Status"
+                                onclick="event.preventDefault(); AdminDashboardManager.toggleSocialMediaStatus(${id})">
+                                <span style="font-size:11px;margin-right:2px;font-weight:600;color:#555;">
+                                    ${isActive ? 'Active' : 'Inactive'}
+                                </span>
+                                <input type="checkbox" ${isActive ? 'checked' : ''}>
+                                <span class="sm-card-toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`; // close #sm-grid
+        }
+
+        html += `</div>`; // close .sm-panel
+        $container.html(html);
+    },
+
+    filterSocialMedia: function () {
+        const query  = (document.getElementById('sm-search-input')?.value || '').toLowerCase();
+        const status = document.getElementById('sm-filter-status')?.value || 'all';
+        document.querySelectorAll('#sm-grid .sm-card').forEach(card => {
+            const name   = card.dataset.name  || '';
+            const links  = card.dataset.links || '';
+            const active = card.dataset.active === 'true';
+            const matchQ = !query  || name.includes(query) || links.includes(query);
+            const matchS = status === 'all'
+                || (status === 'active'   &&  active)
+                || (status === 'inactive' && !active);
+            card.style.display = (matchQ && matchS) ? '' : 'none';
+        });
+    },
+
+    openSocialMediaModal: async function (id = null) {
+        let item = null;
+        if (id) {
+            try {
+                const response = await fetch(
+                    API_CONFIG.getApiUrl(`${this.endpoints.getSocialMediaById}/${id}`),
+                    { headers: this.getHeaders() }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    item = data.data || data;
+                }
+            } catch (e) {}
+        }
+
+        const existingImage = item?.imageUrl || item?.image || item?.Image || '';
+        const existingName  = item?.name  || item?.Name  || '';
+        const existingLinks = item?.links || item?.Links || '';
+
+        const { value: formValues } = await Swal.fire({
+            title: '',
+            width: '520px',
+            padding: '0',
+            background: '#fff',
+            html: `
+                <div class="sm-swal-form" style="padding:28px 28px 4px;">
+
+                    <!-- Modal header -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                        <div>
+                            <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:800;color:#111;letter-spacing:-0.3px;">
+                                ${id ? 'Edit' : 'New'} <span style="color:#c96;">Social Media</span>
+                            </div>
+                            <div style="font-size:11px;color:#aaa;margin-top:2px;">
+                                ${id ? `Editing platform #${id}` : 'Add a new social media platform'}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Image upload — reuses .af-img-upload from ads CSS -->
+                    <div class="af-section-title" style="margin-top:0;">Platform Icon / Image</div>
+                    <div class="af-img-upload ${existingImage ? 'has-image' : ''}" id="sm-img-upload-box">
+                        <input type="file" id="sm-image-file" accept="image/*">
+                        <img class="af-img-preview" id="sm-img-preview"
+                            src="${existingImage}"
+                            style="${existingImage ? 'display:block' : 'display:none'}">
+                        <div class="af-img-placeholder" id="sm-img-placeholder"
+                            style="${existingImage ? 'display:none' : ''}">
+                            <div class="af-upload-label">Click to upload icon</div>
+                            <div class="af-upload-sub">PNG, JPG, SVG, WebP — recommended 64×64</div>
+                        </div>
+                        <div class="af-img-overlay">
+                            <span>Change Image</span>
+                        </div>
+                        <button class="af-img-remove" type="button" title="Remove image"
+                            onclick="event.stopPropagation(); AdminDashboardManager._clearSocialMediaImage()">
+                        </button>
+                    </div>
+
+                    <!-- Platform details -->
+                    <div class="af-section-title">Platform Details</div>
+                    <div class="af-group">
+                        <label>Platform Name <span style="color:#c96;">*</span></label>
+                        <input id="sm-input-name" class="af-input"
+                            placeholder="e.g. Instagram, Facebook, TikTok"
+                            value="${existingName}">
+                    </div>
+                    <div class="af-group" style="margin-top:12px;">
+                        <label>Profile / Page URL <span style="color:#c96;">*</span></label>
+                        <input id="sm-input-links" class="af-input"
+                            placeholder="https://..."
+                            value="${existingLinks}">
+                    </div>
+
+                    <div style="height:20px;"></div>
+                </div>
+            `,
+            didOpen: () => {
+                const fileInput   = document.getElementById('sm-image-file');
+                const previewImg  = document.getElementById('sm-img-preview');
+                const placeholder = document.getElementById('sm-img-placeholder');
+                const uploadBox   = document.getElementById('sm-img-upload-box');
+
+                fileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                        Swal.showValidationMessage('Image must be under 5 MB');
+                        fileInput.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        previewImg.src = ev.target.result;
+                        previewImg.style.display = 'block';
+                        placeholder.style.display = 'none';
+                        uploadBox.classList.add('has-image');
+                    };
+                    reader.readAsDataURL(file);
+                });
+            },
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: id ? '✓ Save Changes' : '+ Add Platform',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#111',
+            preConfirm: () => {
+                const name  = document.getElementById('sm-input-name')?.value.trim()  || '';
+                const links = document.getElementById('sm-input-links')?.value.trim() || '';
+
+                if (!name) {
+                    Swal.showValidationMessage('Platform name is required');
+                    return false;
+                }
+                if (!links) {
+                    Swal.showValidationMessage('URL is required');
+                    return false;
+                }
+                if (!/^https?:\/\/.+/.test(links)) {
+                    Swal.showValidationMessage('URL must start with http:// or https://');
+                    return false;
+                }
+
+                const fileInput  = document.getElementById('sm-image-file');
+                const imageFile  = fileInput?.files?.[0] || null;
+                const previewImg = document.getElementById('sm-img-preview');
+                const imageUrl   = (!imageFile && previewImg?.src && !previewImg.src.startsWith('data:'))
+                    ? previewImg.src : '';
+
+                return { name, links, imageFile, imageUrl };
+            }
+        });
+
+        if (formValues) {
+            if (id) {
+                await this.updateSocialMedia(id, formValues);
+            } else {
+                await this.addSocialMedia(formValues);
+            }
+        }
+    },
+
+    _clearSocialMediaImage: function () {
+        const fileInput   = document.getElementById('sm-image-file');
+        const previewImg  = document.getElementById('sm-img-preview');
+        const placeholder = document.getElementById('sm-img-placeholder');
+        const uploadBox   = document.getElementById('sm-img-upload-box');
+        if (fileInput)   fileInput.value = '';
+        if (previewImg)  { previewImg.src = ''; previewImg.style.display = 'none'; }
+        if (placeholder) placeholder.style.display = '';
+        if (uploadBox)   uploadBox.classList.remove('has-image');
+    },
+
+    _buildSocialMediaFormData: function (fields) {
+        const fd = new FormData();
+        fd.append('Name',  fields.name);
+        fd.append('Links', fields.links);
+        if (fields.imageFile) {
+            fd.append('Image', fields.imageFile, fields.imageFile.name);
+        } else if (fields.imageUrl) {
+            fd.append('Image', fields.imageUrl);
+        }
+        return fd;
+    },
+
+    addSocialMedia: async function (fields) {
+        try {
+            const formData = this._buildSocialMediaFormData(fields);
+            const response = await fetch(API_CONFIG.getApiUrl(this.endpoints.addSocialMedia), {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${this.getToken()}` },
+                body: formData
+            });
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Platform added!', timer: 1500, showConfirmButton: false });
+                this.loadSocialMedia();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not add platform.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    updateSocialMedia: async function (id, fields) {
+        try {
+            const formData = this._buildSocialMediaFormData(fields);
+            const response = await fetch(API_CONFIG.getApiUrl(`${this.endpoints.updateSocialMedia}/${id}`), {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${this.getToken()}` },
+                body: formData
+            });
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Platform updated!', timer: 1500, showConfirmButton: false });
+                this.loadSocialMedia();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not update platform.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    toggleSocialMediaStatus: async function (id) {
+        const result = await Swal.fire({
+            title: 'Toggle Status?',
+            text: 'This will activate or deactivate the platform.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, toggle it',
+            confirmButtonColor: '#c96',
+        });
+        if (!result.isConfirmed) return;
+        try {
+            const response = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.toggleSocialMedia}/${id}`),
+                { method: 'PATCH', headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Status updated!', timer: 1500, showConfirmButton: false });
+                this.loadSocialMedia();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Could not toggle status.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    deleteSocialMedia: async function (id, name) {
+        const result = await Swal.fire({
+            title: 'Delete Platform?',
+            text: `This will permanently remove "${name}".`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+        });
+        if (!result.isConfirmed) return;
+        try {
+            const response = await fetch(API_CONFIG.getApiUrl(`${this.endpoints.deleteSocialMedia}?id=${id}`),
+                { method: 'DELETE', headers: this.getHeaders() }
+            );
+            if (response.ok) {
+                await Swal.fire({ icon: 'success', title: 'Platform deleted!', timer: 1500, showConfirmButton: false });
+                this.loadSocialMedia();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not delete platform.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    // ======================
+    // --- Colors & Sizes ---
+    // ======================
+
+    loadColorsAndSizes: async function () {
+        const $container = $('#admin-colors-sizes-container');
+        if (!$container.length) {
+            console.error('[ColorsAndSizes] Container #admin-colors-sizes-container not found.');
+            return;
+        }
+
+        $container.html(`
+            <div class="cs-panel">
+                <div class="cs-header">
+                    <div>
+                        <h2 class="cs-header-title">Colors <span>&</span> Sizes</h2>
+                        <div class="cs-header-meta">Loading…</div>
+                    </div>
+                </div>
+                <div class="cs-tabs">
+                    <button class="cs-tab cs-tab--active" data-tab="colors">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+                        </svg>
+                        Colors
+                    </button>
+                    <button class="cs-tab" data-tab="sizes">
+                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M21 6H3M16 12H3M11 18H3"/>
+                        </svg>
+                        Sizes
+                    </button>
+                </div>
+                <div class="cs-skeleton-grid">
+                    ${Array(6).fill(0).map(() => `
+                        <div class="cs-skeleton-row">
+                            <div class="cs-skel-circle"></div>
+                            <div class="cs-skel-line w60"></div>
+                            <div class="cs-skel-line w30" style="margin-left:auto"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `);
+
+        try {
+            const [colorsResp, sizesResp] = await Promise.all([
+                fetch(API_CONFIG.getApiUrl(this.endpoints.getAllColors), { headers: this.getHeaders() }),
+                fetch(API_CONFIG.getApiUrl(this.endpoints.getAllSizes),  { headers: this.getHeaders() })
+            ]);
+
+            const colorsData = colorsResp.ok ? await colorsResp.json() : null;
+            const sizesData  = sizesResp.ok  ? await sizesResp.json()  : null;
+
+            const colors = Array.isArray(colorsData?.data) ? colorsData.data : [];
+            const sizes  = Array.isArray(sizesData?.data)  ? sizesData.data  : [];
+
+            console.log('[ColorsAndSizes] Colors:', colors.length, '| Sizes:', sizes.length);
+            this.renderColorsAndSizes(colors, sizes, 'colors');
+
+        } catch (e) {
+            console.error('[ColorsAndSizes] Error:', e);
+            $container.html(`
+                <div class="cs-panel">
+                    <div class="cs-header">
+                        <h2 class="cs-header-title">Colors <span>&</span> Sizes</h2>
+                        <div class="cs-header-meta" style="color:#e55;">Network error</div>
+                    </div>
+                    <div class="cs-error-box">
+                        Failed to load — check your connection and try again.
+                        <br><small style="color:#bbb;">${e.message || ''}</small>
+                    </div>
+                </div>
+            `);
+        }
+    },
+
+    renderColorsAndSizes: function (colors, sizes, activeTab = 'colors') {
+        const $container = $('#admin-colors-sizes-container');
+        if (!$container.length) return;
+
+        const totalColors  = colors.length;
+        const activeColors = colors.filter(c => (c.status || c.Status || '').toLowerCase() === 'active').length;
+        const totalSizes   = sizes.length;
+        const activeSizes  = sizes.filter(s => (s.status || s.Status || '').toLowerCase() === 'active').length;
+
+        let html = `
+        <div class="cs-panel">
+
+            <!-- Header -->
+            <div class="cs-header">
+                <div>
+                    <h2 class="cs-header-title">Colors <span>&</span> Sizes</h2>
+                    <div class="cs-header-meta">${totalColors} color${totalColors !== 1 ? 's' : ''} · ${totalSizes} size${totalSizes !== 1 ? 's' : ''}</div>
+                </div>
+                <button class="cs-btn-add" id="cs-add-btn"
+                    onclick="AdminDashboardManager.${activeTab === 'colors' ? 'openColorModal' : 'openSizeModal'}()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Add ${activeTab === 'colors' ? 'Color' : 'Size'}
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="cs-stats">
+                <div class="cs-stat-card">
+                    <div class="cs-stat-label">Total Colors</div>
+                    <div class="cs-stat-value accent">${totalColors}</div>
+                </div>
+                <div class="cs-stat-card">
+                    <div class="cs-stat-label">Active Colors</div>
+                    <div class="cs-stat-value green">${activeColors}</div>
+                </div>
+                <div class="cs-stat-card">
+                    <div class="cs-stat-label">Total Sizes</div>
+                    <div class="cs-stat-value accent">${totalSizes}</div>
+                </div>
+                <div class="cs-stat-card">
+                    <div class="cs-stat-label">Active Sizes</div>
+                    <div class="cs-stat-value green">${activeSizes}</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="cs-tabs">
+                <button class="cs-tab ${activeTab === 'colors' ? 'cs-tab--active' : ''}" data-tab="colors"
+                    onclick="AdminDashboardManager._csSwitchTab('colors')">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+                    </svg>
+                    Colors <span class="cs-tab-badge">${totalColors}</span>
+                </button>
+                <button class="cs-tab ${activeTab === 'sizes' ? 'cs-tab--active' : ''}" data-tab="sizes"
+                    onclick="AdminDashboardManager._csSwitchTab('sizes')">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 6H3M16 12H3M11 18H3"/>
+                    </svg>
+                    Sizes <span class="cs-tab-badge">${totalSizes}</span>
+                </button>
+            </div>
+
+            <!-- Search -->
+            <div class="cs-toolbar">
+                <div class="cs-search-wrap">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input class="cs-search" id="cs-search-input" type="text"
+                        placeholder="Search…"
+                        oninput="AdminDashboardManager._csFilter()">
+                </div>
+                <select class="cs-filter-select" id="cs-filter-status" onchange="AdminDashboardManager._csFilter()">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <!-- Colors Tab -->
+            <div id="cs-tab-colors" class="cs-tab-content" style="${activeTab === 'colors' ? '' : 'display:none'}">
+        `;
+
+        // ── Colors list ────────────────────────────────────────────────────────
+        if (totalColors === 0) {
+            html += `
+                <div class="cs-empty">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+                    </svg>
+                    <h4>No Colors Yet</h4>
+                    <p>Add your first color to get started.</p>
+                    <button class="cs-btn-add" onclick="AdminDashboardManager.openColorModal()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add First Color
+                    </button>
+                </div>`;
+        } else {
+            html += `<div class="cs-list" id="cs-colors-list">`;
+            colors.forEach(color => {
+                const isActive = (color.status || color.Status || '').toLowerCase() === 'active';
+                const name     = color.name || color.Name || '—';
+                const hex      = color.hexCode || color.HexCode || '#cccccc';
+                const id       = color.id || color.Id;
+
+                html += `
+                <div class="cs-row" data-name="${name.toLowerCase()}" data-active="${isActive}">
+                    <div class="cs-row-left">
+                        <span class="cs-color-swatch" style="background:${hex};" title="${hex}"></span>
+                        <div class="cs-row-info">
+                            <span class="cs-row-name">${name}</span>
+                            <span class="cs-row-sub">${hex}</span>
+                        </div>
+                    </div>
+                    <div class="cs-row-right">
+
+                        <button class="cs-btn-icon cs-btn-edit" title="Edit"
+                            onclick="AdminDashboardManager.openColorModal(${id})">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
+                        <label class="cs-toggle-wrap" onclick="event.preventDefault(); AdminDashboardManager.toggleColorStatus(${id}, this)">
+                            <span class="cs-toggle-label">${isActive ? 'Active' : 'Inactive'}</span>
+                            <span class="cs-toggle-track ${isActive ? 'cs-toggle--on' : 'cs-toggle--off'}">
+                                <span class="cs-toggle-thumb"></span>
+                            </span>
+                        </label>
+                        <button class="cs-btn-icon cs-btn-delete" title="Delete"
+                            onclick="AdminDashboardManager.deleteColor(${id}, '${name.replace(/'/g, "\\'")}')">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        html += `</div>`; // close #cs-tab-colors
+
+        // ── Sizes Tab ──────────────────────────────────────────────────────────
+        html += `<div id="cs-tab-sizes" class="cs-tab-content" style="${activeTab === 'sizes' ? '' : 'display:none'}">`;
+
+        if (totalSizes === 0) {
+            html += `
+                <div class="cs-empty">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path d="M21 6H3M16 12H3M11 18H3"/>
+                    </svg>
+                    <h4>No Sizes Yet</h4>
+                    <p>Add your first size to get started.</p>
+                    <button class="cs-btn-add" onclick="AdminDashboardManager.openSizeModal()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add First Size
+                    </button>
+                </div>`;
+        } else {
+            html += `<div class="cs-list" id="cs-sizes-list">`;
+            sizes.forEach(size => {
+                const isActive = (size.status || size.Status || '').toLowerCase() === 'active';
+                const name     = size.name || size.Name || '—';
+                const id       = size.id || size.Id;
+
+                html += `
+                <div class="cs-row" data-name="${name.toLowerCase()}" data-active="${isActive}">
+                    <div class="cs-row-left">
+                        <span class="cs-size-badge">${name}</span>
+                    </div>
+                    <div class="cs-row-right">
+
+                        <button class="cs-btn-icon cs-btn-edit" title="Edit"
+                            onclick="AdminDashboardManager.openSizeModal(${id})">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </button>
+                        <label class="cs-toggle-wrap" onclick="event.preventDefault(); AdminDashboardManager.toggleSizeStatus(${id}, this)">
+                            <span class="cs-toggle-label">${isActive ? 'Active' : 'Inactive'}</span>
+                            <span class="cs-toggle-track ${isActive ? 'cs-toggle--on' : 'cs-toggle--off'}">
+                                <span class="cs-toggle-thumb"></span>
+                            </span>
+                        </label>
+                        <button class="cs-btn-icon cs-btn-delete" title="Delete"
+                            onclick="AdminDashboardManager.deleteSize(${id}, '${name.replace(/'/g, "\\'")}')">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        html += `</div>`; // close #cs-tab-sizes
+        html += `</div>`; // close .cs-panel
+
+        $container.html(html);
+
+        // Store data on container for tab switching without re-fetch
+        $container.data('cs-colors', colors);
+        $container.data('cs-sizes',  sizes);
+    },
+
+    // ── Tab switching ──────────────────────────────────────────────────────────
+    _csSwitchTab: function (tab) {
+        document.querySelectorAll('.cs-tab').forEach(btn => {
+            btn.classList.toggle('cs-tab--active', btn.dataset.tab === tab);
+        });
+        document.getElementById('cs-tab-colors').style.display = tab === 'colors' ? '' : 'none';
+        document.getElementById('cs-tab-sizes').style.display  = tab === 'sizes'  ? '' : 'none';
+        const addBtn = document.getElementById('cs-add-btn');
+        if (addBtn) {
+            addBtn.innerHTML = `
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add ${tab === 'colors' ? 'Color' : 'Size'}`;
+            addBtn.setAttribute('onclick',
+                `AdminDashboardManager.${tab === 'colors' ? 'openColorModal' : 'openSizeModal'}()`);
+        }
+        this._csFilter();
+    },
+
+    // ── Search / status filter ─────────────────────────────────────────────────
+    _csFilter: function () {
+        const query  = (document.getElementById('cs-search-input')?.value || '').toLowerCase();
+        const status = document.getElementById('cs-filter-status')?.value || 'all';
+
+        ['cs-colors-list', 'cs-sizes-list'].forEach(listId => {
+            const list = document.getElementById(listId);
+            if (!list) return;
+            list.querySelectorAll('.cs-row').forEach(row => {
+                const name   = row.dataset.name   || '';
+                const active = row.dataset.active === 'true';
+                const matchQ = !query  || name.includes(query);
+                const matchS = status === 'all'
+                    || (status === 'active'   &&  active)
+                    || (status === 'inactive' && !active);
+                row.style.display = (matchQ && matchS) ? '' : 'none';
+            });
+        });
+    },
+
+    // ── Shared DOM toggle helper — flips row/label/track without any re-render
+    _csApplyToggleDOM: function (row, _unused, toggleWrap, nowActive) {
+        // 1. Update data-active so the filter keeps working
+        if (row) row.dataset.active = String(nowActive);
+
+        // 2. Flip label text
+        const label = toggleWrap?.querySelector('.cs-toggle-label');
+        if (label) label.textContent = nowActive ? 'Active' : 'Inactive';
+
+        // 3. Flip track class (controls color + thumb position)
+        const track = toggleWrap?.querySelector('.cs-toggle-track');
+        if (track) {
+            track.classList.toggle('cs-toggle--on',  nowActive);
+            track.classList.toggle('cs-toggle--off', !nowActive);
+        }
+    },
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // COLORS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    openColorModal: async function (id = null) {
+        let color = null;
+        if (id) {
+            try {
+                const resp = await fetch(
+                    API_CONFIG.getApiUrl(`${this.endpoints.getColorById}/${id}?includeInactive=true`),
+                    { headers: this.getHeaders() }
+                );
+                if (resp.ok) {
+                    const data = await resp.json();
+                    color = data.data || data;
+                }
+            } catch (e) { console.error('[Colors] fetchById error:', e); }
+        }
+
+        const existingName = color?.name || color?.Name || '';
+        const existingHex  = color?.hexCode || color?.HexCode || '#000000';
+
+        const { value: formValues } = await Swal.fire({
+            title: '',
+            width: '420px',
+            padding: '0',
+            background: '#fff',
+            html: `
+                <div style="padding:28px 28px 4px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                        <div>
+                            <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:800;color:#111;letter-spacing:-0.3px;">
+                                ${id ? 'Edit' : 'New'} <span style="color:#c96;">Color</span>
+                            </div>
+                            <div style="font-size:11px;color:#aaa;margin-top:2px;">
+                                ${id ? `Editing color #${id}` : 'Add a new product color'}
+                            </div>
+                        </div>
+                        <div class="cs-modal-icon-wrap">
+                            <span id="cs-color-preview-icon" style="display:block;width:28px;height:28px;border-radius:50%;background:${existingHex};border:2px solid rgba(0,0,0,0.1);"></span>
+                        </div>
+                    </div>
+
+                    <div class="af-section-title" style="margin-top:0;">Color Details</div>
+
+                    <div class="af-group">
+                        <label>Color Name <span style="color:#c96;">*</span></label>
+                        <input id="cs-color-name" class="af-input"
+                            placeholder="e.g. Midnight Black, Ocean Blue"
+                            value="${existingName}">
+                    </div>
+
+                    <div class="af-group" style="margin-top:12px;">
+                        <label>Hex Code</label>
+                        <div class="cs-hex-row">
+                            <input type="color" id="cs-color-picker" value="${existingHex}"
+                                class="cs-color-picker-input"
+                                oninput="AdminDashboardManager._csColorPickerSync(this.value)">
+                            <input id="cs-color-hex" class="af-input cs-hex-text"
+                                placeholder="#000000"
+                                value="${existingHex}"
+                                oninput="AdminDashboardManager._csHexTextSync(this.value)">
+                        </div>
+                    </div>
+
+                    <div style="height:20px;"></div>
+                </div>
+            `,
+            didOpen: () => {
+                AdminDashboardManager._csColorPickerSync(existingHex);
+            },
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: id ? '✓ Save Changes' : '+ Add Color',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#111',
+            preConfirm: () => {
+                const name    = document.getElementById('cs-color-name')?.value.trim() || '';
+                const hexCode = document.getElementById('cs-color-hex')?.value.trim()  || null;
+                if (!name) {
+                    Swal.showValidationMessage('Color name is required');
+                    return false;
+                }
+                if (hexCode && !/^#[0-9A-Fa-f]{3,8}$/.test(hexCode)) {
+                    Swal.showValidationMessage('Invalid hex code (e.g. #FF5500)');
+                    return false;
+                }
+                return { name, hexCode: hexCode || null };
+            }
+        });
+
+        if (formValues) {
+            if (id) await this.updateColor(id, formValues);
+            else        await this.addColor(formValues);
+        }
+    },
+
+    _csColorPickerSync: function (val) {
+        const hexInput = document.getElementById('cs-color-hex');
+        const preview  = document.getElementById('cs-color-preview-icon');
+        if (hexInput) hexInput.value = val;
+        if (preview)  preview.style.background = val;
+    },
+
+    _csHexTextSync: function (val) {
+        const picker  = document.getElementById('cs-color-picker');
+        const preview = document.getElementById('cs-color-preview-icon');
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            if (picker)  picker.value = val;
+            if (preview) preview.style.background = val;
+        }
+    },
+
+    addColor: async function (fields) {
+        try {
+            const resp = await fetch(API_CONFIG.getApiUrl(this.endpoints.addColor), {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ name: fields.name, hexCode: fields.hexCode })
+            });
+            if (resp.ok) {
+                await Swal.fire({ icon: 'success', title: 'Color added!', timer: 1500, showConfirmButton: false });
+                this.loadColorsAndSizes();
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not add color.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    updateColor: async function (id, fields) {
+        try {
+            const resp = await fetch(API_CONFIG.getApiUrl(`${this.endpoints.updateColor}/${id}`), {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ name: fields.name, hexCode: fields.hexCode })
+            });
+            if (resp.ok) {
+                await Swal.fire({ icon: 'success', title: 'Color updated!', timer: 1500, showConfirmButton: false });
+                this.loadColorsAndSizes();
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not update color.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    // ── Toggle color: flips DOM instantly, reverts on API failure ─────────────
+    toggleColorStatus: async function (id, btn) {
+        const row       = btn.closest('.cs-row');
+        const badge     = row?.querySelector('.cs-status-badge');
+        const wasActive = row?.dataset.active === 'true';
+
+        // Flip immediately (optimistic)
+        this._csApplyToggleDOM(row, badge, btn, !wasActive);
+
+        try {
+            const resp = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.toggleColorStatus}/${id}`),
+                { method: 'PATCH', headers: this.getHeaders() }
+            );
+            if (!resp.ok) {
+                // Revert on failure
+                this._csApplyToggleDOM(row, badge, btn, wasActive);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Could not toggle color status.' });
+            }
+        } catch (e) {
+            this._csApplyToggleDOM(row, badge, btn, wasActive);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    deleteColor: async function (id, name) {
+        const result = await Swal.fire({
+            title: 'Delete Color?',
+            text: `This will permanently remove "${name}".`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+        });
+        if (!result.isConfirmed) return;
+        try {
+            const resp = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.deleteColor}/${id}`),
+                { method: 'DELETE', headers: this.getHeaders() }
+            );
+            if (resp.ok) {
+                await Swal.fire({ icon: 'success', title: 'Color deleted!', timer: 1500, showConfirmButton: false });
+                this.loadColorsAndSizes();
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not delete color.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // SIZES
+    // ══════════════════════════════════════════════════════════════════════════
+
+    openSizeModal: async function (id = null) {
+        let size = null;
+        if (id) {
+            try {
+                const resp = await fetch(
+                    API_CONFIG.getApiUrl(`${this.endpoints.getSizeById}/${id}?includeInactive=true`),
+                    { headers: this.getHeaders() }
+                );
+                if (resp.ok) {
+                    const data = await resp.json();
+                    size = data.data || data;
+                }
+            } catch (e) { console.error('[Sizes] fetchById error:', e); }
+        }
+
+        const existingName = size?.name || size?.Name || '';
+
+        const { value: formValues } = await Swal.fire({
+            title: '',
+            width: '400px',
+            padding: '0',
+            background: '#fff',
+            html: `
+                <div style="padding:28px 28px 4px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                        <div>
+                            <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:800;color:#111;letter-spacing:-0.3px;">
+                                ${id ? 'Edit' : 'New'} <span style="color:#c96;">Size</span>
+                            </div>
+                            <div style="font-size:11px;color:#aaa;margin-top:2px;">
+                                ${id ? `Editing size #${id}` : 'Add a new product size'}
+                            </div>
+                        </div>
+                        <div class="cs-modal-icon-wrap">
+                            <svg width="20" height="20" fill="none" stroke="#c96" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 6H3M16 12H3M11 18H3"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="af-section-title" style="margin-top:0;">Size Details</div>
+
+                    <div class="af-group">
+                        <label>Size Name <span style="color:#c96;">*</span></label>
+                        <input id="cs-size-name" class="af-input"
+                            placeholder="e.g. XS, S, M, L, XL, 42, 28x32"
+                            value="${existingName}">
+                    </div>
+
+                    <div style="height:20px;"></div>
+                </div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: id ? '✓ Save Changes' : '+ Add Size',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#111',
+            preConfirm: () => {
+                const name = document.getElementById('cs-size-name')?.value.trim() || '';
+                if (!name) {
+                    Swal.showValidationMessage('Size name is required');
+                    return false;
+                }
+                return { name };
+            }
+        });
+
+        if (formValues) {
+            if (id) await this.updateSize(id, formValues);
+            else        await this.addSize(formValues);
+        }
+    },
+
+    addSize: async function (fields) {
+        try {
+            const resp = await fetch(API_CONFIG.getApiUrl(this.endpoints.addSize), {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ name: fields.name })
+            });
+            if (resp.ok) {
+                await Swal.fire({ icon: 'success', title: 'Size added!', timer: 1500, showConfirmButton: false });
+                this.loadColorsAndSizes();
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not add size.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    updateSize: async function (id, fields) {
+        try {
+            const resp = await fetch(API_CONFIG.getApiUrl(`${this.endpoints.updateSize}/${id}`), {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                body: JSON.stringify({ name: fields.name })
+            });
+            if (resp.ok) {
+                await Swal.fire({ icon: 'success', title: 'Size updated!', timer: 1500, showConfirmButton: false });
+                this.loadColorsAndSizes();
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not update size.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    // ── Toggle size: flips DOM instantly, reverts on API failure ──────────────
+    toggleSizeStatus: async function (id, btn) {
+        const row       = btn.closest('.cs-row');
+        const badge     = row?.querySelector('.cs-status-badge');
+        const wasActive = row?.dataset.active === 'true';
+
+        // Flip immediately (optimistic)
+        this._csApplyToggleDOM(row, badge, btn, !wasActive);
+
+        try {
+            const resp = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.toggleSizeStatus}/${id}`),
+                { method: 'PATCH', headers: this.getHeaders() }
+            );
+            if (!resp.ok) {
+                // Revert on failure
+                this._csApplyToggleDOM(row, badge, btn, wasActive);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Could not toggle size status.' });
+            }
+        } catch (e) {
+            this._csApplyToggleDOM(row, badge, btn, wasActive);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
+        }
+    },
+
+    deleteSize: async function (id, name) {
+        const result = await Swal.fire({
+            title: 'Delete Size?',
+            text: `This will permanently remove "${name}".`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete it',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+        });
+        if (!result.isConfirmed) return;
+        try {
+            const resp = await fetch(
+                API_CONFIG.getApiUrl(`${this.endpoints.deleteSize}/${id}`),
+                { method: 'DELETE', headers: this.getHeaders() }
+            );
+            if (resp.ok) {
+                await Swal.fire({ icon: 'success', title: 'Size deleted!', timer: 1500, showConfirmButton: false });
+                this.loadColorsAndSizes();
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Could not delete size.' });
+            }
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Network error.' });
         }
     },
 

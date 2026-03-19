@@ -194,7 +194,6 @@ sub {
 
 img {
     display: block;
-    max-width: 100%;
     height: auto
 }
 
@@ -6250,7 +6249,7 @@ p {
     }
 
     .page-header.page-header-big {
-        min-height: 450px
+        min-height: 500px
     }
 }
 
@@ -10064,7 +10063,6 @@ p {
     color: #777;
     margin: 0;
     background-color: transparent;
-    border: .1rem solid #e1e2e6;
     border-radius: 50%;
     text-decoration: none;
     opacity: 1;
@@ -13586,7 +13584,6 @@ button:focus {
         z-index: 500;
         padding-top: 1rem;
         padding-bottom: 1rem;
-        background-color: #fff;
         box-shadow: -15px 0 43px rgba(51, 51, 51, 0.15)
     }
 
@@ -20589,4 +20586,77 @@ button:focus {
 .notyf__toast--success .notyf__message {
     color: #fff !important;
 }
+/* FORM CONTAINER (optional but recommended) */
+.contact-form {
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
 
+/* INPUTS */
+.contact-box .form-control,
+.contact-form .form-control {
+  border-radius: 12px;
+  padding: 14px 15px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: none;
+}
+
+/* PLACEHOLDER STYLE */
+.contact-form .form-control::placeholder {
+  color: #999;
+}
+
+/* FOCUS EFFECT */
+.contact-form .form-control:focus {
+  border-color: #26264C;
+  box-shadow: 0 0 0 3px rgba(38, 38, 76, 0.1);
+  outline: none;
+}
+
+/* TEXTAREA */
+.contact-form textarea {
+  border-radius: 12px;
+  resize: none;
+}
+
+/* BUTTON */
+.contact-submit-btn {
+  background: #26264C;
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px 25px;
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+/* BUTTON HOVER */
+.contact-submit-btn:hover {
+  background: #1b1b38;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(38, 38, 76, 0.3);
+}
+
+/* ICON INSIDE BUTTON */
+.contact-submit-btn i {
+  font-size: 14px;
+}
+
+/* ROW SPACING FIX */
+.contact-form .row {
+  margin-bottom: 5px;
+}
+
+/* MOBILE IMPROVEMENT */
+@media (max-width: 576px) {
+  .contact-form {
+    padding: 20px;
+  }
+}

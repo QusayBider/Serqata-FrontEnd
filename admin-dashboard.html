@@ -36,6 +36,8 @@
     <link rel="stylesheet" href="assets/css/admin-Discountcodes.css">
     <link rel="stylesheet" href="assets/css/admin-orders.css">
     <link rel="stylesheet" href="assets/css/admin-users.css">
+    <link rel="stylesheet" href="./assets//css/admin-socialmedia.css">
+    <link rel="stylesheet" href="assets/css/admin-color&size.css">
 
 </head>
 
@@ -213,6 +215,16 @@
                                         aria-selected="false">Discount Codes</a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link" id="tab-SocialMedia-link" data-toggle="tab"
+                                        href="#tab-SocialMedia" role="tab" aria-controls="tab-SocialMedia"
+                                        aria-selected="false">Social Media</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="tab-colors-sizes-link" data-toggle="tab"
+                                        href="#tab-colors-sizes" role="tab" aria-controls="tab-colors-sizes"
+                                        aria-selected="false">Colors & Sizes</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link" href="#"
                                         onclick="AdminDashboardManager.logout(); return false;">Sign Out</a>
                                 </li>
@@ -290,6 +302,14 @@
                                     <div class="tab-pane fade" id="tab-discountcodes" role="tabpanel"
                                         aria-labelledby="tab-discountcodes-link">
                                         <div id="admin-discountcodes-container"></div>
+                                    </div><!-- .End .tab-pane -->
+                                    <div class="tab-pane fade" id="tab-SocialMedia" role="tabpanel"
+                                        aria-labelledby="tab-SocialMedia-link">
+                                        <div id="admin-SocialMedia-container"></div>
+                                    </div><!-- .End .tab-pane -->
+                                    <div class="tab-pane fade" id="tab-colors-sizes" role="tabpanel"
+                                        aria-labelledby="tab-colors-sizes-link">
+                                        <div id="admin-colors-sizes-container"></div>
                                     </div><!-- .End .tab-pane -->
                                 </div>
                             </div><!-- End .col-lg-9 -->
